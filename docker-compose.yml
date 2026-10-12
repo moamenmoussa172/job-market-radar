@@ -1,0 +1,185 @@
+# Job Market Radar - local stack
+# Services: Postgres (Airflow metadata + warehouse + Metabase app DB),
+#           SeaweedFS (S3-compatible object storage for the raw layer),
+#           Airflow 3 (LocalExecutor), Metabase (dashboards).
+#
+# Start:  docker compose up -d --build
+# Stop:   docker compose down          (keeps data)
+# Reset:  docker compose down -v       (DELETES all data volumes)
+
+x-airflow-common: &airflow-common
+  build:
+    context: ./airflow
+    args:
+      AIRFLOW_VERSION: ${AIRFLOW_VERSION:-3.3.2}
+  image: job-market-radar/airflow:${AIRFLOW_VERSION:-3.3.2}
+  env_file:
+    - .env
+  environment: &airflow-common-env
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg://${AIRFLOW_DB_USER}:${AIRFLOW_DB_PASSWORD}@postgres/airflow
+    AIRFLOW__CORE__FERNET_KEY: ${FERNET_KEY:-}
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    AIRFLOW__CORE__PARALLELISM: '8'
+    AIRFLOW__CORE__EXECUTION_API_SERVER_URL: 'http://airflow-apiserver:8080/execution/'
+    AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW_JWT_SECRET}
+    AIRFLOW__API_AUTH__JWT_ISSUER: airflow
+    AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'true'
+    # Warehouse connection used by the DAGs (conn id: jobradar_wh)
+    AIRFLOW_CONN_JOBRADAR_WH: postgresql://${WAREHOUSE_DB_USER}:${WAREHOUSE_DB_PASSWORD}@postgres:5432/jobradar
+    # Object storage used by the DAGs
+    S3_ENDPOINT_URL: http://seaweedfs:8333
+    S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+    S3_SECRET_KEY: ${S3_SECRET_KEY}
+    S3_RAW_BUCKET: ${S3_RAW_BUCKET:-jobradar-raw}
+  volumes:
+    - ./dags:/opt/airflow/dags
+    - ./logs:/opt/airflow/logs
+    - ./config:/opt/airflow/config
+    - ./plugins:/opt/airflow/plugins
+  user: "${AIRFLOW_UID:-50000}:0"
+  depends_on: &airflow-common-depends-on
+    postgres:
+      condition: service_healthy
+    seaweedfs:
+      condition: service_started
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${AIRFLOW_DB_USER}
+      POSTGRES_PASSWORD: ${AIRFLOW_DB_PASSWORD}
+      POSTGRES_DB: airflow
+      WAREHOUSE_DB_USER: ${WAREHOUSE_DB_USER}
+      WAREHOUSE_DB_PASSWORD: ${WAREHOUSE_DB_PASSWORD}
+      METABASE_DB_USER: ${METABASE_DB_USER}
+      METABASE_DB_PASSWORD: ${METABASE_DB_PASSWORD}
+    volumes:
+      - postgres-db-volume:/var/lib/postgresql/data
+      - ./infra/postgres/init:/docker-entrypoint-initdb.d:ro
+    ports:
+      # 5433 on your PC so it does not clash with a locally installed Postgres
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${AIRFLOW_DB_USER}", "-d", "airflow"]
+      interval: 10s
+      retries: 5
+      start_period: 10s
+    restart: always
+
+  seaweedfs:
+    # S3-compatible object storage (replaces MinIO, whose free images were discontinued)
+    image: chrislusf/seaweedfs:${SEAWEEDFS_VERSION:-latest}
+    command: >
+      server -dir=/data -ip.bind=0.0.0.0
+      -master.volumeSizeLimitMB=1024 -volume.max=0
+      -s3 -s3.port=8333 -s3.config=/etc/seaweedfs/s3.json
+    volumes:
+      - seaweedfs-data:/data
+      - ./infra/seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro
+    ports:
+      - "8333:8333"   # S3 API
+      - "9333:9333"   # master UI (optional)
+    restart: always
+
+  airflow-apiserver:
+    <<: *airflow-common
+    command: api-server
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/api/v2/monitor/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    healthcheck:
+      test: ["CMD-SHELL", 'airflow jobs check --job-type SchedulerJob --hostname "$${HOSTNAME}"']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-dag-processor:
+    <<: *airflow-common
+    command: dag-processor
+    healthcheck:
+      test: ["CMD-SHELL", 'airflow jobs check --job-type DagProcessorJob --hostname "$${HOSTNAME}"']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-init:
+    <<: *airflow-common
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        mkdir -v -p /opt/airflow/{logs,dags,plugins,config}
+        /entrypoint airflow version
+        /entrypoint airflow config list >/dev/null
+        chown -R "${AIRFLOW_UID:-50000}:0" /opt/airflow/{logs,dags,plugins,config}
+        echo "Airflow init finished."
+    environment:
+      <<: *airflow-common-env
+      _AIRFLOW_DB_MIGRATE: 'true'
+      _AIRFLOW_WWW_USER_CREATE: 'true'
+      _AIRFLOW_WWW_USER_USERNAME: ${AIRFLOW_ADMIN_USER:-airflow}
+      _AIRFLOW_WWW_USER_PASSWORD: ${AIRFLOW_ADMIN_PASSWORD:-airflow}
+    user: "0:0"
+
+  airflow-cli:
+    <<: *airflow-common
+    profiles:
+      - debug
+    environment:
+      <<: *airflow-common-env
+      CONNECTION_CHECK_MAX_COUNT: "0"
+    command:
+      - bash
+      - -c
+      - airflow
+
+  metabase:
+    image: metabase/metabase:${METABASE_VERSION:-latest}
+    environment:
+      MB_DB_TYPE: postgres
+      MB_DB_DBNAME: metabase
+      MB_DB_PORT: 5432
+      MB_DB_USER: ${METABASE_DB_USER}
+      MB_DB_PASS: ${METABASE_DB_PASSWORD}
+      MB_DB_HOST: postgres
+      JAVA_OPTS: -Xmx1g
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: always
+
+volumes:
+  postgres-db-volume:
+  seaweedfs-data:

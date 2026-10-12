@@ -1,0 +1,14 @@
+{
+  "identities": [
+    {
+      "name": "jobradar",
+      "credentials": [
+        {
+          "accessKey": "jobradar_access_key",
+          "secretKey": "jobradar_secret_key_change_me"
+        }
+      ],
+      "actions": ["Admin", "Read", "List", "Tagging", "Write"]
+    }
+  ]
+}
