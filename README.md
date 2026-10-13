@@ -3,10 +3,10 @@
 **Which data jobs can I actually get from where I live, what should I learn next, and what do they pay?**
 
 An end-to-end data engineering project that collects ~1,000 data engineering, analytics, BI and data science
-job postings every day from 7 public sources, models them with dbt, and answers those questions in a
+job postings every day from 9 public and licensed sources, models them with dbt, and answers those questions in a
 self-service dashboard, from the point of view of *one specific person* (their country, role and skills).
 
-![CI](https://github.com/moamenmoussa172/job-market-radar/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg)
 
 ![Dashboard](docs/images/dashboard.png)
 
@@ -29,9 +29,10 @@ Job boards answer "what jobs exist?". Job seekers need different answers:
 ```mermaid
 flowchart LR
     subgraph Sources["7 public job APIs"]
-        A1[Greenhouse / Lever / Ashby<br/>48 company boards]
+        A1[Greenhouse / Lever / Ashby /<br/>SmartRecruiters / Workable<br/>self-expanding company registry]
         A2[Himalayas / Jobicy / Remotive<br/>remote boards]
         A3[Arbeitnow<br/>Europe]
+        A5[JSearch / Jooble<br/>LinkedIn, Indeed, Bayt...<br/>via licensed APIs]
         A4[ECB<br/>FX rates]
     end
     subgraph Airflow["Airflow 3 DAG (daily)"]
@@ -122,7 +123,12 @@ dbt layers: `staging` (one model per source, all with identical columns) → `in
 8. **Failure handling is deliberate.** Required sources fail the run if they return nothing;
    optional ones (a source whose free API shrank to a sample) only warn; a failed company board
    is logged as a warning; FX fetch failure falls back to the last known rates.
-9. **Dashboard as code.** The Metabase dashboard (17 charts, 4 filters) is created through the
+9. **A source catalog that grows itself.** Jobs found on aggregators often link to a company's
+   Greenhouse/Lever/Ashby/SmartRecruiters/Workable board. A `discover_boards` task harvests those board names from raw
+   payloads (regex in SQL), a `sync_boards` task validates new candidates with one request each,
+   and working boards join the daily extract; boards failing 3 runs in a row are retired.
+   Status lives in `raw.company_boards`, with a monitoring view in dbt.
+10. **Dashboard as code.** The Metabase dashboard (17 charts, 4 filters) is created through the
    REST API, idempotently, so it is versioned and reproducible like the rest of the pipeline.
 
 More detail: [docs/design-decisions.md](docs/design-decisions.md).
@@ -131,14 +137,20 @@ More detail: [docs/design-decisions.md](docs/design-decisions.md).
 
 | Source | What it adds | Usage notes |
 |---|---|---|
-| Greenhouse, Lever, Ashby public job boards | 48 companies' career pages: full descriptions; Lever/Ashby state work mode and often salary | List in `dags/jobradar/company_boards.csv` |
+| Greenhouse, Lever, Ashby, SmartRecruiters, Workable public job boards | Company career pages: full descriptions; Lever/Ashby/SmartRecruiters state work mode and often salary | **Self-expanding registry**: ~100 seeds in `dags/jobradar/company_boards.csv`, plus boards discovered automatically from other sources' apply links |
 | Himalayas | Remote jobs with country and timezone restrictions | Links back to Himalayas kept; no re-posting |
 | Jobicy | Remote jobs with eligibility, level and salary | Polled once a day; source URL kept |
 | Arbeitnow | European jobs, onsite and remote | Newest pages each day |
 | Remotive | Remote jobs (now a small sample feed) | Optional source |
+| JSearch (OpenWeb Ninja) | Google for Jobs data: postings first published on LinkedIn, Indeed, Glassdoor, Bayt and company sites, searched by country (Egypt, UAE, Saudi Arabia, Qatar, Germany, Spain, UK) | API key; free plan 200 requests/month, so 6 rotating searches/day |
+| Jooble | Aggregator incl. regional boards (e.g. Wuzzuf, NaukriGulf partners); short snippets | API key; 3 rotating searches/day |
 | ECB | Daily euro reference exchange rates | Used for salary conversion only |
 
 Only data-related titles are stored (English, German, French, Spanish and Dutch title patterns).
+No site is scraped: boards without a public API (LinkedIn, Indeed, Wuzzuf, NaukriGulf) are reached
+only through licensed aggregator APIs (JSearch, Jooble), which index part of their listings. Those two have small quotas, so each day runs the
+next slice of a country x role search list; their jobs count as active for 10 days after last seen,
+and they are excluded from day-to-day trend charts so the rotation doesn't distort trends.
 Job content stays the property of the original boards; this project publishes aggregates and links.
 
 ## Quality and testing

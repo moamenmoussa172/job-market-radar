@@ -11,3 +11,5 @@ sources:
         description: One row per source per DAG run.
       - name: fx_rates
         description: ECB reference rates, units of currency per 1 EUR (fx_rates task).
+      - name: company_boards
+        description: Self-expanding registry of Greenhouse/Lever/Ashby boards (seeded + discovered).

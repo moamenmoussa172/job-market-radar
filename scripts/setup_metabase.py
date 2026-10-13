@@ -311,6 +311,14 @@ order by 1, 2"""),
              "from marts.fct_job_postings f\n"
              "where is_active [[and role_family = {{role}}]] [[and " + ELIGIBLE_FROM_COUNTRY + "]]\n"
              "order by first_seen_date desc, job_title limit 500"),
+    # ---- row 66: original boards (aggregator sources) -----------------------
+    dict(key="publishers", name="Where these jobs were first posted (LinkedIn, Indeed, Bayt, ... via JSearch / Jooble)",
+         display="row", tags=["role", "country"], pos=(66, 0, 24, 8),
+         viz={"graph.dimensions": ["original_board"], "graph.metrics": ["jobs"],
+              "graph.max_categories_enabled": False},
+         sql="select original_board, sum(jobs) as jobs from reporting.rpt_jobs_by_publisher "
+             "where 1 = 1 [[and role_family = {{role}}]] [[and country = {{country}}]] "
+             "group by 1 order by 2 desc limit 15"),
 ]
 
 TAG_LABELS = {"role": "Role", "country": "Country", "skill": "Skill", "my_skills": "My skills"}

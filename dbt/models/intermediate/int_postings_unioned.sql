@@ -1,7 +1,12 @@
 -- All sources in one shape, plus plain-text description and activity flag.
 -- A job is "active" if it appeared in its source's latest snapshot, so one
 -- failed source run doesn't mark that source's jobs inactive everywhere.
-{% set sources = ['remotive', 'jobicy', 'himalayas', 'arbeitnow', 'greenhouse', 'lever', 'ashby'] %}
+-- Rotating sources (a different slice of searches each day) can't use that
+-- rule: their jobs stay active if seen within the last N days.
+{% set sources = ['remotive', 'jobicy', 'himalayas', 'arbeitnow', 'greenhouse', 'lever', 'ashby',
+                  'smartrecruiters', 'workable', 'jsearch', 'jooble'] %}
+{% set rotating_sources = ['jsearch', 'jooble'] %}
+{% set rotating_active_days = 10 %}
 
 with unioned as (
     {% for s in sources %}
@@ -20,7 +25,10 @@ select
     md5(u.source || ':' || u.source_job_id)        as posting_key,
     u.*,
     {{ html_to_text('u.description_html') }}       as description_text,
-    u.last_seen_date >= sl.source_latest_date      as is_active
+    case when u.source in ('{{ rotating_sources | join("', '") }}')
+         then u.last_seen_date >= sl.source_latest_date - {{ rotating_active_days }}
+         else u.last_seen_date >= sl.source_latest_date
+    end                                            as is_active
 from unioned u
 join source_latest sl using (source)
 where u.job_title is not null

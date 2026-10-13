@@ -39,6 +39,23 @@ Get-Content scripts\setup_metabase.py -Raw | docker compose exec -T `
 The script creates the Metabase admin on the first run and logs in on later runs. Re-running it
 replaces the dashboard (old version archived), so run it again after any dashboard change.
 
+## Company board registry
+
+`raw.company_boards` holds every Greenhouse/Lever/Ashby/SmartRecruiters/Workable board the pipeline knows
+(SmartRecruiters names are case-sensitive, e.g. `BoschGroup`):
+`candidate` (not checked yet) -> `active` (collected daily) -> `dead` (404, or 3 failed runs in a row).
+- New rows in `dags/jobradar/company_boards.csv` are picked up on the next run and validated first.
+- `discover_boards` adds boards found in other sources' apply links; up to 60 are validated per run.
+- Check it: `select * from monitoring.rpt_company_boards;`
+- Revive a board: `update raw.company_boards set status='candidate', consecutive_failures=0 where token='...';`
+
+## API keys (optional sources)
+
+JSearch and Jooble need keys in `.env` (`JSEARCH_API_KEY`, `JOOBLE_API_KEY`). Without a key the
+source is skipped with a warning. Keys never go in code or git; if a key is exposed, regenerate it.
+Daily budgets: `JSEARCH_REQUESTS_PER_DAY` (default 6, fits the free 200/month) and
+`JOOBLE_REQUESTS_PER_DAY` (default 3). A 401/403/429 answer stops that source for the day.
+
 ## Daily operation
 
 - The DAG runs daily at 05:00 UTC (08:00 Cairo). The machine and Docker must be running;

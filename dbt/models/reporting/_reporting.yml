@@ -16,3 +16,5 @@ models:
     description: Per snapshot day, distinct jobs listed by role family and work mode.
   - name: rpt_salary_by_role
     description: P25/median/P75 annual USD by role (seniority NULL = all levels) and by role x seniority.
+  - name: rpt_jobs_by_publisher
+    description: Active aggregator jobs by the board they were originally posted on (LinkedIn, Indeed, Bayt, ...).

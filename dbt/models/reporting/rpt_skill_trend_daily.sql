@@ -7,6 +7,9 @@ with daily_listings as (
     from {{ source('raw', 'job_posting_snapshots') }} s
     join {{ ref('int_postings_keyed') }} k
       on k.posting_key = md5(s.source || ':' || s.source_job_id)
+    -- rotating sources search different countries each day, so they'd make
+    -- day-to-day numbers jump; trends use the full-feed sources only
+    where s.source not in ('jsearch', 'jooble')
 ),
 
 daily_totals as (

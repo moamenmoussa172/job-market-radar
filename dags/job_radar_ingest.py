@@ -1,8 +1,9 @@
 """Daily pipeline: job sources -> raw object storage -> Postgres -> dbt models.
 
-    setup ──► extract[source] ──► load[source] ──► check ──┐
-              (mapped over SOURCES, one task per source)     ├──► dbt_build
-    fx_rates (ECB exchange rates, for salary conversion) ────┘
+    setup ─► sync_boards ─► extract[source] ─► load[source] ─► check ─┬─► dbt_build
+             (mapped over SOURCES, one task per source)              │
+    setup ─► fx_rates (ECB rates, for salary conversion) ────────────┘
+                                                        load ─► discover_boards
 
 extract: calls the source API, writes an untouched gzip JSON envelope to S3.
 load:    reads that object back from S3 and upserts the daily snapshot into
@@ -11,6 +12,8 @@ check:   fails the run if a source returned nothing (pipeline health check).
 fx_rates: last 90 days of ECB reference rates -> S3 + raw.fx_rates. It never
           fails the run: if ECB is unreachable, dbt uses the last known rates.
 dbt_build: seeds + staging/intermediate/marts models + all dbt tests.
+sync_boards / discover_boards: the self-expanding company board registry
+          (see jobradar/boards.py). Neither ever fails the run.
 """
 from __future__ import annotations
 
@@ -22,8 +25,8 @@ from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.providers.standard.operators.bash import BashOperator
 from airflow.sdk import dag, get_current_context, task
 
-from jobradar import fx, storage, warehouse
-from jobradar.sources import SOURCES
+from jobradar import boards, fx, storage, warehouse
+from jobradar.sources import SOURCES, load_board_rows
 
 log = logging.getLogger(__name__)
 WAREHOUSE_CONN_ID = "jobradar_wh"
@@ -47,13 +50,52 @@ def job_radar_ingest():
         try:
             warehouse.ensure_schema(conn)
             fx.load_rates(conn, [])  # creates raw.fx_rates even if ECB is unreachable today
+            boards.ensure_schema(conn)
+        finally:
+            conn.close()
+
+    @task
+    def sync_boards() -> dict:
+        """Add new CSV seeds, then validate a capped number of candidate boards."""
+        conn = PostgresHook(postgres_conn_id=WAREHOUSE_CONN_ID).get_conn()
+        try:
+            seeded = boards.seed(conn, load_board_rows())
+            counts = boards.validate_candidates(conn)
+        except Exception as exc:  # noqa: BLE001 - extraction falls back to the CSV list
+            log.warning("board sync failed (%s) - extract will use the CSV list", exc)
+            return {}
+        finally:
+            conn.close()
+        log.info("boards: %s new seeds; validation %s", seeded, counts)
+        return {"seeded": seeded, **counts}
+
+    @task
+    def discover_boards(_loaded: list[dict]) -> int:
+        """Harvest board links from today's (and recent) raw payloads -> new candidates."""
+        conn = PostgresHook(postgres_conn_id=WAREHOUSE_CONN_ID).get_conn()
+        try:
+            return boards.harvest(conn)
+        except Exception as exc:  # noqa: BLE001 - discovery is best-effort
+            log.warning("board discovery failed: %s", exc)
+            return 0
         finally:
             conn.close()
 
     @task
     def extract(source: str) -> dict:
         fetched_at = pendulum.now("UTC")
-        result = SOURCES[source].extract()
+        spec = SOURCES[source]
+        if spec.board_ats:
+            conn = PostgresHook(postgres_conn_id=WAREHOUSE_CONN_ID).get_conn()
+            tokens = boards.active_tokens(conn, spec.board_ats)
+            log.info("%s: %s active boards in registry", source, len(tokens))
+            # empty registry (first run, or sync failed): use the CSV list
+            result = spec.extract(tokens=tokens or None)
+            if tokens:
+                boards.record_extraction(conn, spec.board_ats, result.board_status)
+            conn.close()
+        else:
+            result = spec.extract()
         key = storage.raw_key(source, fetched_at)
         envelope = {
             "source": source,
@@ -121,11 +163,15 @@ def job_radar_ingest():
     )
 
     s = setup()
+    synced = sync_boards()
+    s >> synced
     extracted = extract.expand(source=list(SOURCES))
-    s >> extracted
+    synced >> extracted
     rates = fx_rates()
     s >> rates
-    [check(load.expand(meta=extracted)), rates] >> dbt_build
+    loaded = load.expand(meta=extracted)
+    [check(loaded), rates] >> dbt_build
+    discover_boards(loaded)
 
 
 job_radar_ingest()

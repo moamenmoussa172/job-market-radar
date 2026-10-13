@@ -20,3 +20,11 @@ models:
     columns: *stg_cols
   - name: stg_ashby
     columns: *stg_cols
+  - name: stg_jsearch
+    columns: *stg_cols
+  - name: stg_jooble
+    columns: *stg_cols
+  - name: stg_smartrecruiters
+    columns: *stg_cols
+  - name: stg_workable
+    columns: *stg_cols

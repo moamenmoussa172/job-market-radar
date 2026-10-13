@@ -88,8 +88,20 @@ def test_jobicy_keeps_industry_feed_and_dedupes(monkeypatch):
     fake = {"jobs": [{"id": 9, "jobTitle": "ML Engineer"}, {"id": 9, "jobTitle": "ML Engineer"},
                      {"id": 10, "jobTitle": "Data Analyst", "jobGeo": "Europe"}]}
     monkeypatch.setattr(sources, "_get_json", lambda url, params=None: fake)
-    res = sources.extract_jobicy(pause_seconds=0)
+    res = sources.extract_jobicy(pause_seconds=0, tags=[])
     assert sorted(sources.jobicy_id(r) for r in res.records) == ["10", "9"]
+
+
+def test_jobicy_tag_search_keeps_only_data_titles(monkeypatch):
+    def fake_get(url, params=None):
+        if "industry" in params:
+            return {"jobs": [{"id": 1, "jobTitle": "ML Engineer"}]}
+        return {"jobs": [{"id": 2, "jobTitle": "Senior Data Engineer"}, {"id": 3, "jobTitle": "Sales Manager"},
+                         {"id": 1, "jobTitle": "ML Engineer"}]}
+
+    monkeypatch.setattr(sources, "_get_json", fake_get)
+    res = sources.extract_jobicy(pause_seconds=0, tags=["data engineer"])
+    assert sorted(sources.jobicy_id(r) for r in res.records) == ["1", "2"]
 
 
 def test_himalayas_paginates_filters_and_dedupes(monkeypatch):
@@ -108,11 +120,84 @@ def test_himalayas_paginates_filters_and_dedupes(monkeypatch):
 
 
 def test_all_sources_registered():
-    assert set(sources.SOURCES) == {"remotive", "jobicy", "himalayas", "arbeitnow", "greenhouse", "lever", "ashby"}
+    assert set(sources.SOURCES) == {"remotive", "jobicy", "himalayas", "arbeitnow", "greenhouse", "lever",
+                                    "ashby", "jsearch", "jooble", "smartrecruiters", "workable"}
 
 
-def test_only_remotive_is_optional():
-    assert [s for s, spec in sources.SOURCES.items() if not spec.required] == ["remotive"]
+def test_optional_sources():
+    assert {s for s, spec in sources.SOURCES.items() if not spec.required} == {
+        "remotive", "jsearch", "jooble", "smartrecruiters", "workable"}
+
+
+def test_daily_slice_rotates_through_every_pair():
+    import datetime as dt
+    pairs = list(range(28))
+    seen = set()
+    for d in range(5):
+        today = sources.daily_slice(pairs, 6, dt.date(2026, 10, 13) + dt.timedelta(days=d))
+        assert len(today) == 6 and len(set(today)) == 6
+        seen.update(today)
+    assert seen == set(pairs)
+    assert sources.daily_slice([], 6) == []
+
+
+def test_keyless_sources_skip_without_calling(monkeypatch):
+    monkeypatch.delenv("JSEARCH_API_KEY", raising=False)
+    monkeypatch.delenv("JOOBLE_API_KEY", raising=False)
+    monkeypatch.setattr(sources, "_get_json", lambda *a, **k: (_ for _ in ()).throw(AssertionError("called")))
+    for fn in (sources.extract_jsearch, sources.extract_jooble):
+        res = fn()
+        assert res.records == [] and "not set" in res.warnings[0]
+
+
+def test_jsearch_filters_dedupes_and_sends_key(monkeypatch):
+    monkeypatch.setenv("JSEARCH_API_KEY", "k123")
+    calls = []
+
+    def fake_get(url, params=None, headers=None):
+        calls.append((params, headers))
+        return {"status": "OK", "data": [
+            {"job_id": "j1", "job_title": "Data Engineer", "job_publisher": "LinkedIn"},
+            {"job_id": "j1", "job_title": "Data Engineer", "job_publisher": "LinkedIn"},
+            {"job_id": "j2", "job_title": "Nurse"},
+        ]}
+
+    monkeypatch.setattr(sources, "_get_json", fake_get)
+    res = sources.extract_jsearch(pairs=[("data engineer", "eg", "Egypt")], pause_seconds=0)
+    assert [sources.jsearch_id(r) for r in res.records] == ["j1"]
+    assert calls[0][1] == {"x-api-key": "k123"}
+    assert calls[0][0] == {"query": "data engineer jobs in Egypt", "country": "eg"}
+
+
+def test_jsearch_stops_on_quota(monkeypatch):
+    import requests
+    monkeypatch.setenv("JSEARCH_API_KEY", "k")
+    calls = []
+
+    def fake_get(url, params=None, headers=None):
+        calls.append(1)
+        resp = requests.Response(); resp.status_code = 429
+        raise requests.HTTPError("429", response=resp)
+
+    monkeypatch.setattr(sources, "_get_json", fake_get)
+    res = sources.extract_jsearch(pairs=[("a", "eg", "Egypt"), ("b", "ae", "UAE")], pause_seconds=0)
+    assert len(calls) == 1 and res.records == [] and len(res.warnings) == 1
+
+
+def test_jooble_posts_and_filters(monkeypatch):
+    monkeypatch.setenv("JOOBLE_API_KEY", "jk")
+    seen = {}
+
+    def fake_post(url, body):
+        seen["url"], seen["body"] = url, body
+        return {"totalCount": 2, "jobs": [
+            {"id": 11, "title": "Senior Data Analyst", "location": "Cairo", "link": "l1"},
+            {"id": 12, "title": "Driver", "location": "Cairo", "link": "l2"}]}
+
+    monkeypatch.setattr(sources, "_post_json", fake_post)
+    res = sources.extract_jooble(pairs=[("data analyst", "Egypt")], pause_seconds=0)
+    assert [sources.jooble_id(r) for r in res.records] == ["11"]
+    assert seen["url"].endswith("/api/jk") and seen["body"]["location"] == "Egypt"
 
 
 def test_board_file_parses():
@@ -182,3 +267,86 @@ def test_parse_ecb_xml_adds_eur_and_all_days():
     assert ("2026-10-12", "EUR", 1.0) in rows
     assert ("2026-10-09", "EUR", 1.0) in rows
     assert len(rows) == 5
+
+
+# ---------------------------------------------------------------- company board registry
+def test_tokens_harvested_from_apply_links():
+    from jobradar import boards
+    text = ('{"applicationLink": "https://boards.greenhouse.io/Acme/jobs/123", '
+            '"x": "https://job-boards.eu.greenhouse.io/embed/job_board?for=zeta-labs", '
+            '"y": "https://jobs.lever.co/plaid-inc/abc-123", "z": "https://jobs.eu.lever.co/mistral/1", '
+            '"w": "https://jobs.ashbyhq.com/posthog/9f8e", "bad": "https://boards.greenhouse.io/embed/x", '
+            '"sr": "https://jobs.smartrecruiters.com/BoschGroup/7440000-data-engineer", '
+            '"wk": "https://apply.workable.com/acme-data/j/ABC123/", "wk2": "https://apply.workable.com/j/XYZ"}')
+    assert boards.tokens_in_text(text) == {
+        ("greenhouse", "acme"), ("greenhouse", "zeta-labs"),
+        ("lever", "plaid-inc"), ("lever", "mistral"), ("ashby", "posthog"),
+        ("smartrecruiters", "BoschGroup"), ("workable", "acme-data"),
+    }
+
+
+def test_validate_board_outcomes(monkeypatch):
+    import requests
+    from jobradar import boards
+
+    def resp(code):
+        r = requests.Response(); r.status_code = code
+        return requests.HTTPError(str(code), response=r)
+
+    outcomes = {"ok": [{"title": "Data Engineer"}], "gone": resp(404), "flaky": resp(503)}
+
+    def fake_fetch(token):
+        o = outcomes[token]
+        if isinstance(o, Exception):
+            raise o
+        return o
+
+    monkeypatch.setitem(sources.ATS_FETCHERS, "greenhouse", fake_fetch)
+    assert boards.validate_board("greenhouse", "ok") == ("active", 1)
+    assert boards.validate_board("greenhouse", "gone") == ("dead", None)
+    assert boards.validate_board("greenhouse", "flaky") == ("retry", None)
+
+
+def test_board_extract_reports_status_per_board(monkeypatch):
+    import requests
+
+    def fake_get(url, params=None):
+        if "/bad/" in url:
+            raise requests.HTTPError("404")
+        return {"jobs": [{"id": 1, "title": "Data Analyst"}, {"id": 2, "title": "Chef"}]}
+
+    monkeypatch.setattr(sources, "_get_json", fake_get)
+    res = sources.extract_greenhouse(tokens=["good", "bad"], pause_seconds=0)
+    assert res.board_status == {"good": 1, "bad": None}
+
+
+def test_smartrecruiters_lists_then_fetches_details_for_data_roles(monkeypatch):
+    calls = []
+
+    def fake_get(url, params=None):
+        calls.append(url)
+        if url.endswith("/postings"):
+            return {"totalFound": 2, "content": [{"id": "1", "name": "Senior Data Engineer"},
+                                                 {"id": "2", "name": "Store Manager"}]}
+        return {"id": "1", "name": "Senior Data Engineer", "jobAd": {"sections": {}}}
+
+    monkeypatch.setattr(sources, "_get_json", fake_get)
+    res = sources.extract_smartrecruiters(tokens=["BoschGroup"], pause_seconds=0)
+    assert [sources.smartrecruiters_id(r) for r in res.records] == ["BoschGroup:1"]
+    assert calls[-1].endswith("/companies/BoschGroup/postings/1")  # case kept, details fetched
+
+
+def test_workable_filters_and_rejects_non_boards(monkeypatch):
+    from jobradar import boards
+    pages = {"good": {"name": "Acme", "jobs": [{"title": "Data Analyst", "shortcode": "A1"},
+                                               {"title": "Chef", "shortcode": "B2"}]},
+             "notaboard": {"error": "not found"}}
+    monkeypatch.setattr(sources, "_get_json", lambda url, params=None: pages[url.rsplit("/", 1)[1]])
+    res = sources.extract_workable(tokens=["good"], pause_seconds=0)
+    assert [sources.workable_id(r) for r in res.records] == ["good:A1"]
+    assert boards.validate_board("workable", "notaboard") == ("dead", None)
+
+
+def test_csv_rows_are_valid():
+    rows = sources.load_board_rows()
+    assert len(rows) > 40 and all(a in sources.BOARD_ATS for a, _ in rows)

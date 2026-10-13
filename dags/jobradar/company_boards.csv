@@ -1,7 +1,10 @@
-# Company career boards to collect from. ats = greenhouse | lever | ashby.
+# Company career boards to collect from. ats = greenhouse | lever | ashby | smartrecruiters | workable.
 # token = the company's name in its job-board URL:
 #   boards.greenhouse.io/<token> | jobs.lever.co/<token> | jobs.ashbyhq.com/<token>
-# Boards that fail show up as warnings in raw.ingestion_log - remove or fix them there.
+#   jobs.smartrecruiters.com/<Token> (case-sensitive) | apply.workable.com/<token>
+# New rows are validated automatically (one request) before use; wrong tokens are
+# marked dead in raw.company_boards. The pipeline also discovers boards on its own
+# from apply links, so this list only needs to be a starting point.
 ats,token
 greenhouse,airbnb
 greenhouse,cloudflare
@@ -38,7 +41,6 @@ greenhouse,samsara
 greenhouse,sumup
 greenhouse,toast
 lever,spotify
-lever,plaid
 lever,mistral
 lever,palantir
 lever,binance
@@ -52,3 +54,34 @@ ashby,posthog
 ashby,cohere
 ashby,elevenlabs
 ashby,replit
+greenhouse,doctolib
+greenhouse,trivago
+greenhouse,wolt
+greenhouse,adyen
+greenhouse,typeform
+greenhouse,cabify
+greenhouse,wise
+greenhouse,deliveroo
+greenhouse,careem
+greenhouse,vercel
+greenhouse,fivetran
+greenhouse,starburst
+greenhouse,datacamp
+greenhouse,squarespace
+lever,kraken
+lever,whoop
+lever,anyscale
+ashby,cursor
+ashby,perplexity
+ashby,prefect
+ashby,airbyte
+ashby,motherduck
+ashby,hex
+ashby,modal
+ashby,vanta
+smartrecruiters,BoschGroup
+smartrecruiters,Visa
+smartrecruiters,DeliveryHero
+smartrecruiters,Talabat
+smartrecruiters,Ubisoft2
+smartrecruiters,IKEA
