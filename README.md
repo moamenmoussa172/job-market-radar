@@ -22,7 +22,20 @@ Job boards answer "what jobs exist?". Job seekers need different answers:
 | *What should I learn next?* | Extracts ~145 skills (languages, frameworks, testing, design, DevOps, data) from every description; given the skills you already have, ranks the skill that would make you match the most additional jobs. |
 | *Where are the jobs?* | Office location (onsite/hybrid) and remote eligibility mapped to countries and regions. |
 | *What does it pay?* | Salaries in any period/currency normalized to annual USD and EUR with daily ECB exchange rates. |
-| *Is demand rising or falling?* | Daily snapshots give skill trends and how long each job stays open. |
+| *Is demand rising or falling?* | Daily snapshots give skill trends and how long each job stays open; "rising skills" compares jobs posted in the last 14 days with older ones. |
+| *Which jobs should I apply to?* | Every job is scored against the skills you pick, with the skills you would still need to add. |
+
+### The dashboard
+
+Seven dropdown filters (Track, Role, Seniority, Work mode, Your country, My skills, Skill to pair) drive five tabs:
+
+| Tab | What it shows |
+|---|---|
+| 1. Market overview | Active jobs, new this week, remote share, companies hiring, salary coverage and median; jobs by track and work mode; remote vs hybrid vs onsite; most in-demand roles; seniority mix; world map; top hiring companies; new postings per day; newest jobs (click a title to open the posting) |
+| 2. Skills to learn | Top skills and skill areas; next skill to learn for *your* skills; jobs you already match; how in demand your skills are; rising skills; skills that go together; daily skill trend |
+| 3. Where to work | Remote vs hybrid vs onsite; remote jobs by who may apply; top countries; country comparison (jobs, hybrid share, junior jobs, median salary); original job boards |
+| 4. Salary | 25th / median / 75th percentile; salary by role, seniority and country; best-paid skills |
+| 5. Find jobs | Up to 500 jobs you can apply to, best skill match first, with salary and skills to add; click a title to open the posting |
 
 ## Architecture
 
@@ -43,7 +56,7 @@ flowchart LR
     end
     S3[(S3 raw layer<br/>immutable gzip JSON)]
     PG[(Postgres warehouse<br/>raw / staging / intermediate<br/>marts / reporting)]
-    MB[Metabase<br/>17-chart dashboard]
+    MB[Metabase<br/>5-tab dashboard]
 
     Sources --> E --> S3 --> L --> PG
     L --> C --> D --> PG --> MB
@@ -145,8 +158,8 @@ dbt layers: `staging` (one model per source, all with identical columns) → `in
    payloads (regex in SQL), a `sync_boards` task validates new candidates with one request each,
    and working boards join the daily extract; boards failing 3 runs in a row are retired.
    Status lives in `raw.company_boards`, with a monitoring view in dbt.
-10. **Dashboard as code.** The Metabase dashboard (17 charts, 4 filters) is created through the
-   REST API, idempotently, so it is versioned and reproducible like the rest of the pipeline.
+10. **Dashboard as code.** The Metabase dashboard (5 tabs, 38 cards, 7 dropdown filters) is created
+   through the REST API, idempotently, so it is versioned and reproducible like the rest of the pipeline.
 
 More detail: [docs/design-decisions.md](docs/design-decisions.md).
 
