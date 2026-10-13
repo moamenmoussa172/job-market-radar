@@ -1,0 +1,18 @@
+version: 2
+
+# Small, dashboard-ready tables. Each Metabase chart reads one of these.
+models:
+  - name: rpt_skills_by_role
+    description: Share of active jobs per role family that mention each skill.
+  - name: rpt_jobs_by_country
+    description: Active jobs per country (office or remote eligibility) by work mode, role and seniority.
+  - name: rpt_remote_eligibility
+    description: Remote jobs a person in each region can apply to (worldwide + region-specific).
+  - name: rpt_skill_pairs
+    description: For each skill, which other skills appear in the same active jobs.
+  - name: rpt_skill_trend_daily
+    description: Per snapshot day, jobs listed that mention each skill.
+  - name: rpt_market_daily
+    description: Per snapshot day, distinct jobs listed by role family and work mode.
+  - name: rpt_salary_by_role
+    description: P25/median/P75 annual USD by role (seniority NULL = all levels) and by role x seniority.

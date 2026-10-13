@@ -5,3 +5,6 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .venv/
+dbt/target/
+dbt/logs/
+dbt/.user.yml

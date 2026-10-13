@@ -10,7 +10,7 @@ import re
 _INCLUDE = re.compile(
     r"""
     \bdata\b | \banalytics?\b | \banalyst\b | \bbusiness\ intelligence\b | \bbi\b
-    | \betl\b | \belt\b | \bdbt\b | \bwarehous | \blakehouse\b | \bbig\ data\b
+    | \betl\b | \belt\b | \bdbt\b | \bwarehous | \blakehouse\b | \bbig\ data\b | \bdwh\b | \bedw\b
     | daten | donn[ée]es | \bdatos\b | \bdata-
     """,
     re.IGNORECASE | re.VERBOSE,
@@ -23,7 +23,19 @@ _EXCLUDE = re.compile(
 )
 
 
+# Physical warehouse / logistics jobs ("Warehouse Associate", "Lager...").
+# Only dropped when the title has no data word, so "Data Warehouse Lead" stays.
+_WAREHOUSE_NOISE = re.compile(
+    r"\b(warehouse|lager)\s*(associate|lead|operations?|operative|worker|clerk|picker|"
+    r"supervisor|manager|shift|team)|schichtleiter|(operations|logistics)\s+manager,?\s+warehouse",
+    re.IGNORECASE,
+)
+_DATA_WORD = re.compile(r"data|\bdwh\b|\bedw\b|\bbi\b|analytics", re.IGNORECASE)
+
+
 def is_data_role(title: str | None) -> bool:
     if not title:
+        return False
+    if _WAREHOUSE_NOISE.search(title) and not _DATA_WORD.search(title):
         return False
     return bool(_INCLUDE.search(title)) and not _EXCLUDE.search(title)

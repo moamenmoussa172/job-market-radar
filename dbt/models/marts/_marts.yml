@@ -1,0 +1,70 @@
+version: 2
+
+models:
+  - name: fct_job_postings
+    description: One row per distinct data job, deduplicated across sources.
+    columns:
+      - name: job_id
+        data_tests: [unique, not_null]
+      - name: job_title
+        data_tests: [not_null]
+      - name: role_family
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Analytics Engineer', 'Data Engineer', 'Data Scientist', 'ML / AI Engineer',
+                         'BI Analyst / Developer', 'Business / Domain Analyst', 'Data Analyst',
+                         'Data Governance / Privacy', 'Data Product Management',
+                         'Solutions / Consulting', 'Data Leadership',
+                         'Other data role', 'Other']
+      - name: seniority
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Intern / Student', 'Junior', 'Mid', 'Senior', 'Lead / Principal',
+                         'Head / Director', 'Not stated']
+      - name: work_mode
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Remote', 'Hybrid', 'Onsite']
+      - name: remote_scope
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Worldwide', 'Restricted', 'Unknown']
+
+  - name: dim_skills
+    columns:
+      - name: skill_id
+        data_tests: [unique, not_null]
+
+  - name: bridge_job_skills
+    description: Skills each job mentions (title + description), one row per job x skill.
+    columns:
+      - name: job_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('fct_job_postings')
+                field: job_id
+      - name: skill_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_skills')
+                field: skill_id
+
+  - name: bridge_job_regions
+    description: Office location (onsite/hybrid) or remote eligibility, one row per job x country/region.
+    columns:
+      - name: job_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fct_job_postings')
+                field: job_id
+      - name: region
+        data_tests: [not_null]

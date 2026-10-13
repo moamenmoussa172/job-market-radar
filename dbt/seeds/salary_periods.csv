@@ -1,0 +1,31 @@
+salary_period,periods_per_year
+annual,1
+yearly,1
+year,1
+1 year,1
+per year,1
+per-year-salary,1
+monthly,12
+month,12
+1 month,12
+per month,12
+per-month-salary,12
+fortnightly,26
+biweekly,26
+weekly,52
+week,52
+1 week,52
+per week,52
+per-week-salary,52
+daily,260
+day,260
+1 day,260
+per day,260
+per-day-wage,260
+per-day-salary,260
+hourly,2080
+hour,2080
+1 hour,2080
+per hour,2080
+per-hour-wage,2080
+per-hour-salary,2080

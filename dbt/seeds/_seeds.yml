@@ -1,0 +1,24 @@
+version: 2
+
+seeds:
+  - name: skills
+    description: >
+      Skill taxonomy. pattern is a case-insensitive Postgres regex matched
+      against job title + description (\m and \M are word boundaries).
+    columns:
+      - name: skill
+        data_tests: [unique, not_null]
+  - name: geo_patterns
+    description: >
+      Location text -> country/region. A pattern may appear several times
+      to map to several regions (e.g. EMEA -> Europe, MENA, Africa).
+  - name: country_codes
+    description: ISO-3166 alpha-2 code -> country name (names match geo_patterns).
+    columns:
+      - name: code
+        data_tests: [unique, not_null]
+  - name: salary_periods
+    description: Raw salary period label (lower-case) -> how many such periods in a year.
+    columns:
+      - name: salary_period
+        data_tests: [unique, not_null]

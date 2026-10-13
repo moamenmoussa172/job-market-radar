@@ -1,109 +1,205 @@
-# Job Market Radar
+# Data Job Market Radar
 
-Data jobs you can actually get from where you live.
+**Which data jobs can I actually get from where I live, what should I learn next, and what do they pay?**
 
-A daily pipeline that collects data engineering, analytics and BI job
-postings (remote worldwide, plus onsite in Europe and beyond) and turns them
-into decisions: **what to learn next** and **where to apply**.
+An end-to-end data engineering project that collects ~1,000 data engineering, analytics, BI and data science
+job postings every day from 7 public sources, models them with dbt, and answers those questions in a
+self-service dashboard, from the point of view of *one specific person* (their country, role and skills).
+
+![CI](https://github.com/moamenmoussa172/job-market-radar/actions/workflows/ci.yml/badge.svg)
+
+![Dashboard](docs/images/dashboard.png)
+
+---
+
+## Why this project
+
+Job boards answer "what jobs exist?". Job seekers need different answers:
+
+| Question | How the project answers it |
+|---|---|
+| *"Remote" — but remote for whom?* | Parses each remote job's eligibility (worldwide / region / country lists) and matches it to the viewer's country. In the data, only a small fraction of remote data jobs are open worldwide. |
+| *What should I learn next?* | Extracts 73 skills from every description; given the skills you already have, ranks the skill that would make you match the most additional jobs. |
+| *Where are the jobs?* | Office location (onsite/hybrid) and remote eligibility mapped to countries and regions. |
+| *What does it pay?* | Salaries in any period/currency normalized to annual USD and EUR with daily ECB exchange rates. |
+| *Is demand rising or falling?* | Daily snapshots give skill trends and how long each job stays open. |
 
 ## Architecture
 
-```
-job sources ──► raw layer (S3, immutable JSON) ──► Postgres raw snapshots
-                                                       │
-                     (next) dbt silver: dedup, skills, seniority, remote scope, salary
-                     (next) dbt gold: star schema ──► Metabase dashboard
+```mermaid
+flowchart LR
+    subgraph Sources["7 public job APIs"]
+        A1[Greenhouse / Lever / Ashby<br/>48 company boards]
+        A2[Himalayas / Jobicy / Remotive<br/>remote boards]
+        A3[Arbeitnow<br/>Europe]
+        A4[ECB<br/>FX rates]
+    end
+    subgraph Airflow["Airflow 3 DAG (daily)"]
+        E[extract per source<br/>dynamic task mapping]
+        L[load snapshot<br/>idempotent upsert]
+        C[check<br/>health rules]
+        D[dbt build<br/>models + tests]
+    end
+    S3[(S3 raw layer<br/>immutable gzip JSON)]
+    PG[(Postgres warehouse<br/>raw / staging / intermediate<br/>marts / reporting)]
+    MB[Metabase<br/>17-chart dashboard]
+
+    Sources --> E --> S3 --> L --> PG
+    L --> C --> D --> PG --> MB
 ```
 
-| Service | What it does | URL on your PC |
+| Layer | Tech | Notes |
 |---|---|---|
-| Airflow 3.3 (LocalExecutor) | Orchestration | http://localhost:8080 |
-| Postgres 16 | Airflow metadata, `jobradar` warehouse, Metabase app DB | `localhost:5433` |
-| SeaweedFS | S3-compatible raw layer (bucket `jobradar-raw`) | S3 API `http://localhost:8333` |
-| Metabase | Dashboards | http://localhost:3000 |
+| Orchestration | **Apache Airflow 3.3** (LocalExecutor) | TaskFlow API, dynamic task mapping (one task per source), retries, idempotent reruns |
+| Raw layer | **S3-compatible object storage** (SeaweedFS) | Untouched API responses, partitioned `source=/snapshot_date=`; loads are replayable from here |
+| Warehouse | **PostgreSQL 16** | Daily snapshot table (grain: source × job × day) + ingestion log |
+| Transformation | **dbt 1.12** | 28 models, 51 data tests, 4 seeds; staging → intermediate → marts → reporting |
+| BI | **Metabase** | Dashboard built from code via its REST API (`scripts/setup_metabase.py`) |
+| Packaging | **Docker Compose** | One command brings up the whole stack on a laptop |
 
-> Why SeaweedFS and not MinIO? MinIO stopped publishing free Docker images in
-> October 2025, so `minio/minio` no longer pulls. SeaweedFS speaks the same
-> S3 API, so code written here works unchanged against AWS S3 later.
+## Data model
 
-## Sources (phase 1)
+```mermaid
+erDiagram
+    FCT_JOB_POSTINGS ||--o{ BRIDGE_JOB_SKILLS : "asks for"
+    DIM_SKILLS ||--o{ BRIDGE_JOB_SKILLS : "is"
+    FCT_JOB_POSTINGS ||--o{ BRIDGE_JOB_REGIONS : "located in / open to"
+    FCT_JOB_POSTINGS {
+        text job_id PK "dedup key across sources"
+        text role_family
+        text seniority
+        text work_mode "Remote / Hybrid / Onsite"
+        text remote_scope "Worldwide / Restricted"
+        numeric salary_annual_mid_usd
+        date first_seen_date
+        date last_seen_date
+        bool is_active
+        text listed_on "all boards the job appeared on"
+    }
+    BRIDGE_JOB_SKILLS {
+        text job_id FK
+        text skill_id FK
+    }
+    DIM_SKILLS {
+        text skill_id PK
+        text skill
+        text category
+    }
+    BRIDGE_JOB_REGIONS {
+        text job_id FK
+        text country "null for region-level matches"
+        text region
+    }
+```
 
-| Source | Covers | Notes |
+dbt layers: `staging` (one model per source, all with identical columns) → `intermediate`
+(union → classify → geo → job key → dedup → salary) → `marts` (fact + bridges + dim) →
+`reporting` (small dashboard-ready aggregates) and `monitoring` (what the rules missed).
+
+## Engineering decisions worth discussing
+
+1. **Raw layer first, always.** Every API response lands untouched in object storage before
+   anything parses it. Parsing rules changed many times during development (role rules, skill
+   patterns, salary handling); history was simply rebuilt with `dbt build`, never re-fetched.
+2. **Daily snapshots instead of "current state".** The raw table's grain is *source × job × day*.
+   From that, dbt derives `first_seen`, `last_seen`, `days_listed` and `is_active` for every job,
+   and skill trends over time, information no source provides directly.
+3. **Activity is judged per source.** A job is active if it appeared in its *own source's* latest
+   snapshot, so one failed source doesn't mark its jobs as closed.
+4. **Cross-source dedup with a survivor rule.** The same job appears on a company board and on
+   aggregators. A normalized key (company + title without gender markers like *(m/w/d)* + work
+   mode + country) groups listings; the richest source survives, but **attributes are merged**:
+   a tested bug fix takes the salary from whichever listing has one.
+5. **Remote eligibility is a first-class field.** Free-text eligibility ("Remote within Germany",
+   "EMEA", "USA only", empty = worldwide) is mapped through an editable regex seed
+   (~100 patterns, 90+ countries, multi-region mappings like EMEA → Europe + MENA + Africa).
+6. **Rules live in seeds, not code.** Skills (73 regexes), locations, salary periods and country
+   codes are CSV seeds. A `monitoring` schema lists unmatched locations and unclassified titles,
+   which drove several tuning rounds on real data (e.g. role coverage went from ~76% to ~95%).
+7. **Salaries normalized honestly.** Period labels ("1 YEAR", "per-month-salary", "hourly", ...)
+   → annual; currency → EUR/USD at the ECB rate of the day the job was first seen; implausible
+   values flagged, not deleted. The dashboard states that posted salaries are mostly US.
+8. **Failure handling is deliberate.** Required sources fail the run if they return nothing;
+   optional ones (a source whose free API shrank to a sample) only warn; a failed company board
+   is logged as a warning; FX fetch failure falls back to the last known rates.
+9. **Dashboard as code.** The Metabase dashboard (17 charts, 4 filters) is created through the
+   REST API, idempotently, so it is versioned and reproducible like the rest of the pipeline.
+
+More detail: [docs/design-decisions.md](docs/design-decisions.md).
+
+## Data sources
+
+| Source | What it adds | Usage notes |
 |---|---|---|
-| Remotive | Remote jobs, with `candidate_required_location` | Max ~4 calls/day. Keep job links and credit Remotive. |
-| Arbeitnow | Europe (onsite + remote), visa sponsorship flag | Newest-first pages; first 10 pages per run |
-| Greenhouse boards | Company career pages (full descriptions) | Edit `dags/jobradar/greenhouse_boards.txt` |
+| Greenhouse, Lever, Ashby public job boards | 48 companies' career pages: full descriptions; Lever/Ashby state work mode and often salary | List in `dags/jobradar/company_boards.csv` |
+| Himalayas | Remote jobs with country and timezone restrictions | Links back to Himalayas kept; no re-posting |
+| Jobicy | Remote jobs with eligibility, level and salary | Polled once a day; source URL kept |
+| Arbeitnow | European jobs, onsite and remote | Newest pages each day |
+| Remotive | Remote jobs (now a small sample feed) | Optional source |
+| ECB | Daily euro reference exchange rates | Used for salary conversion only |
 
-Only data-related titles are landed (see `dags/jobradar/filters.py`,
-which also matches German, French, Spanish and Dutch titles).
+Only data-related titles are stored (English, German, French, Spanish and Dutch title patterns).
+Job content stays the property of the original boards; this project publishes aggregates and links.
 
-## Run it on Windows
+## Quality and testing
 
-Prerequisites: Docker Desktop running (WSL2 backend), about 6 GB free RAM for Docker.
+- **51 dbt data tests**: uniqueness and not-null keys, accepted values for every classification,
+  referential integrity between fact and bridges, job lifecycle sanity, unique skill matches.
+- **37 Python unit tests**: title filtering (including multilingual and false-positive cases),
+  every extractor's pagination/filtering/failure path with mocked HTTP, ECB XML parsing.
+- **Dashboard queries tested**: every chart's SQL is rendered with and without each filter and
+  executed against a test warehouse; the Metabase API calls are checked against Metabase's own
+  request schemas.
+- **CI** (GitHub Actions): unit tests, `dbt parse`, and Docker Compose validation on every push.
 
-```powershell
-cd job-market-radar
-Copy-Item .env.example .env
-# Edit .env and change the passwords.
-# If you change S3_ACCESS_KEY / S3_SECRET_KEY, change them in infra/seaweedfs/s3.json too.
+## Run it locally
 
-docker compose up -d --build     # first build takes a few minutes
-docker compose ps                # wait until airflow-* show "healthy"
+Requirements: Docker Desktop (Windows/macOS) or Docker Engine (Linux), ~6 GB RAM for Docker.
+
+```bash
+cp .env.example .env            # Windows PowerShell: Copy-Item .env.example .env, then edit passwords
+docker compose up -d --build    # Airflow, Postgres, SeaweedFS, Metabase
 ```
 
-Then:
+Then open Airflow at http://localhost:8080, trigger `job_radar_ingest`, and build the dashboard:
 
-1. Open http://localhost:8080 and log in with `AIRFLOW_ADMIN_USER` / `AIRFLOW_ADMIN_PASSWORD`.
-2. Unpause the DAG `job_radar_ingest` and click **Trigger**.
-3. When it's green, check the data:
-
-```powershell
-docker compose exec postgres psql -U jobradar -d jobradar -c "select source, count(*) from raw.job_posting_snapshots group by 1;"
-docker compose exec postgres psql -U jobradar -d jobradar -c "select * from raw.ingestion_log order by log_id desc limit 10;"
+```bash
+docker compose exec -T -e MB_ADMIN_EMAIL=you@example.com -e MB_ADMIN_PASSWORD=YourPassw0rd123 \
+  airflow-scheduler python - < scripts/setup_metabase.py
 ```
 
-To connect from DBeaver or VS Code: host `localhost`, port `5433`,
-database `jobradar`, user and password from `.env`.
+Dashboard: http://localhost:3000. Full operating guide (Windows commands, manual dbt runs,
+tuning the rules, troubleshooting): [docs/RUNBOOK.md](docs/RUNBOOK.md).
 
-### Common issues
-
-- **Port already in use** (8080, 3000, 5433, 8333, 9333): change the left-hand
-  port in `docker-compose.yml`, e.g. `"8081:8080"`.
-- **Init script did not create `jobradar`**: Postgres init scripts only run on
-  an empty volume. Run `docker compose down -v` (deletes data) and start again.
-- **Scripts fail with `\r` errors**: the files must keep Linux line endings.
-  `.gitattributes` enforces this for git; don't re-save files with CRLF.
-
-## The DAG
+## Project structure
 
 ```
-setup ──► extract[remotive|arbeitnow|greenhouse] ──► load[...] ──► check
+dags/
+  job_radar_ingest.py        # the DAG: setup → extract[source] → load → check → dbt_build (+ fx_rates)
+  jobradar/                  # sources, title filter, S3 raw layer, warehouse loader, ECB FX
+dbt/
+  models/staging/            # stg_<source>: one shape for all 7 sources
+  models/intermediate/       # classify, geo, job key, dedup, salary
+  models/marts/              # fct_job_postings, bridges, dim_skills
+  models/reporting/          # dashboard-ready aggregates
+  models/monitoring/         # what the rules missed
+  seeds/                     # skills, geo patterns, salary periods, country codes
+scripts/setup_metabase.py    # dashboard as code
+infra/                       # Postgres init, S3 credentials (local dev)
+tests/                       # Python unit tests
 ```
 
-- `extract` calls the API and writes an untouched gzip JSON envelope to
-  `s3://jobradar-raw/source=<s>/snapshot_date=<date>/<timestamp>.json.gz`.
-  Only metadata goes through XCom.
-- `load` reads the object back from S3 and upserts into
-  `raw.job_posting_snapshots` (grain: source × job × day). This makes loads
-  replayable from the raw layer and idempotent within a day.
-- `check` fails the run if any source loaded zero postings. Every load is
-  recorded in `raw.ingestion_log`.
+## Limitations and next steps
 
-Seeing the same job on consecutive days is what gives `first_seen`,
-`last_seen` and `days_open` later.
+- Local job boards (e.g. LinkedIn, regional boards) have no free public API, so onsite coverage is
+  strongest for the US and Europe; remote coverage is global.
+- Rule-based classification is transparent and testable but not perfect; an LLM-based extractor
+  benchmarked against these rules is a natural next step.
+- Planned: Iceberg + PySpark for the silver layer as volume grows, and a public read-only dashboard.
 
-## Tests
+## Author
 
-```powershell
-python -m venv .venv; .venv\Scripts\Activate.ps1
-pip install -r tests/requirements.txt
-pytest
-```
+**Moamen Moussa**, Data Engineer. Built with Airflow, dbt, PostgreSQL, S3-compatible storage
+and Metabase.
 
-## Roadmap
-
-- [x] Phase 1a: stack, raw layer, daily snapshots, ingestion log
-- [ ] Phase 1b: dbt silver (dedup, role, seniority, remote scope, skills taxonomy seed)
-- [ ] Phase 1c: dbt gold star schema + first Metabase dashboard
-- [ ] Phase 2: Lever, Ashby, Adzuna; salary normalization (USD/EUR); next-best-skill
-- [ ] Phase 3: Iceberg + PySpark for the silver layer, public dashboard, weekly report
+License: [MIT](LICENSE).

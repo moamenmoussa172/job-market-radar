@@ -1,0 +1,22 @@
+version: 2
+
+# Every staging model has the same columns, so tests are declared once per model.
+models:
+  - name: stg_remotive
+    columns: &stg_cols
+      - name: source_job_id
+        data_tests: [unique, not_null]
+      - name: job_title
+        data_tests: [not_null]
+  - name: stg_jobicy
+    columns: *stg_cols
+  - name: stg_himalayas
+    columns: *stg_cols
+  - name: stg_arbeitnow
+    columns: *stg_cols
+  - name: stg_greenhouse
+    columns: *stg_cols
+  - name: stg_lever
+    columns: *stg_cols
+  - name: stg_ashby
+    columns: *stg_cols

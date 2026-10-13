@@ -1,0 +1,13 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: raw
+    description: Landed by the Airflow DAG job_radar_ingest.
+    tables:
+      - name: job_posting_snapshots
+        description: One row per source x job x day; payload is the untouched source JSON.
+      - name: ingestion_log
+        description: One row per source per DAG run.
+      - name: fx_rates
+        description: ECB reference rates, units of currency per 1 EUR (fx_rates task).

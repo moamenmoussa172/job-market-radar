@@ -1,0 +1,54 @@
+name: job_radar
+version: "0.1.0"
+config-version: 2
+profile: job_radar
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+
+clean-targets: ["target", "dbt_packages"]
+
+flags:
+  send_anonymous_usage_stats: false
+
+models:
+  job_radar:
+    staging:
+      +schema: staging
+      +materialized: view
+    intermediate:
+      +schema: intermediate
+      +materialized: table
+    marts:
+      +schema: marts
+      +materialized: table
+    reporting:
+      +schema: reporting
+      +materialized: table
+    monitoring:
+      +schema: monitoring
+      +materialized: view
+
+seeds:
+  job_radar:
+    +schema: seeds
+    skills:
+      +column_types:
+        skill: text
+        category: text
+        pattern: text
+    salary_periods:
+      +column_types:
+        salary_period: text
+        periods_per_year: integer
+    country_codes:
+      +column_types:
+        code: text
+        country: text
+    geo_patterns:
+      +column_types:
+        pattern: text
+        country: text
+        region: text

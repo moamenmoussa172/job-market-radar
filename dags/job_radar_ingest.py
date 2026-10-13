@@ -1,12 +1,16 @@
-"""Daily ingestion: job sources -> raw object storage -> Postgres raw snapshots.
+"""Daily pipeline: job sources -> raw object storage -> Postgres -> dbt models.
 
-    setup ──► extract[source] ──► load[source] ──► check
-              (mapped over SOURCES, one task instance per source)
+    setup ──► extract[source] ──► load[source] ──► check ──┐
+              (mapped over SOURCES, one task per source)     ├──► dbt_build
+    fx_rates (ECB exchange rates, for salary conversion) ────┘
 
 extract: calls the source API, writes an untouched gzip JSON envelope to S3.
 load:    reads that object back from S3 and upserts the daily snapshot into
          Postgres, so loads can always be replayed from the raw layer.
 check:   fails the run if a source returned nothing (pipeline health check).
+fx_rates: last 90 days of ECB reference rates -> S3 + raw.fx_rates. It never
+          fails the run: if ECB is unreachable, dbt uses the last known rates.
+dbt_build: seeds + staging/intermediate/marts models + all dbt tests.
 """
 from __future__ import annotations
 
@@ -15,9 +19,10 @@ from datetime import timedelta
 
 import pendulum
 from airflow.providers.postgres.hooks.postgres import PostgresHook
+from airflow.providers.standard.operators.bash import BashOperator
 from airflow.sdk import dag, get_current_context, task
 
-from jobradar import storage, warehouse
+from jobradar import fx, storage, warehouse
 from jobradar.sources import SOURCES
 
 log = logging.getLogger(__name__)
@@ -31,7 +36,7 @@ WAREHOUSE_CONN_ID = "jobradar_wh"
     catchup=False,
     max_active_runs=1,
     default_args={"retries": 2, "retry_delay": timedelta(minutes=5)},
-    tags=["job-market-radar", "ingestion"],
+    tags=["job-market-radar", "ingestion", "dbt"],
 )
 def job_radar_ingest():
 
@@ -41,14 +46,14 @@ def job_radar_ingest():
         conn = PostgresHook(postgres_conn_id=WAREHOUSE_CONN_ID).get_conn()
         try:
             warehouse.ensure_schema(conn)
+            fx.load_rates(conn, [])  # creates raw.fx_rates even if ECB is unreachable today
         finally:
             conn.close()
 
     @task
     def extract(source: str) -> dict:
-        extract_fn, _ = SOURCES[source]
         fetched_at = pendulum.now("UTC")
-        result = extract_fn()
+        result = SOURCES[source].extract()
         key = storage.raw_key(source, fetched_at)
         envelope = {
             "source": source,
@@ -66,7 +71,7 @@ def job_radar_ingest():
 
     @task
     def load(meta: dict) -> dict:
-        _, id_fn = SOURCES[meta["source"]]
+        id_fn = SOURCES[meta["source"]].job_id
         envelope = storage.get_envelope(meta["s3_key"])
         run_id = get_current_context()["run_id"]
         conn = PostgresHook(postgres_conn_id=WAREHOUSE_CONN_ID).get_conn()
@@ -82,12 +87,45 @@ def job_radar_ingest():
         for r in results:
             log.info("%-12s fetched=%-6s loaded=%s", r["source"], r["records"], r["loaded"])
         empty = [r["source"] for r in results if r["loaded"] == 0]
-        if empty:
-            raise ValueError(f"No postings loaded for: {empty}")
+        failing = [s for s in empty if SOURCES[s].required]
+        for s in set(empty) - set(failing):
+            log.warning("%s loaded 0 postings (optional source, not failing the run)", s)
+        if failing:
+            raise ValueError(f"No postings loaded for required sources: {failing}")
 
+    @task
+    def fx_rates() -> int:
+        fetched_at = pendulum.now("UTC")
+        try:
+            xml_text = fx.fetch_ecb_xml()
+            rows = fx.parse_ecb_xml(xml_text)
+        except Exception as exc:  # noqa: BLE001 - salary conversion falls back to last known rates
+            log.warning("ECB rates not fetched (%s) - keeping existing rates", exc)
+            return 0
+        key = storage.raw_key("ecb_fx", fetched_at)
+        storage.put_envelope(key, {"source": "ecb_fx", "fetched_at": fetched_at.isoformat(),
+                                   "s3_key": key, "xml": xml_text})
+        conn = PostgresHook(postgres_conn_id=WAREHOUSE_CONN_ID).get_conn()
+        try:
+            loaded = fx.load_rates(conn, rows)
+        finally:
+            conn.close()
+        log.info("fx: loaded %s rate rows (%s days)", loaded, len({r[0] for r in rows}))
+        return loaded
+
+    dbt_build = BashOperator(
+        task_id="dbt_build",
+        # Paths and credentials come from env vars set in docker-compose.yml / .env
+        bash_command="dbt build --project-dir $DBT_PROJECT_DIR --profiles-dir $DBT_PROFILES_DIR",
+        retries=0,
+    )
+
+    s = setup()
     extracted = extract.expand(source=list(SOURCES))
-    setup() >> extracted
-    check(load.expand(meta=extracted))
+    s >> extracted
+    rates = fx_rates()
+    s >> rates
+    [check(load.expand(meta=extracted)), rates] >> dbt_build
 
 
 job_radar_ingest()

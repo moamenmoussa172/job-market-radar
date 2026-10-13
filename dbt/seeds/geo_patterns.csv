@@ -1,0 +1,104 @@
+pattern,country,region
+"\m(europe|european\s+union|eu|eea|european)\M",,Europe
+"\memea\M",,Europe
+"\memea\M",,MENA
+"\memea\M",,Africa
+"\mamericas\M",,North America
+"\mamericas\M",,LATAM
+"\mnorth\s+america\M",,North America
+"\m(latam|latin\s+america|south\s+america|central\s+america)\M",,LATAM
+"\m(apac|asia|asia[- ]pacific)\M",,APAC
+"\m(mena|middle\s+east|gcc)\M",,MENA
+"\mafrica\M",,Africa
+"\m(usa|us|u\.s\.a?\.?|united\s+states)\M|san\s+francisco|new\s+york|\mnyc\M|seattle|austin|boston|chicago|los\s+angeles|denver|atlanta|washington,?\s+d\.?c|,\s*(ny|wa|tx|ma|il|nj|ga|nc|or)\s*(,\s*(usa|us))?\s*$",United States,North America
+"\m(california|texas|florida|massachusetts|illinois|colorado|virginia|north\s+carolina|oregon|arizona|utah|pennsylvania|ohio|michigan|minnesota|new\s+jersey|washington|tennessee|missouri|wisconsin|maryland|indiana|nevada|connecticut)\M|\m(bellevue|mountain\s+view|palo\s+alto|menlo\s+park|sunnyvale|san\s+jose|santa\s+clara|cupertino|redmond|plano|dallas|houston|san\s+diego|portland|miami|philadelphia|pittsburgh|raleigh|salt\s+lake|phoenix|minneapolis|detroit|irvine|nashville|charlotte)\M",United States,North America
+"\m(canada|toronto|vancouver|montr[eé]al|ottawa|calgary)\M",Canada,North America
+"\m(mexico|méxico|cdmx|guadalajara|monterrey)\M",Mexico,LATAM
+"\m(brazil|brasil|s[aã]o\s+paulo|rio\s+de\s+janeiro)\M",Brazil,LATAM
+"\m(argentina|buenos\s+aires)\M",Argentina,LATAM
+"\m(colombia|bogot[aá]|medell[ií]n)\M",Colombia,LATAM
+"\m(chile|santiago)\M",Chile,LATAM
+"\m(jamaica|kingston,\s*jamaica)\M",Jamaica,LATAM
+"\m(dominican\s+republic|santo\s+domingo)\M",Dominican Republic,LATAM
+"\m(costa\s+rica|san\s+jos[eé],\s*costa)\M",Costa Rica,LATAM
+"\m(panama)\M",Panama,LATAM
+"\m(bermuda)\M",Bermuda,LATAM
+"\m(antigua(\s+and\s+barbuda)?)\M",Antigua and Barbuda,LATAM
+"\m(barbados)\M",Barbados,LATAM
+"\m(bahamas)\M",Bahamas,LATAM
+"\m(trinidad(\s+and\s+tobago)?)\M",Trinidad and Tobago,LATAM
+"\m(puerto\s+rico)\M",Puerto Rico,LATAM
+"\m(guatemala)\M",Guatemala,LATAM
+"\m(el\s+salvador)\M",El Salvador,LATAM
+"\m(honduras)\M",Honduras,LATAM
+"\m(nicaragua)\M",Nicaragua,LATAM
+"\m(belize)\M",Belize,LATAM
+"\m(cayman(\s+islands)?)\M",Cayman Islands,LATAM
+"\m(peru|lima)\M",Peru,LATAM
+"\m(uruguay|montevideo)\M",Uruguay,LATAM
+"\m(ecuador|quito)\M",Ecuador,LATAM
+"\m(venezuela|caracas)\M",Venezuela,LATAM
+"\m(bolivia)\M",Bolivia,LATAM
+"\m(paraguay)\M",Paraguay,LATAM
+"\m(germany|deutschland|berlin|m[uü]nchen|munich|hamburg|k[oö]ln|cologne|frankfurt|stuttgart|d[uü]sseldorf|karlsruhe|kassel|mainz|offenburg|leipzig|dresden|n[uü]rnberg|nuremberg|hannover|bremen|bonn|essen|dortmund|heidelberg|mannheim|freiburg|baden-w[uü]rttemberg|bavaria|bayern)\M",Germany,Europe
+"\m(france|paris|lyon|lille|montpellier|toulouse|marseille|bordeaux|nantes|nice|strasbourg|rennes)\M",France,Europe
+"\m(united\s+kingdom|uk|u\.k\.|gb|great\s+britain|england|scotland|wales|london|manchester|edinburgh|glasgow|bristol|cambridge|oxford|leeds|birmingham|westminster|belfast|cardiff|swansea|newcastle|liverpool|nottingham|sheffield|reading)\M",United Kingdom,Europe
+"\m(netherlands|nederland|holland|amsterdam|rotterdam|utrecht|eindhoven|the\s+hague|den\s+haag)\M",Netherlands,Europe
+"\m(spain|españa|espana|madrid|barcelona|valencia|sevilla|seville|m[aá]laga|bilbao)\M",Spain,Europe
+"\m(portugal|lisbon|lisboa|porto|braga)\M",Portugal,Europe
+"\m(ireland|dublin|cork|galway)\M",Ireland,Europe
+"\m(switzerland|schweiz|suisse|z[uü]rich|geneva|gen[eè]ve|basel|bern|lausanne|lugano|mendrisio|zug)\M",Switzerland,Europe
+"\m(austria|[oö]sterreich|vienna|wien|graz|linz|salzburg)\M",Austria,Europe
+"\m(belgium|belgique|brussels|bruxelles|antwerp|ghent)\M",Belgium,Europe
+"\m(luxembourg)\M",Luxembourg,Europe
+"\m(italy|italia|milan|milano|rome|roma|turin|torino)\M",Italy,Europe
+"\m(poland|polska|warsaw|warszawa|krak[oó]w|wroc[lł]aw|gda[nń]sk|pozna[nń])\M",Poland,Europe
+"\m(czech|czechia|prague|praha|brno)\M",Czechia,Europe
+"\m(romania|bucharest|cluj)\M",Romania,Europe
+"\m(hungary|budapest)\M",Hungary,Europe
+"\m(greece|athens)\M",Greece,Europe
+"\m(sweden|stockholm|gothenburg|malm[oö])\M",Sweden,Europe
+"\m(denmark|copenhagen|aarhus)\M",Denmark,Europe
+"\m(norway|oslo|bergen)\M",Norway,Europe
+"\m(finland|helsinki|espoo|tampere)\M",Finland,Europe
+"\m(estonia|tallinn)\M",Estonia,Europe
+"\m(lithuania|vilnius)\M",Lithuania,Europe
+"\m(latvia|riga)\M",Latvia,Europe
+"\m(serbia|belgrade)\M",Serbia,Europe
+"\m(croatia|zagreb)\M",Croatia,Europe
+"\m(bulgaria|sofia)\M",Bulgaria,Europe
+"\m(ukraine|kyiv|kiev|lviv)\M",Ukraine,Europe
+"\m(cyprus|limassol|nicosia)\M",Cyprus,Europe
+"\m(malta)\M",Malta,Europe
+"\m(turkey|türkiye|turkiye|istanbul|ankara)\M",Turkey,MENA
+"\m(egypt|cairo|alexandria|giza)\M",Egypt,MENA
+"\m(uae|u\.a\.e|united\s+arab\s+emirates|dubai|abu\s+dhabi)\M",United Arab Emirates,MENA
+"\m(saudi|ksa|riyadh|jeddah|dammam)\M",Saudi Arabia,MENA
+"\m(qatar|doha)\M",Qatar,MENA
+"\m(bahrain|manama)\M",Bahrain,MENA
+"\m(kuwait)\M",Kuwait,MENA
+"\m(oman|muscat)\M",Oman,MENA
+"\m(jordan|amman)\M",Jordan,MENA
+"\m(lebanon|beirut)\M",Lebanon,MENA
+"\m(morocco|casablanca|rabat)\M",Morocco,MENA
+"\m(tunisia|tunis)\M",Tunisia,MENA
+"\m(israel|tel\s+aviv|jerusalem|haifa)\M",Israel,MENA
+"\m(nigeria|lagos|abuja)\M",Nigeria,Africa
+"\m(kenya|nairobi)\M",Kenya,Africa
+"\m(south\s+africa|cape\s+town|johannesburg)\M",South Africa,Africa
+"\m(ghana|accra)\M",Ghana,Africa
+"\m(india|bangalore|bengaluru|hyderabad|pune|mumbai|delhi|gurgaon|gurugram|noida|chennai|kolkata)\M",India,APAC
+"\m(pakistan|karachi|lahore|islamabad)\M",Pakistan,APAC
+"\m(singapore)\M",Singapore,APAC
+"\m(japan|tokyo|osaka)\M",Japan,APAC
+"\m(south\s+korea|korea|seoul)\M",South Korea,APAC
+"\m(china|beijing|shanghai|shenzhen)\M",China,APAC
+"\m(hong\s+kong)\M",Hong Kong,APAC
+"\m(taiwan|taipei)\M",Taiwan,APAC
+"\m(philippines|manila)\M",Philippines,APAC
+"\m(vietnam|ho\s+chi\s+minh|hanoi)\M",Vietnam,APAC
+"\m(indonesia|jakarta)\M",Indonesia,APAC
+"\m(malaysia|kuala\s+lumpur)\M",Malaysia,APAC
+"\m(thailand|bangkok)\M",Thailand,APAC
+"\m(australia|sydney|melbourne|brisbane|perth)\M",Australia,APAC
+"\m(new\s+zealand|auckland|wellington)\M",New Zealand,APAC

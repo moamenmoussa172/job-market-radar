@@ -1,0 +1,27 @@
+version: 2
+
+models:
+  - name: int_postings_unioned
+    description: All sources in one shape. One row per source listing.
+    columns:
+      - name: posting_key
+        data_tests: [unique, not_null]
+  - name: int_postings_classified
+    description: Adds role_family, seniority and work_mode.
+    columns:
+      - name: posting_key
+        data_tests: [unique]
+  - name: int_posting_geo
+    description: Listing -> country/region matches (via seeds/geo_patterns.csv).
+  - name: int_postings_deduped
+    description: One surviving listing per distinct job (job_id).
+    columns:
+      - name: job_id
+        data_tests: [unique]
+  - name: int_job_salary
+    description: Annual salary in USD and EUR for jobs that post a structured salary.
+    columns:
+      - name: job_id
+        data_tests: [unique, not_null]
+      - name: annual_mid_usd
+        data_tests: [not_null]

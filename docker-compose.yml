@@ -34,7 +34,13 @@ x-airflow-common: &airflow-common
     S3_ACCESS_KEY: ${S3_ACCESS_KEY}
     S3_SECRET_KEY: ${S3_SECRET_KEY}
     S3_RAW_BUCKET: ${S3_RAW_BUCKET:-jobradar-raw}
+    # dbt project (mounted below). Build artifacts go to /tmp, not your folder.
+    DBT_PROJECT_DIR: /opt/airflow/dbt
+    DBT_PROFILES_DIR: /opt/airflow/dbt
+    DBT_TARGET_PATH: /tmp/dbt/target
+    DBT_LOG_PATH: /tmp/dbt/logs
   volumes:
+    - ./dbt:/opt/airflow/dbt
     - ./dags:/opt/airflow/dags
     - ./logs:/opt/airflow/logs
     - ./config:/opt/airflow/config

@@ -1,0 +1,54 @@
+# Company career boards to collect from. ats = greenhouse | lever | ashby.
+# token = the company's name in its job-board URL:
+#   boards.greenhouse.io/<token> | jobs.lever.co/<token> | jobs.ashbyhq.com/<token>
+# Boards that fail show up as warnings in raw.ingestion_log - remove or fix them there.
+ats,token
+greenhouse,airbnb
+greenhouse,cloudflare
+greenhouse,contentful
+greenhouse,databricks
+greenhouse,datadog
+greenhouse,dropbox
+greenhouse,figma
+greenhouse,gitlab
+greenhouse,gusto
+greenhouse,hellofresh
+greenhouse,n26
+greenhouse,reddit
+greenhouse,stripe
+greenhouse,twilio
+greenhouse,affirm
+greenhouse,airtable
+greenhouse,asana
+greenhouse,brex
+greenhouse,celonis
+greenhouse,coinbase
+greenhouse,discord
+greenhouse,duolingo
+greenhouse,elastic
+greenhouse,getyourguide
+greenhouse,grafanalabs
+greenhouse,instacart
+greenhouse,lyft
+greenhouse,mongodb
+greenhouse,monzo
+greenhouse,pinterest
+greenhouse,robinhood
+greenhouse,samsara
+greenhouse,sumup
+greenhouse,toast
+lever,spotify
+lever,plaid
+lever,mistral
+lever,palantir
+lever,binance
+ashby,openai
+ashby,notion
+ashby,ramp
+ashby,linear
+ashby,supabase
+ashby,deel
+ashby,posthog
+ashby,cohere
+ashby,elevenlabs
+ashby,replit
