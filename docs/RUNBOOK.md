@@ -117,6 +117,8 @@ docker compose exec airflow-scheduler bash -c 'dbt build --project-dir $DBT_PROJ
 | Skills detected | `dbt/seeds/skills.csv` (case-insensitive Postgres regex; `\m` `\M` = word boundaries) |
 | Location → country/region | `dbt/seeds/geo_patterns.csv` (check `monitoring.rpt_unmatched_locations`) |
 | Role families | `dbt/models/intermediate/int_postings_classified.sql` (check `monitoring.rpt_role_family_check`) |
+| Role → track grouping | `dbt/seeds/role_tracks.csv` |
+| Which titles are collected | `dags/jobradar/filters.py` (`is_tech_role`) |
 | Salary period labels | `dbt/seeds/salary_periods.csv` |
 | Companies collected | `dags/jobradar/company_boards.csv` |
 

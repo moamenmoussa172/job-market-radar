@@ -1,4 +1,4 @@
--- Gold: one row per distinct job (after cross-source dedup).
+-- Gold: one row per distinct tech job (after cross-source dedup).
 -- Dimensions are kept as descriptive columns for now; Phase 1c splits them out.
 with d as (select * from {{ ref('int_postings_deduped') }}),
 
@@ -14,6 +14,7 @@ select
     d.job_id,
     d.job_title,
     d.company_name,
+    d.track,
     d.role_family,
     d.seniority,
     d.work_mode,
@@ -53,4 +54,4 @@ select
 from d
 left join scope using (posting_key)
 left join {{ ref('int_job_salary') }} sal using (job_id)
-where d.role_family <> 'Not a data role'
+where d.role_family <> 'Not a tech role'

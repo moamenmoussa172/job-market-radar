@@ -1,18 +1,19 @@
 -- "I want to be a <role>. What should I learn?"
 -- Share of active jobs in each role that mention each skill.
 with active as (
-    select job_id, role_family
+    select job_id, track, role_family
     from {{ ref('fct_job_postings') }}
     where is_active
 ),
 
 role_totals as (
-    select role_family, count(*) as role_jobs
+    select track, role_family, count(*) as role_jobs
     from active
-    group by 1
+    group by 1, 2
 )
 
 select
+    a.track,
     a.role_family,
     s.skill,
     s.category,
@@ -21,5 +22,5 @@ select
     round(100.0 * count(distinct a.job_id) / rt.role_jobs, 1)        as pct_of_role_jobs
 from active a
 join {{ ref('bridge_job_skills') }} s using (job_id)
-join role_totals rt using (role_family)
-group by a.role_family, s.skill, s.category, rt.role_jobs
+join role_totals rt using (track, role_family)
+group by a.track, a.role_family, s.skill, s.category, rt.role_jobs

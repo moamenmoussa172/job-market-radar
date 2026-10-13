@@ -1,74 +1,147 @@
 skill,category,pattern
-SQL,Language,"\msql\M|t-sql|\mpl/sql\M"
-Python,Language,"\mpython\M"
-Scala,Language,"\mscala\M"
-Java,Language,"\mjava\M"
+SQL,Language,\msql\M|t-sql|\mpl/sql\M
+Python,Language,\mpython\M
+Scala,Language,\mscala\M
+Java,Language,\mjava\M
 R,Language,"\mR\s+(programming|language)\M|\mR\s*(,|or|and|/)\s*(python|sql)\M|\m(python|sql)\s*(,|or|and|/)\s*R\M"
-Spark,Processing,"\m(apache\s+)?spark\M|\mpyspark\M|spark\s*sql"
-Flink,Processing,"\mflink\M"
-Kafka,Streaming,"\mkafka\M"
-Kinesis,Streaming,"\mkinesis\M"
-Hadoop,Processing,"\mhadoop\M|\mhdfs\M"
-Hive,Processing,"\mhive\M"
-Trino / Presto,Processing,"\mtrino\M|\mpresto\M"
-Pandas,Processing,"\mpandas\M"
-Polars,Processing,"\mpolars\M"
-dbt,Transformation,"\mdbt\M"
-Airflow,Orchestration,"\mairflow\M|\mmwaa\M|cloud\s+composer"
-Dagster,Orchestration,"\mdagster\M"
-Prefect,Orchestration,"\mprefect\M"
-NiFi,Ingestion,"\mnifi\M"
-Fivetran,Ingestion,"\mfivetran\M"
-Airbyte,Ingestion,"\mairbyte\M"
-Talend,Ingestion,"\mtalend\M"
-Informatica,Ingestion,"\minformatica\M"
-SSIS,Ingestion,"\mssis\M"
-AWS Glue,Ingestion,"aws\s+glue|\mglue\s+(jobs?|etl|catalog)"
-Azure Data Factory,Ingestion,"azure\s+data\s+factory|\madf\M"
-Snowflake,Warehouse / Lakehouse,"\msnowflake\M"
-BigQuery,Warehouse / Lakehouse,"\mbig\s*query\M"
-Redshift,Warehouse / Lakehouse,"\mredshift\M"
-Databricks,Warehouse / Lakehouse,"\mdatabricks\M"
-Azure Synapse,Warehouse / Lakehouse,"\msynapse\M"
-Microsoft Fabric,Warehouse / Lakehouse,"microsoft\s+fabric|\mms\s+fabric\M"
-ClickHouse,Warehouse / Lakehouse,"\mclickhouse\M"
-DuckDB,Warehouse / Lakehouse,"\mduckdb\M"
-Delta Lake,Table format,"delta\s+lake"
-Iceberg,Table format,"\miceberg\M"
-Hudi,Table format,"\mhudi\M"
-PostgreSQL,Database,"\mpostgres(ql)?\M"
-MySQL,Database,"\mmysql\M"
-SQL Server,Database,"sql\s+server|\mmssql\M|t-sql"
-Oracle,Database,"\moracle\M"
-MongoDB,Database,"\mmongo(db)?\M"
-Cassandra,Database,"\mcassandra\M"
-Elasticsearch,Database,"\melastic(search)?\M|\mopensearch\M"
-Redis,Database,"\mredis\M"
-AWS,Cloud,"\maws\M|amazon\s+web\s+services"
-Azure,Cloud,"\mazure\M"
-GCP,Cloud,"\mgcp\M|google\s+cloud"
-Docker,DevOps,"\mdocker\M"
-Kubernetes,DevOps,"\mkubernetes\M|\mk8s\M"
-Terraform,DevOps,"\mterraform\M"
-Git,DevOps,"\mgit(hub|lab)?\M"
-CI/CD,DevOps,"ci\s*/\s*cd|\mcicd\M|continuous\s+integration"
-Tableau,BI / Visualization,"\mtableau\M"
-Power BI,BI / Visualization,"power\s*bi"
-Looker,BI / Visualization,"\mlooker\M"
-Qlik,BI / Visualization,"\mqlik"
-Metabase,BI / Visualization,"\mmetabase\M"
-Superset,BI / Visualization,"\msuperset\M"
+Spark,Processing,\m(apache\s+)?spark\M|\mpyspark\M|spark\s*sql
+Flink,Processing,\mflink\M
+Kafka,Streaming,\mkafka\M
+Kinesis,Streaming,\mkinesis\M
+Hadoop,Processing,\mhadoop\M|\mhdfs\M
+Hive,Processing,\mhive\M
+Trino / Presto,Processing,\mtrino\M|\mpresto\M
+Pandas,Processing,\mpandas\M
+Polars,Processing,\mpolars\M
+dbt,Transformation,\mdbt\M
+Airflow,Orchestration,\mairflow\M|\mmwaa\M|cloud\s+composer
+Dagster,Orchestration,\mdagster\M
+Prefect,Orchestration,\mprefect\M
+NiFi,Ingestion,\mnifi\M
+Fivetran,Ingestion,\mfivetran\M
+Airbyte,Ingestion,\mairbyte\M
+Talend,Ingestion,\mtalend\M
+Informatica,Ingestion,\minformatica\M
+SSIS,Ingestion,\mssis\M
+AWS Glue,Ingestion,aws\s+glue|\mglue\s+(jobs?|etl|catalog)
+Azure Data Factory,Ingestion,azure\s+data\s+factory|\madf\M
+Snowflake,Warehouse / Lakehouse,\msnowflake\M
+BigQuery,Warehouse / Lakehouse,\mbig\s*query\M
+Redshift,Warehouse / Lakehouse,\mredshift\M
+Databricks,Warehouse / Lakehouse,\mdatabricks\M
+Azure Synapse,Warehouse / Lakehouse,\msynapse\M
+Microsoft Fabric,Warehouse / Lakehouse,microsoft\s+fabric|\mms\s+fabric\M
+ClickHouse,Warehouse / Lakehouse,\mclickhouse\M
+DuckDB,Warehouse / Lakehouse,\mduckdb\M
+Delta Lake,Table format,delta\s+lake
+Iceberg,Table format,\miceberg\M
+Hudi,Table format,\mhudi\M
+PostgreSQL,Database,\mpostgres(ql)?\M
+MySQL,Database,\mmysql\M
+SQL Server,Database,sql\s+server|\mmssql\M|t-sql
+Oracle,Database,\moracle\M
+MongoDB,Database,\mmongo(db)?\M
+Cassandra,Database,\mcassandra\M
+Elasticsearch,Database,\melastic(search)?\M|\mopensearch\M
+Redis,Database,\mredis\M
+AWS,Cloud,\maws\M|amazon\s+web\s+services
+Azure,Cloud,\mazure\M
+GCP,Cloud,\mgcp\M|google\s+cloud
+Docker,DevOps,\mdocker\M
+Kubernetes,DevOps,\mkubernetes\M|\mk8s\M
+Terraform,DevOps,\mterraform\M
+Git,DevOps,\mgit(hub|lab)?\M
+CI/CD,DevOps,ci\s*/\s*cd|\mcicd\M|continuous\s+integration
+Tableau,BI / Visualization,\mtableau\M
+Power BI,BI / Visualization,power\s*bi
+Looker,BI / Visualization,\mlooker\M
+Qlik,BI / Visualization,\mqlik
+Metabase,BI / Visualization,\mmetabase\M
+Superset,BI / Visualization,\msuperset\M
 Excel,BI / Visualization,"(microsoft|ms|advanced|proficient\s+in|proficiency\s+in|expert\s+in|strong)\s+excel\M|\mexcel\s*(,|/|&|and|or)\s*(sql|power\s*bi|tableau|python|google\s+sheets|vba|powerpoint)\M|\m(sql|power\s*bi|tableau|python|google\s+sheets|word|powerpoint)\s*(,|/|&|and|or)\s*excel\M|\mexcel\s+(vba|formulas?|skills|spreadsheets?|models?|macros?|pivot)"
-Machine learning,ML / AI,"machine\s+learning"
-scikit-learn,ML / AI,"scikit-?learn|\msklearn\M"
-TensorFlow,ML / AI,"\mtensorflow\M"
-PyTorch,ML / AI,"\mpytorch\M"
-MLflow,ML / AI,"\mmlflow\M"
-LLMs / GenAI,ML / AI,"\mllms?\M|generative\s+ai|\mgenai\M|large\s+language\s+model"
-Statistics,Practice,"\mstatistic"
-A/B testing,Practice,"a\s*/\s*b\s+test|\mab\s+test|experiment(ation)?\s+(design|platforms?|frameworks?)|controlled\s+experiments|multivariate\s+test"
-Data modeling,Practice,"data\s+model+ing|dimensional\s+model|star\s+schema|\mkimball\M"
-Data Vault,Practice,"data\s+vault"
-Data quality,Practice,"data\s+quality|great\s+expectations|\msoda\s+(core|cloud)\M|data\s+observability"
-Data governance,Practice,"data\s+governance|data\s+catalog|\mdatahub\M|\mcollibra\M|\malation\M"
-Streaming,Practice,"\mstream(ing)?\s+(data|processing|pipelines?)|real-?time\s+(data|pipelines?|processing)"
+Machine learning,ML / AI,machine\s+learning
+scikit-learn,ML / AI,scikit-?learn|\msklearn\M
+TensorFlow,ML / AI,\mtensorflow\M
+PyTorch,ML / AI,\mpytorch\M
+MLflow,ML / AI,\mmlflow\M
+LLMs / GenAI,ML / AI,\mllms?\M|generative\s+ai|\mgenai\M|large\s+language\s+model
+Statistics,Practice,\mstatistic
+A/B testing,Practice,a\s*/\s*b\s+test|\mab\s+test|experiment(ation)?\s+(design|platforms?|frameworks?)|controlled\s+experiments|multivariate\s+test
+Data modeling,Practice,data\s+model+ing|dimensional\s+model|star\s+schema|\mkimball\M
+Data Vault,Practice,data\s+vault
+Data quality,Practice,data\s+quality|great\s+expectations|\msoda\s+(core|cloud)\M|data\s+observability
+Data governance,Practice,data\s+governance|data\s+catalog|\mdatahub\M|\mcollibra\M|\malation\M
+Streaming,Practice,\mstream(ing)?\s+(data|processing|pipelines?)|real-?time\s+(data|pipelines?|processing)
+JavaScript,Language,\mjavascript\M|\mecmascript\M|\mes6\M
+TypeScript,Language,\mtypescript\M
+Go,Language,"\mgolang\M|\mgo\s+(developer|engineer|programming|language|microservices|services)\M|(python|java|rust|kotlin|typescript|c\+\+|node(\.?js)?)\s*(,|/|and|or)\s*go\M|\mgo\s*(,|/)\s*(python|java|rust|kotlin|typescript|c\+\+)"
+Rust,Language,\mrust\M
+C#,Language,(^|[^a-z])c#
+C++,Language,(^|[^a-z])c\+\+
+PHP,Language,\mphp\M
+Ruby,Language,\mruby\M
+Kotlin,Language,\mkotlin\M
+Swift,Language,"\mswiftui\M|\mswift\M(?=[^.]{0,80}\m(ios|xcode|uikit|kotlin|objective-c|apple)\M)|\m(ios|xcode|uikit|objective-c)\M[^.]{0,80}\mswift\M"
+Dart,Language,\mdart\M
+HTML/CSS,Frontend,\mhtml5?\M|\mcss3?\M|\msass\M|\mscss\M
+React,Frontend,\mreact(\.?js)?\M(?!\s+(to|quickly|fast|swiftly|accordingly|appropriately|promptly|positively|calmly)\M)(?!\s+native)
+Angular,Frontend,\mangular(js)?\M
+Vue.js,Frontend,\mvue(\.?js)?\M|\mnuxt\M
+Next.js,Frontend,\mnext\.?js\M
+Svelte,Frontend,\msvelte(kit)?\M
+Redux,Frontend,\mredux\M
+Tailwind CSS,Frontend,\mtailwind\M
+Webpack/Vite,Frontend,\mwebpack\M|\mvite\M
+Node.js,Backend,"\mnode\.?js\M|\mnodejs\M|\mexpress\.?js\M|\mnestjs\M|\mnode\s*(,|/)\s*(typescript|javascript|react)|\m(typescript|javascript|react)\s*(,|/|and)\s*node\M"
+Java Spring,Backend,spring\s+(boot|framework|cloud|mvc|data|security)
+.NET,Backend,"(^|[\s(,/])\.net(\s+core)?\M|\masp\.net\M|\mdotnet\M|\mvb\.net\M"
+Django,Backend,\mdjango\M
+Flask/FastAPI,Backend,\mflask\M|\mfastapi\M
+Ruby on Rails,Backend,ruby\s+on\s+rails|\mror\M|\mrails\s+(developer|engineer|api|application)
+Laravel,Backend,\mlaravel\M|\msymfony\M
+GraphQL,Backend,\mgraphql\M
+REST APIs,Backend,\mrest(ful)?\s*(api|apis|services|endpoints)\M|\mrest\s*/\s*graphql
+gRPC,Backend,\mgrpc\M
+Microservices,Backend,micro-?services?
+RabbitMQ,Backend,\mrabbitmq\M|\mactivemq\M|\msqs\M
+iOS,Mobile,\mios\M
+Android,Mobile,\mandroid\M
+React Native,Mobile,react\s+native
+Flutter,Mobile,\mflutter\M
+Selenium,Testing,\mselenium\M|\mwebdriver\M
+Cypress,Testing,\mcypress\M
+Playwright,Testing,\mplaywright\M
+Appium,Testing,\mappium\M
+Jest/Mocha,Testing,\mjest\M|\mmocha\M|\mvitest\M|\mjasmine\M
+JUnit/TestNG,Testing,\mjunit\M|\mtestng\M|\mmockito\M
+Pytest,Testing,\mpytest\M
+Postman,Testing,\mpostman\M|\mnewman\M|rest\s*assured
+JMeter/k6,Testing,\mjmeter\M|\mgatling\M|\mk6\M|\mlocust\M|load\s+testing|performance\s+testing
+Cucumber/BDD,Testing,\mcucumber\M|\mgherkin\M|\mbdd\M|\mspecflow\M
+Test automation,Testing,test\s+automation|automated\s+(tests?|testing)|automation\s+framework
+Manual testing,Testing,manual\s+(testing|tests?|qa)|exploratory\s+testing|test\s+cases?
+ISTQB,Testing,\mistqb\M
+Figma,Design,\mfigma\M|\mfigjam\M
+Sketch,Design,"\msketch\M(?=[^.]{0,40}\m(figma|adobe|invision|zeplin|principle)\M)|\m(figma|adobe\s+xd|invision)\M[^.]{0,40}\msketch\M"
+Adobe XD / Creative Suite,Design,adobe\s+(xd|creative|photoshop|illustrator|after\s+effects)|\mphotoshop\M|\millustrator\M
+Prototyping,Design,\mprototyp\w*
+Wireframing,Design,\mwirefram\w*
+User research,Design,user\s+research|usability\s+test\w*|user\s+interviews?|\mux\s+research
+Design systems,Design,design\s+systems?|component\s+librar(y|ies)
+Accessibility,Design,\maccessibility\M|\mwcag\M|\ma11y\M
+Linux,DevOps,\mlinux\M|\mbash\M|shell\s+scripting|\munix\M
+Jenkins,DevOps,\mjenkins\M
+GitHub Actions,DevOps,github\s+actions|gitlab\s+ci|circleci|argo\s*cd|\margocd\M
+Ansible,DevOps,\mansible\M|\mpuppet\M|\mchef\s+(infra|automate)\M
+Helm,DevOps,"\mhelm\s+(charts?|3)\M|kubernetes[^.]{0,40}\mhelm\M|\mhelm\M[^.]{0,40}kubernetes"
+Prometheus/Grafana,DevOps,\mprometheus\M|\mgrafana\M|\mdatadog\M|\mnew\s+relic\M|\mopentelemetry\M
+Nginx,DevOps,\mnginx\M
+Serverless,DevOps,\mserverless\M|aws\s+lambda|azure\s+functions|cloud\s+functions
+OWASP / AppSec,Security,\mowasp\M|\mappsec\M|secure\s+coding|\msast\M|\mdast\M
+Penetration testing,Security,penetration\s+test\w*|\mpentest\w*|ethical\s+hacking|burp\s+suite|\mmetasploit\M
+SIEM / SOC,Security,\msiem\M|\msplunk\M|\mqradar\M|security\s+operations|incident\s+response
+IAM,Security,identity\s+and\s+access|\miam\M|\mokta\M|\moauth\M|\msso\M
+Agile / Scrum,Practice,\magile\M|\mscrum\M|\mkanban\M
+Jira,Practice,\mjira\M
+System design,Practice,system\s+design|distributed\s+systems|scalab(le|ility)\s+(systems?|architecture)
+Testing practices (TDD),Practice,\mtdd\M|test[\s-]driven|unit\s+tests?|integration\s+tests?

@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import csv
 import os
+import re
 import sys
 import time
 import uuid
@@ -25,16 +26,32 @@ MB_URL = os.environ.get("MB_URL", "http://metabase:3000").rstrip("/")
 ADMIN_EMAIL = os.environ.get("MB_ADMIN_EMAIL", "")
 ADMIN_PASSWORD = os.environ.get("MB_ADMIN_PASSWORD", "")
 DB_NAME = "Job Market Radar"
-DASHBOARD_NAME = "Data Job Market Radar"
+DASHBOARD_NAME = "Tech Job Market Radar"
+LEGACY_DASHBOARD_NAMES = ["Data Job Market Radar"]  # archived on re-run
 CARD_PREFIX = "JMR - "
 SEEDS_DIR = os.environ.get("SEEDS_DIR", "/opt/airflow/dbt/seeds")
 
-ROLES = [
-    "Data Engineer", "Analytics Engineer", "Data Analyst", "BI Analyst / Developer",
-    "Data Scientist", "ML / AI Engineer", "Business / Domain Analyst",
-    "Data Leadership", "Data Governance / Privacy", "Data Product Management",
-    "Solutions / Consulting", "Other data role", "Other",
-]
+def _seed_column(filename: str, column: str, order_by: str | None = None) -> list[str]:
+    path = os.path.join(SEEDS_DIR, filename)
+    with open(path, encoding="utf-8") as fh:
+        rows = list(csv.DictReader(fh))
+    if order_by:
+        rows.sort(key=lambda r: (int(r[order_by]), r[column]))
+    seen, out = set(), []
+    for r in rows:
+        v = r[column]
+        if v and v not in seen and r.get("track") != "Not tech":
+            seen.add(v)
+            out.append(v)
+    return out
+
+
+def roles() -> list[str]:
+    return _seed_column("role_tracks.csv", "role_family", "track_order")
+
+
+def tracks() -> list[str]:
+    return _seed_column("role_tracks.csv", "track", "track_order")
 
 
 # --------------------------------------------------------------------------- #
@@ -132,7 +149,7 @@ def archive_previous(c: Client) -> None:
         dashboards = c.call("GET", "/api/dashboard/") or []
         dashboards = dashboards.get("data", dashboards) if isinstance(dashboards, dict) else dashboards
         for d in dashboards:
-            if d.get("name") == DASHBOARD_NAME and not d.get("archived"):
+            if d.get("name") in [DASHBOARD_NAME, *LEGACY_DASHBOARD_NAMES] and not d.get("archived"):
                 c.call("PUT", f"/api/dashboard/{d['id']}", {"archived": True})
                 print(f"Archived previous dashboard (id {d['id']}).")
         cards = c.call("GET", "/api/card/") or []
@@ -175,7 +192,7 @@ MY_SKILLS_CTES = """with me as (
 ),
 jobs as (
   select job_id from marts.fct_job_postings f
-  where is_active [[and role_family = {{role}}]] [[and """ + ELIGIBLE_FROM_COUNTRY + """]]
+  where is_active [[and track = {{track}}]] [[and role_family = {{role}}]] [[and """ + ELIGIBLE_FROM_COUNTRY + """]]
 ),
 js as (
   select b.job_id, lower(b.skill) as skill
@@ -190,66 +207,73 @@ stats as (
 
 CARDS = [
     # ---- row 0: headline numbers -------------------------------------------
-    dict(key="kpi_active", name="Active data jobs", display="scalar", tags=["role"],
+    dict(key="kpi_active", name="Active tech jobs", display="scalar", tags=["role"],
          pos=(0, 0, 5, 3), viz={},
          sql="select count(*) as jobs from marts.fct_job_postings f where is_active "
-             "[[and role_family = {{role}}]]"),
+             "[[and track = {{track}}]] [[and role_family = {{role}}]]"),
     dict(key="kpi_worldwide", name="Remote jobs open worldwide", display="scalar", tags=["role"],
          pos=(0, 5, 5, 3), viz={},
          sql="select count(*) as jobs from marts.fct_job_postings f where is_active "
-             "and remote_scope = 'Worldwide' [[and role_family = {{role}}]]"),
+             "and remote_scope = 'Worldwide' [[and track = {{track}}]] [[and role_family = {{role}}]]"),
     dict(key="kpi_eligible", name="Jobs you can apply to (pick your country)", display="scalar",
          tags=["role", "country"], pos=(0, 10, 5, 3), viz={},
          sql="select count(*) as jobs from marts.fct_job_postings f where is_active "
-             "[[and role_family = {{role}}]] [[and " + ELIGIBLE_FROM_COUNTRY + "]]"),
+             "[[and track = {{track}}]] [[and role_family = {{role}}]] [[and " + ELIGIBLE_FROM_COUNTRY + "]]"),
     dict(key="kpi_companies", name="Companies hiring", display="scalar", tags=["role"],
          pos=(0, 15, 5, 3), viz={},
          sql="select count(distinct lower(company_name)) as companies from marts.fct_job_postings f "
-             "where is_active [[and role_family = {{role}}]]"),
-    # ---- row 3: what to learn / how people work ----------------------------
+             "where is_active [[and track = {{track}}]] [[and role_family = {{role}}]]"),
+    # ---- row 3: the market by track -----------------------------------------
+    dict(key="by_track", name="Active jobs by track and work mode", display="bar", tags=[],
+         pos=(3, 0, 24, 8),
+         viz={"graph.dimensions": ["track", "work_mode"], "graph.metrics": ["jobs"],
+              "stackable.stack_type": "stacked"},
+         sql="select track, work_mode, count(*) as jobs from marts.fct_job_postings f where is_active "
+             "[[and " + ELIGIBLE_FROM_COUNTRY.strip() + "]] group by 1, 2 order by 1, 2"),
+    # ---- row 11: what to learn / how people work ---------------------------
     dict(key="top_skills", name="Top skills for this role (% of jobs)", display="row", tags=["role"],
-         pos=(3, 0, 12, 9),
+         pos=(11, 0, 12, 9),
          viz={"graph.dimensions": ["skill"], "graph.metrics": ["pct_of_jobs"],
               "graph.max_categories_enabled": False},
          sql="""with j as (
-  select job_id from marts.fct_job_postings f where is_active [[and role_family = {{role}}]]
+  select job_id from marts.fct_job_postings f where is_active [[and track = {{track}}]] [[and role_family = {{role}}]]
 )
 select s.skill, round(100.0 * count(distinct s.job_id) / nullif((select count(*) from j), 0), 1) as pct_of_jobs
 from marts.bridge_job_skills s join j using (job_id)
 group by 1 order by 2 desc limit 15"""),
     dict(key="work_mode", name="Remote vs hybrid vs onsite", display="pie", tags=["role"],
-         pos=(3, 12, 12, 9), viz={"pie.dimension": "work_mode", "pie.metric": "jobs"},
+         pos=(11, 12, 12, 9), viz={"pie.dimension": "work_mode", "pie.metric": "jobs"},
          sql="select work_mode, count(*) as jobs from marts.fct_job_postings f where is_active "
-             "[[and role_family = {{role}}]] group by 1 order by 2 desc"),
+             "[[and track = {{track}}]] [[and role_family = {{role}}]] group by 1 order by 2 desc"),
     # ---- row 12: where -----------------------------------------------------
     dict(key="remote_by_region", name="Remote jobs you can apply to, by your region", display="bar",
-         tags=["role"], pos=(12, 0, 12, 8),
+         tags=["role"], pos=(20, 0, 12, 8),
          viz={"graph.dimensions": ["region"], "graph.metrics": ["remote_jobs"]},
          sql="select region, sum(remote_jobs) as remote_jobs from reporting.rpt_remote_eligibility "
-             "where 1 = 1 [[and role_family = {{role}}]] group by 1 order by 2 desc"),
+             "where 1 = 1 [[and track = {{track}}]] [[and role_family = {{role}}]] group by 1 order by 2 desc"),
     dict(key="onsite_countries", name="Top countries for onsite & hybrid jobs", display="row",
-         tags=["role"], pos=(12, 12, 12, 8),
+         tags=["role"], pos=(20, 12, 12, 8),
          viz={"graph.dimensions": ["country"], "graph.metrics": ["jobs"]},
          sql="select country, sum(jobs) as jobs from reporting.rpt_jobs_by_country "
-             "where work_mode <> 'Remote' [[and role_family = {{role}}]] "
+             "where work_mode <> 'Remote' [[and track = {{track}}]] [[and role_family = {{role}}]] "
              "group by 1 order by 2 desc limit 15"),
     # ---- row 20: next skill / seniority ------------------------------------
     dict(key="skill_pairs", name="If you know this skill, the next skills employers pair with it (%)",
-         display="row", tags=["skill"], pos=(20, 0, 12, 8),
+         display="row", tags=["skill"], pos=(28, 0, 12, 8),
          viz={"graph.dimensions": ["skill_b"], "graph.metrics": ["pct_of_skill_a_jobs"]},
          sql="select skill_b, pct_of_skill_a_jobs from reporting.rpt_skill_pairs "
              "where skill_a = coalesce([[{{skill}}, ]] 'SQL') order by 2 desc limit 15"),
-    dict(key="seniority", name="Seniority mix", display="bar", tags=["role"], pos=(20, 12, 12, 8),
+    dict(key="seniority", name="Seniority mix", display="bar", tags=["role"], pos=(28, 12, 12, 8),
          viz={"graph.dimensions": ["seniority"], "graph.metrics": ["jobs"]},
          sql="select seniority, count(*) as jobs from marts.fct_job_postings f where is_active "
-             "[[and role_family = {{role}}]] group by 1 order by 2 desc"),
+             "[[and track = {{track}}]] [[and role_family = {{role}}]] group by 1 order by 2 desc"),
     dict(key="kpi_salary_share", name="Jobs that post a salary", display="scalar", tags=["role"],
          pos=(0, 20, 4, 3), viz={},
          sql="select count(*) filter (where has_comparable_salary) || ' of ' || count(*) as jobs "
-             "from marts.fct_job_postings f where is_active [[and role_family = {{role}}]]"),
+             "from marts.fct_job_postings f where is_active [[and track = {{track}}]] [[and role_family = {{role}}]]"),
     # ---- row 28: salary ----------------------------------------------------
     dict(key="salary_by_role", name="Salary by role: annual USD, middle 50% and median (jobs that post pay)",
-         display="bar", tags=["country"], pos=(28, 0, 14, 9),
+         display="bar", tags=["country"], pos=(36, 0, 14, 9),
          viz={"graph.dimensions": ["role_family"], "graph.metrics": ["p25_usd", "median_usd", "p75_usd"]},
          sql="""select role_family,
        round(percentile_cont(0.25) within group (order by salary_annual_mid_usd)::numeric, -3) as p25_usd,
@@ -257,20 +281,20 @@ group by 1 order by 2 desc limit 15"""),
        round(percentile_cont(0.75) within group (order by salary_annual_mid_usd)::numeric, -3) as p75_usd,
        count(*) as jobs_with_salary
 from marts.fct_job_postings f
-where is_active and has_comparable_salary [[and """ + ELIGIBLE_FROM_COUNTRY + """]]
+where is_active and has_comparable_salary [[and track = {{track}}]] [[and """ + ELIGIBLE_FROM_COUNTRY + """]]
 group by 1 having count(*) >= 3 order by median_usd desc"""),
     dict(key="salary_by_seniority", name="Median salary by seniority (annual USD)", display="bar",
-         tags=["role", "country"], pos=(28, 14, 10, 9),
+         tags=["role", "country"], pos=(36, 14, 10, 9),
          viz={"graph.dimensions": ["seniority"], "graph.metrics": ["median_usd"]},
          sql="""select seniority,
        round(percentile_cont(0.5) within group (order by salary_annual_mid_usd)::numeric, -3) as median_usd,
        count(*) as jobs_with_salary
 from marts.fct_job_postings f
-where is_active and has_comparable_salary [[and role_family = {{role}}]] [[and """ + ELIGIBLE_FROM_COUNTRY + """]]
+where is_active and has_comparable_salary [[and track = {{track}}]] [[and role_family = {{role}}]] [[and """ + ELIGIBLE_FROM_COUNTRY + """]]
 group by 1 having count(*) >= 2 order by median_usd"""),
     # ---- row 37: next best skill --------------------------------------------
     dict(key="next_skill", name="Next skill to learn: extra jobs you would match (you have 60%+ of their skills)",
-         display="row", tags=["my_skills", "role", "country"], pos=(37, 0, 16, 9),
+         display="row", tags=["my_skills", "role", "country"], pos=(45, 0, 16, 9),
          viz={"graph.dimensions": ["skill"], "graph.metrics": ["extra_jobs_you_would_match"],
               "graph.max_categories_enabled": False},
          sql=MY_SKILLS_CTES + """,
@@ -286,13 +310,13 @@ select d.skill, g.extra_jobs_you_would_match
 from gains g join marts.dim_skills d on lower(d.skill) = g.skill
 order by 2 desc, 1 limit 12"""),
     dict(key="match_now", name="Jobs you match today (60%+ of their listed skills)", display="scalar",
-         tags=["my_skills", "role", "country"], pos=(37, 16, 8, 9), viz={},
+         tags=["my_skills", "role", "country"], pos=(45, 16, 8, 9), viz={},
          sql=MY_SKILLS_CTES + """
 select count(*) filter (where known::numeric / total >= 0.6) || ' of ' || count(*) as jobs
 from stats"""),
     # ---- row 46: trend -----------------------------------------------------
     dict(key="trend", name="Skill trend: % of jobs listed each day (top 8 skills)", display="line",
-         tags=[], pos=(46, 0, 24, 8),
+         tags=[], pos=(54, 0, 24, 8),
          viz={"graph.dimensions": ["snapshot_date", "skill"], "graph.metrics": ["pct_of_jobs"]},
          sql="""select snapshot_date, skill, pct_of_jobs
 from reporting.rpt_skill_trend_daily
@@ -303,31 +327,40 @@ where skill in (
 order by 1, 2"""),
     # ---- row 54: the list --------------------------------------------------
     dict(key="job_list", name="Jobs you can apply to", display="table", tags=["role", "country"],
-         pos=(54, 0, 24, 12), viz={},
+         pos=(62, 0, 24, 12), viz={},
          sql="select job_title, company_name, role_family, seniority, work_mode, remote_scope,\n"
              "       coalesce(remote_eligibility_text, location_text) as where_or_who_can_apply,\n"
              "       salary_annual_min_usd, salary_annual_max_usd,\n"
              "       first_seen_date, listed_on, job_url\n"
              "from marts.fct_job_postings f\n"
-             "where is_active [[and role_family = {{role}}]] [[and " + ELIGIBLE_FROM_COUNTRY + "]]\n"
+             "where is_active [[and track = {{track}}]] [[and role_family = {{role}}]] [[and " + ELIGIBLE_FROM_COUNTRY + "]]\n"
              "order by first_seen_date desc, job_title limit 500"),
     # ---- row 66: original boards (aggregator sources) -----------------------
     dict(key="publishers", name="Where these jobs were first posted (LinkedIn, Indeed, Bayt, ... via JSearch / Jooble)",
-         display="row", tags=["role", "country"], pos=(66, 0, 24, 8),
+         display="row", tags=["role", "country"], pos=(74, 0, 24, 8),
          viz={"graph.dimensions": ["original_board"], "graph.metrics": ["jobs"],
               "graph.max_categories_enabled": False},
          sql="select original_board, sum(jobs) as jobs from reporting.rpt_jobs_by_publisher "
-             "where 1 = 1 [[and role_family = {{role}}]] [[and country = {{country}}]] "
+             "where 1 = 1 [[and track = {{track}}]] [[and role_family = {{role}}]] [[and country = {{country}}]] "
              "group by 1 order by 2 desc limit 15"),
 ]
 
-TAG_LABELS = {"role": "Role", "country": "Country", "skill": "Skill", "my_skills": "My skills"}
+# Each card's filter tags are derived from the {{variables}} its SQL uses.
+for _card in CARDS:
+    _used = set(re.findall(r"\{\{(\w+)\}\}", _card["sql"]))
+    _card["tags"] = [t for t in ("track", "role", "country", "skill", "my_skills") if t in _used]
+
+TAG_LABELS = {"track": "Track", "role": "Role", "country": "Country", "skill": "Skill", "my_skills": "My skills"}
 
 
 def build_dashboard_parameters() -> list[dict]:
     return [
-        {"id": "role", "name": "Role", "slug": "role", "type": "string/=", "sectionId": "string", "isMultiSelect": False,
-         "values_source_type": "static-list", "values_source_config": {"values": ROLES}},
+        {"id": "track", "name": "Track", "slug": "track", "type": "string/=", "sectionId": "string",
+         "isMultiSelect": False, "values_source_type": "static-list",
+         "values_source_config": {"values": tracks()}},
+        {"id": "role", "name": "Role", "slug": "role", "type": "string/=", "sectionId": "string",
+         "isMultiSelect": False, "values_source_type": "static-list",
+         "values_source_config": {"values": roles()}},
         {"id": "country", "name": "Country", "slug": "country", "type": "string/=", "sectionId": "string", "isMultiSelect": False,
          "values_source_type": "static-list",
          "values_source_config": {"values": seed_values("geo_patterns.csv", "country")}},
@@ -361,7 +394,7 @@ def create_card(c: Client, db_id: int, spec: dict) -> int:
 def create_dashboard(c: Client, db_id: int) -> int:
     dash = c.call("POST", "/api/dashboard", {
         "name": DASHBOARD_NAME,
-        "description": "What to learn next and where to apply. Built by scripts/setup_metabase.py.",
+        "description": "Tech jobs (data, software, QA, UI/UX, DevOps, security): what to learn next and where to apply. Built by scripts/setup_metabase.py.",
     })
     dashcards = []
     for i, spec in enumerate(CARDS, start=1):

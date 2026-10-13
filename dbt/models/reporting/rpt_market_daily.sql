@@ -3,6 +3,7 @@ with daily_listings as (
     select distinct
         s.snapshot_date,
         k.job_id,
+        k.track,
         k.role_family,
         k.work_mode
     from {{ source('raw', 'job_posting_snapshots') }} s
@@ -11,13 +12,14 @@ with daily_listings as (
     -- rotating sources search different countries each day, so they'd make
     -- day-to-day numbers jump; trends use the full-feed sources only
     where s.source not in ('jsearch', 'jooble')
-      and k.role_family <> 'Not a data role'
+      and k.role_family <> 'Not a tech role'
 )
 
 select
     snapshot_date,
+    track,
     role_family,
     work_mode,
     count(distinct job_id) as jobs_listed
 from daily_listings
-group by 1, 2, 3
+group by 1, 2, 3, 4

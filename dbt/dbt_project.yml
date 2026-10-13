@@ -39,6 +39,11 @@ seeds:
         skill: text
         category: text
         pattern: text
+    role_tracks:
+      +column_types:
+        role_family: text
+        track: text
+        track_order: integer
     salary_periods:
       +column_types:
         salary_period: text

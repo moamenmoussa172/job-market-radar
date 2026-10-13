@@ -1,50 +1,122 @@
 -- Rule-based classification from the title (and source hints).
 -- Order of the WHEN branches matters: the first match wins.
-with p as (select * from {{ ref('int_postings_unioned') }})
+-- role_family -> track mapping lives in seeds/role_tracks.csv (joined in int_postings_tracked).
+with p as (select * from {{ ref('int_postings_unioned') }}),
 
+classified as (
 select
     p.*,
 
     case
-        -- Physical warehouse / logistics jobs that slipped in via the word "warehouse"
-        when job_title ~* '(\mwarehouse|\mlager)\s*(associate|lead|operations?|operative|worker|clerk|picker|supervisor|manager|shift|team)|schichtleiter|(operations|logistics)\s+manager,?\s+warehouse'
+        -- ---------------------------------------------------------------- not tech
+        when job_title ~* '(\mwarehouse|\mlager)\s*(associate|lead|operations?|operative|worker|clerk|picker|supervisor|manager|shift|team|employee|mitarbeiter)|schichtleiter|(operations|logistics)\s+manager,?\s+warehouse'
          and job_title !~* 'data|\mdwh\M|\medw\M|\mbi\M|analytics'
-            then 'Not a data role'
+            then 'Not a tech role'
+        -- business jobs that only mention AI (same rule as is_tech_role in filters.py)
+        when job_title ~* '\mai\M|artificial\s+intelligence'
+         and job_title ~* 'trainer|strateg|transformation|\mgtm\M|go[\s-]to[\s-]market|market(er|ing)|growth|talent|accelerator|operations|communications|business\s+risk|legal|policy|\msales\M|recruit|adoption|evangelist|writer|tutor|annotat|content'
+         and job_title !~* 'engineer|developer|scientist|research|architect|programmer|\mml\M|machine\s+learning|\mdata\M'
+            then 'Not a tech role'
+        when job_title ~* 'data\s+assistant|medical\s+data|\mai\s+trainers?\M'
+            then 'Not a tech role'
 
+        -- ---------------------------------------------------- QA & testing (before any "analyst" rule)
+        when job_title ~* '\m(qa|qe|sdet|tester|testeur|testing)\M|quality\s+assurance|test\s*(automation|engineer|analyst|lead|manager|specialist|architect)|testautomat|softwaretest|\mautomation\s+tester'
+         and job_title !~* 'data\s+quality|penetration|pen\s*test'
+            then case when job_title ~* 'automat|sdet|selenium|cypress|playwright|appium|\mqe\M|software\s+(development\s+)?engineer\s+in\s+test'
+                      then 'QA Automation Engineer' else 'QA / Test Engineer' end
+
+        -- --------------------------------------------------------------- Data & AI
         when job_title ~* 'governance|data\s+protection|privacy|datenschutz|data\s+steward|data\s+catalog|\mgdpr\M'
             then 'Data Governance / Privacy'
-
-        -- Roles named by their craft come first: a "Lead Data Engineer" is a Data Engineer
         when job_title ~* 'analytics\s+engineer'
             then 'Analytics Engineer'
         when job_title ~* '\m(data|etl|elt|big\s+data|data\s+platform|data\s+pipeline|data\s+warehouse|data\s+integration)\s+(engineer|developer|architect)'
           or job_title ~* 'dateningenieur|data-?engineer|ingénieur\s+(de\s+)?données|ingeniero\s+de\s+datos|\metl\M'
-          -- software / platform engineers who build data systems
           or (job_title ~* '\m(engineer|developer)\M'
-              and job_title ~* 'data\s*(platforms?|systems?|infrastructure|ops|pipelines?|factory|extraction|lake|integration)|distributed\s+data|\mdataops\M|data\s*&\s*(ai\s+)?(platforms?|systems?)|data\s*/\s*software')
+              and job_title ~* 'data\s*(platforms?|systems?|infrastructure|ops|pipelines?|factory|extraction|lake|integration)|distributed\s+data|\mdataops\M|data\s*&\s*(ai\s+)?(platforms?|systems?)|data\s*/\s*software|data\s+enablement')
+          or job_title ~* 'data\s+(and|&)\s+(ai|analytics)\s+(engineer|architect)'
             then 'Data Engineer'
-        when job_title ~* 'scien'
+        when job_title ~* 'data\s+scien|\mscientist\M|scientifique\s+des\s+données|científico\s+de\s+datos'
             then 'Data Scientist'
-        when job_title ~* 'machine\s+learning|\mml\M|\mmlops\M|deep\s+learning|\mnlp\M|computer\s+vision|\mai\s+engineer'
+        when job_title ~* 'machine\s+learning|\mml\M|\mmlops\M|deep\s+learning|\mnlp\M|computer\s+vision|\mai\s+(engineer|developer|researcher|architect)|\mllm\M|genai|\mai(\s*/\s*|\s+)(agent|safety|agentic|platform|applied|research)\s+(engineers?|developers?|scientists?)|agent(ic)?\s+(ai\s+)?engineer|ai\s+safety'
             then 'ML / AI Engineer'
-        when job_title ~* 'business\s+intelligence|\mbi\M|power\s*bi|tableau|looker|reporting'
+        when job_title ~* 'business\s+intelligence|\mbi\M|power\s*bi|tableau|looker|\mreporting\s+(analyst|developer|engineer|specialist)'
             then 'BI Analyst / Developer'
-        when job_title ~* '(business|product|financial|finance|credit|risk|pricing|venture|clearing|operations|marketing|sales)\s+analyst'
+
+        -- --------------------------------------------------------------- Security
+        when job_title ~* '\msecurity\M|\mcyber|\msoc\M|penetration|pen\s*test|\mappsec\M|\minfosec\M|\miam\s+(engineer|analyst)|threat|vulnerabilit|\mgrc\M'
+            then 'Security Engineer / Analyst'
+
+        -- --------------------------------------------------------------- UI / UX design
+        when job_title ~* '(ux|ui|user\s+experience|user\s+interface|product|interaction|visual|web|service|motion)\s*(/\s*(ux|ui)\s*)?(designer|design\s+(lead|manager|director))|\mdesigner\M|design\s+systems?|\mux\s+(research|writer|lead|manager)|\mui\s*/\s*ux|\mux\s*/\s*ui'
+            then case when job_title ~* 'research' then 'UX Researcher'
+                      when job_title ~* '\mui\M|visual|web\s+designer|motion' and job_title !~* '\mux\M|product' then 'UI / Visual Designer'
+                      else 'UX / Product Designer' end
+
+        -- -------------------------------------- analyst roles (data track unless clearly IT)
+        when job_title ~* '\m(systems?|it|technical|functional|software|application|erp|sap|crm|salesforce)\s+(business\s+)?analyst'
+            then 'Systems / IT Analyst'
+        when job_title ~* '(business|product|financial|finance|credit|risk|pricing|venture|clearing|operations|marketing|sales|revenue)\s+analyst'
             then 'Business / Domain Analyst'
         when job_title ~* 'data\s+analy|analytics|analyst|datenanaly|analyste|analista|insights?\s+(analyst|lead|manager|specialist)'
             then 'Data Analyst'
 
-        -- Data-adjacent functions
-        when job_title ~* 'product\s+(manager|owner|marketing|lead|director)'
-            then 'Data Product Management'
-        when job_title ~* 'consultant|consulting|pre-?sales|presales|solutions?\s+(architect|engineer|consultant)|account\s+(executive|manager)|\msales\M|berater|practitioner|customer\s+(delivery|success)'
-            then 'Solutions / Consulting'
-        when job_title ~* '\m(manager|director|head|vp|vice\s+president|chief|lead)\M|projektleit|project\s+(manager|lead)'
-            then 'Data Leadership'
+        -- --------------------------------------------------------- IT, DevOps & cloud
+        when job_title ~* 'it\s+support|help\s*desk|service\s+desk|desktop\s+support|sys(tem)?\s*admin|system\s+administrator|systemadministrat|network\s+(engineer|administrator|admin)|it\s+(administrator|technician|specialist|engineer)|fachinformatiker'
+            then 'IT Support / Systems Admin'
+        when job_title ~* '\msre\M|site\s+reliability'
+            then 'Site Reliability Engineer'
+        when job_title ~* '\m(devops|devsecops|dev\s*ops)\M|platform\s+engineer|release\s+engineer|build\s+engineer|kubernetes|infrastructure\s+engineer'
+            then 'DevOps / Platform Engineer'
+        when job_title ~* 'cloud\s+(engineer|architect|developer|specialist|consultant)|\m(aws|azure|gcp)\s+(engineer|architect|developer)|infrastructure|systems?\s+engineer'
+            then 'Cloud / Infrastructure Engineer'
 
-        when job_title ~* 'data|daten|données|datos|lakehouse|lakebase|\medw\M|\mdwh\M'
-            then 'Other data role'
-        else 'Other'
+        -- -------------------------------------------------------- delivery / agile
+        when job_title ~* 'scrum\s+master|agile\s+coach|delivery\s+(enabler|manager|lead)|release\s+train\s+engineer'
+            then 'Scrum Master / Agile Coach'
+
+        -- ------------------------------------------------------- Software engineering
+        when job_title ~* 'go[\s-]to[\s-]market\s+engineer|\mgtm\s+engineer'
+            then 'Solutions / Support Engineer'
+        when job_title ~* '(engineering|software|development|technical)\s+(manager|director)|\m(manager|director|head)\M[^,]*,\s*(software\s+)?engineering|director\s+of\s+(software\s+)?engineering|head\s+of\s+(engineering|software|technology|development)|\mcto\M|vp\s+(of\s+)?engineering|chief\s+technology'
+            then 'Engineering Leadership'
+        when job_title ~* '\m(ios|android|mobile|flutter|react\s+native|swiftui|kotlin\s+multiplatform|xamarin)\M'
+            then 'Mobile Engineer'
+        when job_title ~* 'full[\s-]?stack|fullstack'
+            then 'Full-Stack Engineer'
+        when job_title ~* 'front[\s-]?end|frontend|\mui\s+(engineer|developer)|web\s+(developer|engineer)|javascript|typescript|\mreact\M|angular|\mvue\M|svelte|wordpress|shopify\s+developer'
+            then 'Frontend Engineer'
+        when job_title ~* 'back[\s-]?end|backend|\mapi\s+(engineer|developer)|\mjava\M|\.net\M|c#|\mgolang\M|\mgo\s+(engineer|developer)|\m(python|node(\.?js)?|php|ruby|rails|rust|scala|elixir|django|laravel|spring)\s+(engineer|developer)'
+            then 'Backend Engineer'
+        when job_title ~* 'embedded|firmware|\mc\+\+|\mrtos\M'
+            then 'Embedded / Firmware Engineer'
+        when job_title ~* 'game\s+(developer|engineer|programmer)|unity\s+developer|unreal'
+            then 'Game Developer'
+        when job_title ~* '(solutions?|sales|pre-?sales|customer|support|integration|implementation|forward\s+deployed)\s+(engineer|architect|consultant)|technical\s+account\s+manager'
+         and job_title !~* 'data|analytics'
+            then 'Solutions / Support Engineer'
+        when (job_title ~* '\m(engineer|developer|programmer|architect|coder|sdet)\M|entwickler|développeu|desarrollador|programador|ingeniero\s+de\s+software|ontwikkelaar|informatiker|software\s+(engineering|development)'
+              and job_title !~* '\mdata\M|daten|données|datos')
+          or job_title ~* 'software\s+(engineer|developer|engineering)'
+            then 'Software Engineer'
+
+        -- --------------------------------------- data-adjacent (only titles with data words)
+        when job_title ~* '\m(data|daten|données|datos|analytics|bi|ai|ml|machine\s+learning|insights?|lakehouse|lakebase|edw|dwh|dbt)\M'
+            then case
+                when job_title ~* 'product\s+(manager|owner|marketing|lead|director|partner)'
+                    then 'Data Product Management'
+                when job_title ~* 'consultant|consulting|pre-?sales|presales|solutions?\s+(architect|engineer|consultant)|account\s+(executive|manager)|\msales\M|berater|practitioner|customer\s+(delivery|success)'
+                    then 'Solutions / Consulting'
+                when job_title ~* '\m(manager|director|head|vp|vice\s+president|chief|lead)\M|projektleit|project\s+(manager|lead)'
+                    then 'Data Leadership'
+                else 'Other data role'
+            end
+
+        -- ------------------------------------------------------------ other tech
+        when job_title ~* 'product\s+(manager|owner)|produktmanager|chef\s+de\s+produit'
+            then 'Product Manager'
+        else 'Other tech role'
     end as role_family,
 
     case
@@ -82,3 +154,10 @@ select
     end as work_mode
 
 from p
+)
+
+select
+    c.*,
+    coalesce(rt.track, 'IT & Other tech') as track
+from classified c
+left join {{ ref('role_tracks') }} rt using (role_family)

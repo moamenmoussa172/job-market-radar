@@ -6,7 +6,7 @@
 {% set sources = ['remotive', 'jobicy', 'himalayas', 'arbeitnow', 'greenhouse', 'lever', 'ashby',
                   'smartrecruiters', 'workable', 'jsearch', 'jooble'] %}
 {% set rotating_sources = ['jsearch', 'jooble'] %}
-{% set rotating_active_days = 10 %}
+{% set rotating_active_days = 14 %}
 
 with unioned as (
     {% for s in sources %}

@@ -18,7 +18,7 @@ from typing import Callable
 
 import requests
 
-from jobradar.filters import is_data_role
+from jobradar.filters import is_tech_role
 
 log = logging.getLogger(__name__)
 
@@ -60,7 +60,7 @@ def extract_remotive() -> ExtractResult:
     jobs = payload.get("jobs", [])
     keep = [
         j for j in jobs
-        if is_data_role(j.get("title")) or "data" in (j.get("category") or "").lower()
+        if is_tech_role(j.get("title"))
     ]
     log.info("remotive: %s jobs total, %s data-related", len(jobs), len(keep))
     warnings = []
@@ -87,7 +87,7 @@ def extract_arbeitnow(max_pages: int = 10, pause_seconds: float = 1.0) -> Extrac
         payload = _get_json(ARBEITNOW_URL, params={"page": page})
         data = payload.get("data", [])
         seen += len(data)
-        keep.extend(j for j in data if is_data_role(j.get("title")))
+        keep.extend(j for j in data if is_tech_role(j.get("title")))
         if not data or not (payload.get("links") or {}).get("next"):
             break
         time.sleep(pause_seconds)
@@ -140,7 +140,7 @@ def load_board_tokens(ats: str, path: Path = BOARDS_FILE) -> list[str]:
 
 def _fetch_greenhouse(token: str) -> list[dict]:
     payload = _get_json(GREENHOUSE_URL.format(token=token), params={"content": "true"})
-    return [j for j in payload.get("jobs", []) if is_data_role(j.get("title"))]
+    return [j for j in payload.get("jobs", []) if is_tech_role(j.get("title"))]
 
 
 def _fetch_lever(token: str) -> list[dict]:
@@ -153,7 +153,7 @@ def _fetch_lever(token: str) -> list[dict]:
             last_exc = exc
             continue
         if isinstance(postings, list):
-            return [j for j in postings if is_data_role(j.get("text"))]
+            return [j for j in postings if is_tech_role(j.get("text"))]
     raise last_exc or requests.HTTPError(f"lever board '{token}' not found")
 
 
@@ -161,21 +161,30 @@ def _fetch_ashby(token: str) -> list[dict]:
     payload = _get_json(ASHBY_URL.format(token=token), params={"includeCompensation": "true"})
     return [
         j for j in payload.get("jobs", [])
-        if j.get("isListed", True) and is_data_role(j.get("title"))
+        if j.get("isListed", True) and is_tech_role(j.get("title"))
     ]
 
 
-def _fetch_smartrecruiters(token: str, max_pages: int = 10) -> list[dict]:
+SMARTRECRUITERS_MAX_DETAILS = int(os.environ.get("SMARTRECRUITERS_MAX_DETAILS", "150"))
+
+
+def _fetch_smartrecruiters(token: str, max_pages: int = 20) -> list[dict]:
     """List postings (titles only), then fetch full details for data roles only."""
     url = SMARTRECRUITERS_URL.format(token=token)
     data_items: list[dict] = []
     for page in range(max_pages):
         payload = _get_json(url, params={"limit": 100, "offset": page * 100})
         content = payload.get("content") or []
-        data_items.extend(p for p in content if is_data_role(p.get("name")))
+        data_items.extend(p for p in content if is_tech_role(p.get("name")))
         if len(content) < 100 or (page + 1) * 100 >= (payload.get("totalFound") or 0):
             break
-    detailed = []
+    # One details call per matching posting; big employers list hundreds of tech roles,
+    # so details are fetched for the newest SMARTRECRUITERS_MAX_DETAILS only (the rest
+    # are kept as summaries: title, location, dates - but no description/skills).
+    data_items.sort(key=lambda p: p.get("releasedDate") or "", reverse=True)
+    summaries = data_items[SMARTRECRUITERS_MAX_DETAILS:]
+    data_items = data_items[:SMARTRECRUITERS_MAX_DETAILS]
+    detailed = list(summaries)
     for item in data_items:
         try:
             detailed.append(_get_json(f"{url}/{item['id']}"))
@@ -189,7 +198,7 @@ def _fetch_workable(token: str) -> list[dict]:
     jobs = payload.get("jobs") if isinstance(payload, dict) else None
     if jobs is None:
         raise ValueError(f"workable account '{token}' returned no jobs list")
-    return [{**j, "account_name": payload.get("name")} for j in jobs if is_data_role(j.get("title"))]
+    return [{**j, "account_name": payload.get("name")} for j in jobs if is_tech_role(j.get("title"))]
 
 
 ATS_FETCHERS: dict[str, Callable[[str], list[dict]]] = {
@@ -271,9 +280,10 @@ def ashby_id(record: dict) -> str:
 # Terms: poll at most hourly (we do daily), keep the Jobicy url + attribution.
 # --------------------------------------------------------------------------- #
 JOBICY_URL = "https://jobicy.com/api/v2/remote-jobs"
-JOBICY_INDUSTRIES = ["data-science"]
-# Keyword searches catch data roles listed under other industries (e.g. engineering).
-JOBICY_TAGS = ["data engineer", "data analyst", "analytics", "business intelligence", "machine learning"]
+JOBICY_INDUSTRIES = ["data-science", "engineering", "design-multimedia"]
+# Keyword searches catch roles listed under other industries.
+JOBICY_TAGS = ["data engineer", "data analyst", "analytics", "machine learning",
+               "qa", "tester", "devops", "ux"]
 
 
 def extract_jobicy(industries: list[str] | None = None, pause_seconds: float = 2.0,
@@ -288,7 +298,8 @@ def extract_jobicy(industries: list[str] | None = None, pause_seconds: float = 2
         jobs = payload.get("jobs") or []
         seen += len(jobs)
         for j in jobs:
-            keep[str(j["id"])] = j  # industry feed is already data-focused; keep all
+            if is_tech_role(j.get("jobTitle")):  # e.g. design-multimedia also has graphic/video roles
+                keep[str(j["id"])] = j
         time.sleep(pause_seconds)
     for tag in tags:
         try:
@@ -299,7 +310,7 @@ def extract_jobicy(industries: list[str] | None = None, pause_seconds: float = 2
         jobs = payload.get("jobs") or []
         seen += len(jobs)
         for j in jobs:
-            if is_data_role(j.get("jobTitle")):  # keyword hits can be any role
+            if is_tech_role(j.get("jobTitle")):  # keyword hits can be any role
                 keep.setdefault(str(j["id"]), j)
         time.sleep(pause_seconds)
     log.info("jobicy: %s results scanned, %s distinct data jobs", seen, len(keep))
@@ -317,9 +328,13 @@ def jobicy_id(record: dict) -> str:
 # --------------------------------------------------------------------------- #
 HIMALAYAS_SEARCH_URL = "https://himalayas.app/jobs/api/search"
 HIMALAYAS_QUERIES = [
+    # data & AI
     "data engineer", "data analyst", "analytics engineer", "business intelligence",
-    "data scientist", "machine learning engineer", "bi developer", "data platform",
-    "analytics", "etl",
+    "data scientist", "machine learning engineer", "bi developer", "data platform", "analytics", "etl",
+    # software, QA, design, devops, security
+    "software engineer", "frontend", "backend", "full stack", "mobile developer",
+    "qa engineer", "test automation", "ux designer", "product designer", "ui designer",
+    "devops", "site reliability", "cloud engineer", "security engineer",
 ]
 
 
@@ -353,7 +368,7 @@ def extract_himalayas(queries: list[str] | None = None, max_pages: int = 5,
                 warnings.append(f"himalayas q='{query}' page={page} failed: {exc}")
                 break
             for j in jobs:
-                if is_data_role(j.get("title")):
+                if is_tech_role(j.get("title")):
                     keep[himalayas_id(j)] = {**j, "search_query": query}
             if len(jobs) < 20:
                 break
@@ -372,7 +387,8 @@ SEARCH_COUNTRIES = [  # (ISO code, name used in free-text queries)
     ("eg", "Egypt"), ("ae", "United Arab Emirates"), ("sa", "Saudi Arabia"), ("qa", "Qatar"),
     ("de", "Germany"), ("es", "Spain"), ("gb", "United Kingdom"),
 ]
-SEARCH_ROLES = ["data engineer", "data analyst", "business intelligence", "analytics engineer"]
+SEARCH_ROLES = ["data engineer", "data analyst", "software engineer", "frontend developer",
+                "backend developer", "qa engineer", "ux designer", "devops engineer"]
 
 
 def daily_slice(pairs: list, per_day: int, day: dt.date | None = None) -> list:
@@ -414,7 +430,7 @@ def extract_jsearch(pairs: list | None = None, pause_seconds: float = 1.0) -> Ex
         if isinstance(data, dict):  # some versions nest the list
             data = data.get("jobs") or data.get("data") or []
         for job in data or []:
-            if is_data_role(job.get("job_title")) and job.get("job_id"):
+            if is_tech_role(job.get("job_title")) and job.get("job_id"):
                 keep[str(job["job_id"])] = {**job, "search_query": role, "search_country": code}
         time.sleep(pause_seconds)
     log.info("jsearch: %s searches, %s data-related jobs", len(pairs), len(keep))
@@ -432,7 +448,7 @@ JOOBLE_PER_DAY = int(os.environ.get("JOOBLE_REQUESTS_PER_DAY", "3"))
 
 
 def jooble_pairs() -> list[tuple[str, str]]:
-    roles = ["data engineer", "data analyst"]
+    roles = ["data engineer", "software developer", "qa tester", "ux designer"]
     return [(role, name) for role in roles for _, name in SEARCH_COUNTRIES]
 
 
@@ -454,7 +470,7 @@ def extract_jooble(pairs: list | None = None, pause_seconds: float = 1.0) -> Ext
                 break
             continue
         for job in payload.get("jobs") or []:
-            if is_data_role(job.get("title")):
+            if is_tech_role(job.get("title")):
                 job_key = str(job.get("id") or job.get("link"))
                 keep[job_key] = {**job, "search_query": role, "search_location": location}
         time.sleep(pause_seconds)

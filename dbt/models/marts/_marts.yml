@@ -2,22 +2,26 @@ version: 2
 
 models:
   - name: fct_job_postings
-    description: One row per distinct data job, deduplicated across sources.
+    description: One row per distinct tech job, deduplicated across sources.
     columns:
       - name: job_id
         data_tests: [unique, not_null]
       - name: job_title
         data_tests: [not_null]
-      - name: role_family
+      - name: track
         data_tests:
           - not_null
           - accepted_values:
               arguments:
-                values: ['Analytics Engineer', 'Data Engineer', 'Data Scientist', 'ML / AI Engineer',
-                         'BI Analyst / Developer', 'Business / Domain Analyst', 'Data Analyst',
-                         'Data Governance / Privacy', 'Data Product Management',
-                         'Solutions / Consulting', 'Data Leadership',
-                         'Other data role', 'Other']
+                values: ['Data & AI', 'Software Engineering', 'QA & Testing', 'UI/UX Design',
+                         'DevOps & Cloud', 'Security', 'IT & Other tech']
+      - name: role_family
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('role_tracks')
+                field: role_family
       - name: seniority
         data_tests:
           - accepted_values:

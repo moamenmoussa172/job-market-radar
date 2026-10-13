@@ -38,7 +38,8 @@ def test_remotive_filter_and_id(monkeypatch):
     ]}
     monkeypatch.setattr(sources, "_get_json", lambda url, params=None: fake)
     res = sources.extract_remotive()
-    assert [sources.remotive_id(r) for r in res.records] == ["1", "3"]
+    # tech-wide scope: the product designer is kept; "Insights Lead" is not a tech title
+    assert [sources.remotive_id(r) for r in res.records] == ["1", "2"]
 
 
 def test_arbeitnow_paginates_until_no_next(monkeypatch):

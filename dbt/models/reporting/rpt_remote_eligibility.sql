@@ -2,7 +2,7 @@
 -- A worldwide job counts for every region; a restricted job counts for the
 -- regions it names (directly, or via one of its listed countries).
 with remote_jobs as (
-    select job_id, role_family, seniority, remote_scope
+    select job_id, track, role_family, seniority, remote_scope
     from {{ ref('fct_job_postings') }}
     where is_active and work_mode = 'Remote'
 ),
@@ -29,6 +29,7 @@ eligible as (
 
 select
     e.region,
+    j.track,
     j.role_family,
     j.seniority,
     count(distinct e.job_id)                                              as remote_jobs,
@@ -36,4 +37,4 @@ select
     count(distinct e.job_id) filter (where j.remote_scope = 'Restricted') as region_specific_jobs
 from eligible e
 join remote_jobs j using (job_id)
-group by 1, 2, 3
+group by 1, 2, 3, 4

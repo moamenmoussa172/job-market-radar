@@ -1,9 +1,9 @@
-# Data Job Market Radar
+# Tech Job Market Radar
 
-**Which data jobs can I actually get from where I live, what should I learn next, and what do they pay?**
+**Which tech jobs can I actually get from where I live, what should I learn next, and what do they pay?**
 
-An end-to-end data engineering project that collects ~1,000 data engineering, analytics, BI and data science
-job postings every day from 9 public and licensed sources, models them with dbt, and answers those questions in a
+An end-to-end data engineering project that collects thousands of tech job postings every day (data & AI,
+software engineering, QA & testing, UI/UX design, DevOps & cloud, security, IT) from 9 public and licensed sources, models them with dbt, and answers those questions in a
 self-service dashboard, from the point of view of *one specific person* (their country, role and skills).
 
 ![CI](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg)
@@ -19,7 +19,7 @@ Job boards answer "what jobs exist?". Job seekers need different answers:
 | Question | How the project answers it |
 |---|---|
 | *"Remote" — but remote for whom?* | Parses each remote job's eligibility (worldwide / region / country lists) and matches it to the viewer's country. In the data, only a small fraction of remote data jobs are open worldwide. |
-| *What should I learn next?* | Extracts 73 skills from every description; given the skills you already have, ranks the skill that would make you match the most additional jobs. |
+| *What should I learn next?* | Extracts ~145 skills (languages, frameworks, testing, design, DevOps, data) from every description; given the skills you already have, ranks the skill that would make you match the most additional jobs. |
 | *Where are the jobs?* | Office location (onsite/hybrid) and remote eligibility mapped to countries and regions. |
 | *What does it pay?* | Salaries in any period/currency normalized to annual USD and EUR with daily ECB exchange rates. |
 | *Is demand rising or falling?* | Daily snapshots give skill trends and how long each job stays open. |
@@ -58,6 +58,22 @@ flowchart LR
 | BI | **Metabase** | Dashboard built from code via its REST API (`scripts/setup_metabase.py`) |
 | Packaging | **Docker Compose** | One command brings up the whole stack on a laptop |
 
+## Tracks and roles
+
+Every job gets a **track** and a **role family** from rule-based title classification
+(`dbt/models/intermediate/int_postings_classified.sql`); the role → track mapping is a seed
+(`dbt/seeds/role_tracks.csv`) so it can be regrouped without code changes.
+
+| Track | Role families |
+|---|---|
+| Data & AI | Data Engineer, Analytics Engineer, Data Analyst, BI, Data Scientist, ML/AI Engineer, ... |
+| Software Engineering | Frontend, Backend, Full-Stack, Mobile, Embedded, Software Engineer, Engineering Leadership |
+| QA & Testing | QA Automation Engineer, QA / Test Engineer |
+| UI/UX Design | UX / Product Designer, UI / Visual Designer, UX Researcher |
+| DevOps & Cloud | DevOps / Platform, SRE, Cloud / Infrastructure |
+| Security | Security Engineer / Analyst |
+| IT & Other tech | IT Support / Sysadmin, Systems Analyst, Solutions / Support Engineer, Product Manager, Scrum Master / Agile Coach |
+
 ## Data model
 
 ```mermaid
@@ -67,6 +83,7 @@ erDiagram
     FCT_JOB_POSTINGS ||--o{ BRIDGE_JOB_REGIONS : "located in / open to"
     FCT_JOB_POSTINGS {
         text job_id PK "dedup key across sources"
+        text track
         text role_family
         text seniority
         text work_mode "Remote / Hybrid / Onsite"

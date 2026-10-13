@@ -1,0 +1,37 @@
+role_family,track,track_order
+Data Engineer,Data & AI,1
+Analytics Engineer,Data & AI,1
+Data Analyst,Data & AI,1
+BI Analyst / Developer,Data & AI,1
+Data Scientist,Data & AI,1
+ML / AI Engineer,Data & AI,1
+Business / Domain Analyst,Data & AI,1
+Data Governance / Privacy,Data & AI,1
+Data Product Management,Data & AI,1
+Solutions / Consulting,Data & AI,1
+Data Leadership,Data & AI,1
+Other data role,Data & AI,1
+Software Engineer,Software Engineering,2
+Backend Engineer,Software Engineering,2
+Frontend Engineer,Software Engineering,2
+Full-Stack Engineer,Software Engineering,2
+Mobile Engineer,Software Engineering,2
+Embedded / Firmware Engineer,Software Engineering,2
+Game Developer,Software Engineering,2
+Engineering Leadership,Software Engineering,2
+QA Automation Engineer,QA & Testing,3
+QA / Test Engineer,QA & Testing,3
+UX / Product Designer,UI/UX Design,4
+UI / Visual Designer,UI/UX Design,4
+UX Researcher,UI/UX Design,4
+DevOps / Platform Engineer,DevOps & Cloud,5
+Site Reliability Engineer,DevOps & Cloud,5
+Cloud / Infrastructure Engineer,DevOps & Cloud,5
+Security Engineer / Analyst,Security,6
+IT Support / Systems Admin,IT & Other tech,7
+Systems / IT Analyst,IT & Other tech,7
+Solutions / Support Engineer,IT & Other tech,7
+Product Manager,IT & Other tech,7
+Scrum Master / Agile Coach,IT & Other tech,7
+Other tech role,IT & Other tech,7
+Not a tech role,Not tech,9

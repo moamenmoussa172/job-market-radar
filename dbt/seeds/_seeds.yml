@@ -22,3 +22,8 @@ seeds:
     columns:
       - name: salary_period
         data_tests: [unique, not_null]
+  - name: role_tracks
+    description: Role family -> track (Data & AI, Software Engineering, QA & Testing, ...). Edit to regroup roles.
+    columns:
+      - name: role_family
+        data_tests: [unique, not_null]

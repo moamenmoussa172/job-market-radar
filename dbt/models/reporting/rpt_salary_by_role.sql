@@ -2,7 +2,7 @@
 -- plausible salary. Mostly US postings (pay-transparency laws), so read
 -- these as US-market ranges; job counts show how solid each number is.
 with s as (
-    select role_family, seniority, work_mode, salary_annual_mid_usd as mid_usd
+    select track, role_family, seniority, work_mode, salary_annual_mid_usd as mid_usd
     from {{ ref('fct_job_postings') }}
     where is_active and has_comparable_salary
 ),
@@ -15,6 +15,7 @@ totals as (
 )
 
 select
+    s.track,
     s.role_family,
     s.seniority,
     count(*)                                                              as jobs_with_salary,
@@ -24,4 +25,4 @@ select
     round(percentile_cont(0.75) within group (order by s.mid_usd)::numeric, -3) as p75_usd
 from s
 join totals t using (role_family)
-group by grouping sets ((s.role_family), (s.role_family, s.seniority))
+group by grouping sets ((s.track, s.role_family), (s.track, s.role_family, s.seniority))
