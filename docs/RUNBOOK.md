@@ -41,7 +41,7 @@ replaces the dashboard (old version archived), so run it again after any dashboa
 
 ## Company board registry
 
-`raw.company_boards` holds every Greenhouse/Lever/Ashby/SmartRecruiters/Workable board the pipeline knows
+`raw.company_boards` holds every Greenhouse/Lever/Ashby/SmartRecruiters/Workable/Recruitee/Personio board the pipeline knows
 (SmartRecruiters names are case-sensitive, e.g. `BoschGroup`):
 `candidate` (not checked yet) -> `active` (collected daily) -> `dead` (404, or 3 failed runs in a row).
 - New rows in `dags/jobradar/company_boards.csv` are picked up on the next run and validated first.
@@ -51,10 +51,26 @@ replaces the dashboard (old version archived), so run it again after any dashboa
 
 ## API keys (optional sources)
 
-JSearch and Jooble need keys in `.env` (`JSEARCH_API_KEY`, `JOOBLE_API_KEY`). Without a key the
-source is skipped with a warning. Keys never go in code or git; if a key is exposed, regenerate it.
-Daily budgets: `JSEARCH_REQUESTS_PER_DAY` (default 6, fits the free 200/month) and
-`JOOBLE_REQUESTS_PER_DAY` (default 3). A 401/403/429 answer stops that source for the day.
+JSearch, Jooble and Adzuna need keys in `.env` (`JSEARCH_API_KEY`, `JOOBLE_API_KEY`,
+`ADZUNA_APP_ID` + `ADZUNA_APP_KEY`). Without a key the source is skipped with a warning. Keys never
+go in code or git; if a key is exposed, regenerate it. Daily budgets: `JSEARCH_REQUESTS_PER_DAY`
+(default 6, fits the free 200/month), `JOOBLE_REQUESTS_PER_DAY` (default 3) and
+`ADZUNA_REQUESTS_PER_DAY` (default 40). A 401/403/429 answer stops that source for the day.
+
+## Company list and industries
+
+`dbt/seeds/companies.csv` (company, country, industry, optional board names) does two jobs:
+- **Industry** of each employer for the dashboard's Industry filter. Companies not in the list get
+  an industry from keyword rules on their name (`dbt/seeds/industry_keywords.csv`), else
+  "Not identified".
+- **Finding each company's hiring platform.** The `probe_companies` task tries the company's likely
+  board names (e.g. `mnthalan`, `mnt-halan`, or the `slugs` column) on all 7 platforms, up to
+  `BOARD_PROBES_PER_RUN` requests per run. A board is kept only if its tech jobs mention the company's
+  country. A company with no tech jobs today is tried again after 30 days. Rows with country
+  `Global` are only used for their industry.
+
+To add companies: add rows and run the DAG. Check what was found:
+`select company_name, ats, token, status, note from raw.company_boards where origin = 'probe' and status = 'active';`
 
 ## Daily operation
 
@@ -103,7 +119,7 @@ docker compose exec airflow-scheduler bash -c 'dbt build --project-dir $DBT_PROJ
 
 | Schema | Contents |
 |---|---|
-| `seeds` | `skills`, `geo_patterns`, `salary_periods`, `country_codes` |
+| `seeds` | `skills`, `geo_patterns`, `salary_periods`, `country_codes`, `companies`, `industry_keywords`, `currency_pegs`, `role_tracks` |
 | `staging` | `stg_<source>`: one row per source job, identical columns for all sources |
 | `intermediate` | unioned → classified (role, seniority, work mode) → geo → keyed (job_id) → deduped; `int_job_salary` |
 | `marts` | `fct_job_postings`, `bridge_job_skills`, `bridge_job_regions`, `dim_skills` |
@@ -120,7 +136,8 @@ docker compose exec airflow-scheduler bash -c 'dbt build --project-dir $DBT_PROJ
 | Role → track grouping | `dbt/seeds/role_tracks.csv` |
 | Which titles are collected | `dags/jobradar/filters.py` (`is_tech_role`) |
 | Salary period labels | `dbt/seeds/salary_periods.csv` |
-| Companies collected | `dags/jobradar/company_boards.csv` |
+| Companies collected | `dags/jobradar/company_boards.csv` (known boards), `dbt/seeds/companies.csv` (platform detected automatically) |
+| Industries | `dbt/seeds/companies.csv`, `dbt/seeds/industry_keywords.csv` |
 
 ## Applying code changes
 

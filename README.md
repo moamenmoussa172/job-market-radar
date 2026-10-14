@@ -3,7 +3,7 @@
 **Which tech jobs can I actually get from where I live, what should I learn next, and what do they pay?**
 
 An end-to-end data engineering project that collects thousands of tech job postings every day (data & AI,
-software engineering, QA & testing, UI/UX design, DevOps & cloud, security, IT) from 9 public and licensed sources, models them with dbt, and answers those questions in a
+software engineering, QA & testing, UI/UX design, DevOps & cloud, security, IT) from 14 public and licensed sources, models them with dbt, and answers those questions in a
 self-service dashboard, from the point of view of *one specific person* (their country, role and skills).
 
 ![CI](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg)
@@ -27,15 +27,17 @@ Job boards answer "what jobs exist?". Job seekers need different answers:
 
 ### The dashboard
 
-Seven dropdown filters (Track, Role, Seniority, Work mode, Your country, My skills, Skill to pair) drive five tabs:
+Nine dropdown filters (Industry, Track, Role, Seniority, Work mode, Your country, Must-have skill, Requirements,
+My skills) drive six tabs, and clicking a bar (a track, role, skill, country, industry, ...) sets that filter:
 
 | Tab | What it shows |
 |---|---|
-| 1. Market overview | Active jobs, new this week, remote share, companies hiring, salary coverage and median; jobs by track and work mode; remote vs hybrid vs onsite; most in-demand roles; seniority mix; world map; top hiring companies; new postings per day; newest jobs (click a title to open the posting) |
-| 2. Skills to learn | Top skills and skill areas; next skill to learn for *your* skills; jobs you already match; how in demand your skills are; rising skills; skills that go together; daily skill trend |
-| 3. Where to work | Remote vs hybrid vs onsite; remote jobs by who may apply; top countries; country comparison (jobs, hybrid share, junior jobs, median salary); original job boards |
-| 4. Salary | 25th / median / 75th percentile; salary by role, seniority and country; best-paid skills |
-| 5. Find jobs | Up to 500 jobs you can apply to, best skill match first, with salary and skills to add; click a title to open the posting |
+| 1. Market overview | Tech jobs by industry (banking, fintech, telecom, e-commerce, ...); active jobs, new this week, remote share, companies hiring, salary coverage and median; jobs by track and work mode; remote vs hybrid vs onsite; most in-demand roles; seniority mix; world map; top hiring companies; new postings per day; newest jobs (click a title to open the posting) |
+| 2. Middle East | Jobs by country and track, nationals-only and Arabic-required shares, median salary, top roles and companies, and jobs abroad that offer visa sponsorship or relocation |
+| 3. Skills to learn | Top skills and skill areas; next skill to learn for *your* skills; jobs you already match; how in demand your skills are; rising skills; skills that go together; daily skill trend |
+| 4. Where to work | Remote vs hybrid vs onsite; remote jobs by who may apply; top countries; country comparison (jobs, hybrid share, junior jobs, median salary); original job boards |
+| 5. Salary | 25th / median / 75th percentile; salary by role, seniority and country; best-paid skills |
+| 6. Find jobs | Up to 500 jobs you can apply to, best skill match first, with salary and skills to add; click a title to open the posting |
 
 ## Architecture
 
@@ -79,13 +81,21 @@ Every job gets a **track** and a **role family** from rule-based title classific
 
 | Track | Role families |
 |---|---|
-| Data & AI | Data Engineer, Analytics Engineer, Data Analyst, BI, Data Scientist, ML/AI Engineer, ... |
-| Software Engineering | Frontend, Backend, Full-Stack, Mobile, Embedded, Software Engineer, Engineering Leadership |
+| Data & Analytics | Data Engineer, Analytics Engineer, Data Analyst, BI, Data Scientist, Database Administrator, ... |
+| AI & Machine Learning | ML / AI Engineer, MLOps Engineer, AI Research Scientist / Engineer |
+| Software Engineering | Frontend, Backend, Full-Stack, Mobile, Embedded, Game, Blockchain, Software Engineer, Engineering Leadership |
 | QA & Testing | QA Automation Engineer, QA / Test Engineer |
 | UI/UX Design | UX / Product Designer, UI / Visual Designer, UX Researcher |
 | DevOps & Cloud | DevOps / Platform, SRE, Cloud / Infrastructure |
 | Security | Security Engineer / Analyst |
-| IT & Other tech | IT Support / Sysadmin, Systems Analyst, Solutions / Support Engineer, Product Manager, Scrum Master / Agile Coach |
+| ERP & CRM | ERP / CRM Consultant, ERP / CRM Developer (SAP, Salesforce, Dynamics 365, Oracle apps, ServiceNow, Odoo) |
+| Networks & Telecom | Network Engineer, Telecom Engineer (RF, RAN, core network) |
+| Product & Delivery | Product Manager / Owner, Technical Project / Program Manager, Scrum Master / Agile Coach |
+| IT & Support | IT Support / Sysadmin, Systems / IT Analyst, Solutions / Support Engineer, Technical Writer |
+
+Each job also gets three signals read from its description (`int_job_signals`): **nationals only**
+("Saudi nationals only", Emiratisation roles), **Arabic required**, and **visa sponsorship / relocation
+offered** (explicit refusals such as "unable to sponsor" don't count).
 
 ## Data model
 
@@ -158,7 +168,7 @@ dbt layers: `staging` (one model per source, all with identical columns) → `in
    payloads (regex in SQL), a `sync_boards` task validates new candidates with one request each,
    and working boards join the daily extract; boards failing 3 runs in a row are retired.
    Status lives in `raw.company_boards`, with a monitoring view in dbt.
-10. **Dashboard as code.** The Metabase dashboard (5 tabs, 38 cards, 7 dropdown filters) is created
+10. **Dashboard as code.** The Metabase dashboard (6 tabs, 48 cards, 9 dropdown filters, click-to-filter) is created
    through the REST API, idempotently, so it is versioned and reproducible like the rest of the pipeline.
 
 More detail: [docs/design-decisions.md](docs/design-decisions.md).
@@ -167,14 +177,15 @@ More detail: [docs/design-decisions.md](docs/design-decisions.md).
 
 | Source | What it adds | Usage notes |
 |---|---|---|
-| Greenhouse, Lever, Ashby, SmartRecruiters, Workable public job boards | Company career pages: full descriptions; Lever/Ashby/SmartRecruiters state work mode and often salary | **Self-expanding registry**: ~100 seeds in `dags/jobradar/company_boards.csv`, plus boards discovered automatically from other sources' apply links |
+| Greenhouse, Lever, Ashby, SmartRecruiters, Workable, Recruitee, Personio public job boards | Company career pages: full descriptions; Lever/Ashby/SmartRecruiters/Recruitee state work mode and often salary | **Self-expanding registry**: seeds in `dags/jobradar/company_boards.csv`; ~230 companies in Egypt, the Gulf and Europe in `dbt/seeds/companies.csv` whose hiring platform is detected automatically; plus boards discovered from other sources' apply links |
+| Adzuna | UK and EU job search (10 countries), short snippets; only real (not Adzuna-predicted) salaries are kept | API id + key; 40 rotating searches/day. Jobs by Adzuna |
 | Himalayas | Remote jobs with country and timezone restrictions | Links back to Himalayas kept; no re-posting |
 | Jobicy | Remote jobs with eligibility, level and salary | Polled once a day; source URL kept |
 | Arbeitnow | European jobs, onsite and remote | Newest pages each day |
 | Remotive | Remote jobs (now a small sample feed) | Optional source |
-| JSearch (OpenWeb Ninja) | Google for Jobs data: postings first published on LinkedIn, Indeed, Glassdoor, Bayt and company sites, searched by country (Egypt, UAE, Saudi Arabia, Qatar, Germany, Spain, UK) | API key; free plan 200 requests/month, so 6 rotating searches/day |
-| Jooble | Aggregator incl. regional boards (e.g. Wuzzuf, NaukriGulf partners); short snippets | API key; 3 rotating searches/day |
-| ECB | Daily euro reference exchange rates | Used for salary conversion only |
+| JSearch (OpenWeb Ninja) | Google for Jobs data: postings first published on LinkedIn, Indeed, Glassdoor, Bayt and company sites, searched across the Middle East (Egypt, UAE, Saudi Arabia, Qatar, Kuwait, Bahrain, Oman, Jordan) for 12 tech roles | API key; free plan 200 requests/month, so 6 rotating searches/day |
+| Jooble | Aggregator incl. regional boards (e.g. Wuzzuf, NaukriGulf partners); short snippets | API key; 3 rotating searches/day, Middle East countries |
+| ECB | Daily euro reference exchange rates | Used for salary conversion only. Gulf currencies (AED, SAR, QAR, ...) are pegged to the USD and converted with fixed rates (`dbt/seeds/currency_pegs.csv`); EGP salaries are not converted |
 
 Only data-related titles are stored (English, German, French, Spanish and Dutch title patterns).
 No site is scraped: boards without a public API (LinkedIn, Indeed, Wuzzuf, NaukriGulf) are reached
@@ -220,7 +231,7 @@ dags/
   job_radar_ingest.py        # the DAG: setup → extract[source] → load → check → dbt_build (+ fx_rates)
   jobradar/                  # sources, title filter, S3 raw layer, warehouse loader, ECB FX
 dbt/
-  models/staging/            # stg_<source>: one shape for all 7 sources
+  models/staging/            # stg_<source>: one shape for all 14 sources
   models/intermediate/       # classify, geo, job key, dedup, salary
   models/marts/              # fct_job_postings, bridges, dim_skills
   models/reporting/          # dashboard-ready aggregates

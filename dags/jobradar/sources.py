@@ -12,6 +12,7 @@ import datetime as dt
 import logging
 import os
 import time
+import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
@@ -40,6 +41,12 @@ def _get_json(url: str, params: dict | None = None, headers: dict | None = None)
                         headers={"User-Agent": USER_AGENT, **(headers or {})})
     resp.raise_for_status()
     return resp.json()
+
+
+def _get_text(url: str, params: dict | None = None) -> str:
+    resp = requests.get(url, params=params, timeout=TIMEOUT, headers={"User-Agent": USER_AGENT})
+    resp.raise_for_status()
+    return resp.text
 
 
 def _post_json(url: str, body: dict) -> dict | list:
@@ -111,8 +118,11 @@ LEVER_URLS = ["https://api.lever.co/v0/postings/{token}", "https://api.eu.lever.
 ASHBY_URL = "https://api.ashbyhq.com/posting-api/job-board/{token}"
 SMARTRECRUITERS_URL = "https://api.smartrecruiters.com/v1/companies/{token}/postings"
 WORKABLE_URL = "https://www.workable.com/api/accounts/{token}"
+RECRUITEE_URL = "https://{token}.recruitee.com/api/offers/"           # public Careers Site API
+PERSONIO_URLS = ["https://{token}.jobs.personio.de/xml",                # public XML job feed
+                 "https://{token}.jobs.personio.com/xml"]
 
-BOARD_ATS = ("greenhouse", "lever", "ashby", "smartrecruiters", "workable")
+BOARD_ATS = ("greenhouse", "lever", "ashby", "smartrecruiters", "workable", "recruitee", "personio")
 # SmartRecruiters company identifiers are case-sensitive (e.g. "BoschGroup").
 CASE_SENSITIVE_ATS = ("smartrecruiters",)
 
@@ -201,18 +211,68 @@ def _fetch_workable(token: str) -> list[dict]:
     return [{**j, "account_name": payload.get("name")} for j in jobs if is_tech_role(j.get("title"))]
 
 
+def _fetch_recruitee(token: str) -> list[dict]:
+    payload = _get_json(RECRUITEE_URL.format(token=token))
+    offers = payload.get("offers") if isinstance(payload, dict) else None
+    if offers is None:
+        raise ValueError(f"recruitee '{token}' returned no offers list")
+    return [o for o in offers if is_tech_role(o.get("title"))]
+
+
+def parse_personio_xml(xml_text: str) -> list[dict]:
+    """<workzag-jobs><position>...</position></workzag-jobs> -> list of dicts."""
+    root = ET.fromstring(xml_text)
+    if root.tag != "workzag-jobs":
+        raise ValueError(f"not a Personio feed (root <{root.tag}>)")
+    jobs = []
+    for pos in root.findall("position"):
+        job: dict = {}
+        for child in pos:
+            if child.tag == "additionalOffices":
+                job["additionalOffices"] = [o.text for o in child.findall("office") if o.text]
+            elif child.tag == "jobDescriptions":
+                job["jobDescriptions"] = [
+                    {"name": (d.findtext("name") or "").strip(), "value": (d.findtext("value") or "").strip()}
+                    for d in child.findall("jobDescription")
+                ]
+            else:
+                job[child.tag] = (child.text or "").strip()
+        jobs.append(job)
+    return jobs
+
+
+def _fetch_personio(token: str) -> list[dict]:
+    last_exc: Exception | None = None
+    for url in PERSONIO_URLS:
+        try:
+            jobs = parse_personio_xml(_get_text(url.format(token=token)))
+        except (requests.HTTPError, ET.ParseError) as exc:
+            last_exc = exc
+            continue
+        return [{**j, "job_url": f"https://{token}.jobs.personio.de/job/{j.get('id')}"}
+                for j in jobs if is_tech_role(j.get("name"))]
+    if isinstance(last_exc, ET.ParseError):
+        raise ValueError(f"personio '{token}' did not return a job feed")
+    raise last_exc or requests.HTTPError(f"personio '{token}' not found")
+
+
 ATS_FETCHERS: dict[str, Callable[[str], list[dict]]] = {
     "greenhouse": _fetch_greenhouse,
     "lever": _fetch_lever,
     "ashby": _fetch_ashby,
     "smartrecruiters": _fetch_smartrecruiters,
     "workable": _fetch_workable,
+    "recruitee": _fetch_recruitee,
+    "personio": _fetch_personio,
 }
 
 
 def extract_company_boards(ats: str, tokens: list[str] | None = None,
-                           pause_seconds: float = 0.5) -> ExtractResult:
+                           pause_seconds: float = 0.5, meta: dict[str, dict] | None = None) -> ExtractResult:
+    """meta: token -> {"company": .., "country": ..} from the company list (attached to records,
+    used when a feed has no company name or country, e.g. Personio and Recruitee)."""
     tokens = tokens if tokens is not None else load_board_tokens(ats)
+    meta = meta or {}
     fetch = ATS_FETCHERS[ats]
     keep: list[dict] = []
     warnings: list[str] = []
@@ -225,7 +285,10 @@ def extract_company_boards(ats: str, tokens: list[str] | None = None,
             status[token] = None
             continue
         status[token] = len(jobs)
-        keep.extend({**job, "board_token": token} for job in jobs)
+        extra = {"board_token": token}
+        if meta.get(token):
+            extra.update({f"board_{k}": v for k, v in meta[token].items() if v})
+        keep.extend({**job, **extra} for job in jobs)
         time.sleep(pause_seconds)
     ok_boards = sum(1 for v in status.values() if v is not None)
     if tokens and ok_boards == 0:
@@ -234,24 +297,47 @@ def extract_company_boards(ats: str, tokens: list[str] | None = None,
     return ExtractResult(ats, keep, warnings, status)
 
 
-def extract_greenhouse(tokens: list[str] | None = None, pause_seconds: float = 0.5) -> ExtractResult:
-    return extract_company_boards("greenhouse", tokens, pause_seconds)
+def extract_greenhouse(tokens: list[str] | None = None, pause_seconds: float = 0.5,
+                  meta: dict | None = None) -> ExtractResult:
+    return extract_company_boards("greenhouse", tokens, pause_seconds, meta)
 
 
-def extract_lever(tokens: list[str] | None = None, pause_seconds: float = 0.5) -> ExtractResult:
-    return extract_company_boards("lever", tokens, pause_seconds)
+def extract_lever(tokens: list[str] | None = None, pause_seconds: float = 0.5,
+                  meta: dict | None = None) -> ExtractResult:
+    return extract_company_boards("lever", tokens, pause_seconds, meta)
 
 
-def extract_ashby(tokens: list[str] | None = None, pause_seconds: float = 0.5) -> ExtractResult:
-    return extract_company_boards("ashby", tokens, pause_seconds)
+def extract_ashby(tokens: list[str] | None = None, pause_seconds: float = 0.5,
+                  meta: dict | None = None) -> ExtractResult:
+    return extract_company_boards("ashby", tokens, pause_seconds, meta)
 
 
-def extract_smartrecruiters(tokens: list[str] | None = None, pause_seconds: float = 0.5) -> ExtractResult:
-    return extract_company_boards("smartrecruiters", tokens, pause_seconds)
+def extract_smartrecruiters(tokens: list[str] | None = None, pause_seconds: float = 0.5,
+                  meta: dict | None = None) -> ExtractResult:
+    return extract_company_boards("smartrecruiters", tokens, pause_seconds, meta)
 
 
-def extract_workable(tokens: list[str] | None = None, pause_seconds: float = 0.5) -> ExtractResult:
-    return extract_company_boards("workable", tokens, pause_seconds)
+def extract_workable(tokens: list[str] | None = None, pause_seconds: float = 0.5,
+                  meta: dict | None = None) -> ExtractResult:
+    return extract_company_boards("workable", tokens, pause_seconds, meta)
+
+
+def extract_recruitee(tokens: list[str] | None = None, pause_seconds: float = 0.5,
+                      meta: dict | None = None) -> ExtractResult:
+    return extract_company_boards("recruitee", tokens, pause_seconds, meta)
+
+
+def extract_personio(tokens: list[str] | None = None, pause_seconds: float = 0.5,
+                     meta: dict | None = None) -> ExtractResult:
+    return extract_company_boards("personio", tokens, pause_seconds, meta)
+
+
+def recruitee_id(record: dict) -> str:
+    return f"{record['board_token']}:{record.get('id') or record.get('slug')}"
+
+
+def personio_id(record: dict) -> str:
+    return f"{record['board_token']}:{record['id']}"
 
 
 def smartrecruiters_id(record: dict) -> str:
@@ -383,11 +469,17 @@ def extract_himalayas(queries: list[str] | None = None, max_pages: int = 5,
 # list of (role, country) searches; every pair is covered every few days.
 # Jobs from these sources stay "active" for ACTIVE_WINDOW_DAYS (see dbt).
 # --------------------------------------------------------------------------- #
+# Europe is covered by Adzuna, so the key-based searches focus on the Middle East,
+# where few companies use the public job-board platforms.
 SEARCH_COUNTRIES = [  # (ISO code, name used in free-text queries)
     ("eg", "Egypt"), ("ae", "United Arab Emirates"), ("sa", "Saudi Arabia"), ("qa", "Qatar"),
-    ("de", "Germany"), ("es", "Spain"), ("gb", "United Kingdom"),
+    ("kw", "Kuwait"), ("bh", "Bahrain"), ("om", "Oman"), ("jo", "Jordan"),
 ]
-SEARCH_ROLES = ["data engineer", "data analyst", "software engineer", "frontend developer",
+# Countries first, so each day's slice spreads over several countries.
+SEARCH_ROLES = ["software engineer", "data engineer", "data analyst", "developer", "devops engineer",
+                "qa engineer", "cyber security", "network engineer", "sap consultant", "product manager",
+                "ux designer", "machine learning engineer"]
+ADZUNA_ROLES = ["data engineer", "data analyst", "software engineer", "frontend developer",
                 "backend developer", "qa engineer", "ux designer", "devops engineer"]
 
 
@@ -448,7 +540,7 @@ JOOBLE_PER_DAY = int(os.environ.get("JOOBLE_REQUESTS_PER_DAY", "3"))
 
 
 def jooble_pairs() -> list[tuple[str, str]]:
-    roles = ["data engineer", "software developer", "qa tester", "ux designer"]
+    roles = ["software developer", "data", "it", "network engineer", "qa tester", "ux designer"]
     return [(role, name) for role in roles for _, name in SEARCH_COUNTRIES]
 
 
@@ -482,6 +574,50 @@ def jooble_id(record: dict) -> str:
     return str(record.get("id") or record.get("link"))
 
 
+# Adzuna: job search API for the UK and most of the EU (Egypt / Gulf not covered).
+# Needs ADZUNA_APP_ID + ADZUNA_APP_KEY. Free plan limits are per day/week/month,
+# so a fixed daily budget walks through (role, country) pairs. Attribution
+# ("Jobs by Adzuna") is required wherever the data is shown.
+ADZUNA_URL = "https://api.adzuna.com/v1/api/jobs/{country}/search/1"
+ADZUNA_PER_DAY = int(os.environ.get("ADZUNA_REQUESTS_PER_DAY", "40"))
+ADZUNA_COUNTRIES = ["gb", "de", "nl", "fr", "es", "it", "pl", "at", "be", "ch"]
+
+
+def adzuna_pairs() -> list[tuple[str, str]]:
+    return [(role, c) for role in ADZUNA_ROLES for c in ADZUNA_COUNTRIES]
+
+
+def extract_adzuna(pairs: list | None = None, pause_seconds: float = 2.5) -> ExtractResult:
+    app_id = os.environ.get("ADZUNA_APP_ID", "").strip()
+    app_key = os.environ.get("ADZUNA_APP_KEY", "").strip()
+    if not app_id or not app_key:
+        return ExtractResult("adzuna", [], ["ADZUNA_APP_ID / ADZUNA_APP_KEY not set - source skipped"])
+    pairs = pairs if pairs is not None else daily_slice(adzuna_pairs(), ADZUNA_PER_DAY)
+    keep: dict[str, dict] = {}
+    warnings: list[str] = []
+    for role, country in pairs:
+        try:
+            payload = _get_json(ADZUNA_URL.format(country=country), params={
+                "app_id": app_id, "app_key": app_key, "what": role,
+                "results_per_page": 50, "max_days_old": 30, "content-type": "application/json"})
+        except requests.HTTPError as exc:
+            code = exc.response.status_code if exc.response is not None else "?"
+            warnings.append(f"adzuna '{role}' in {country} failed: HTTP {code}")
+            if code in (401, 403, 429):
+                break  # bad key or quota used up
+            continue
+        for job in payload.get("results") or []:
+            if is_tech_role(job.get("title")) and job.get("id"):
+                keep[str(job["id"])] = {**job, "search_query": role, "search_country": country}
+        time.sleep(pause_seconds)  # free plan allows ~25 requests a minute
+    log.info("adzuna: %s searches, %s tech jobs", len(pairs), len(keep))
+    return ExtractResult("adzuna", list(keep.values()), warnings)
+
+
+def adzuna_id(record: dict) -> str:
+    return str(record["id"])
+
+
 # --------------------------------------------------------------------------- #
 @dataclass(frozen=True)
 class SourceSpec:
@@ -502,7 +638,10 @@ SOURCES: dict[str, SourceSpec] = {
     "smartrecruiters": SourceSpec(extract_smartrecruiters, smartrecruiters_id, required=False,
                                   board_ats="smartrecruiters"),
     "workable": SourceSpec(extract_workable, workable_id, required=False, board_ats="workable"),
+    "recruitee": SourceSpec(extract_recruitee, recruitee_id, required=False, board_ats="recruitee"),
+    "personio": SourceSpec(extract_personio, personio_id, required=False, board_ats="personio"),
     # key-based aggregators: optional (missing key / quota reached only warns)
     "jsearch": SourceSpec(extract_jsearch, jsearch_id, required=False),
     "jooble": SourceSpec(extract_jooble, jooble_id, required=False),
+    "adzuna": SourceSpec(extract_adzuna, adzuna_id, required=False),
 }

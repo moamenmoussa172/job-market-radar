@@ -122,12 +122,13 @@ def test_himalayas_paginates_filters_and_dedupes(monkeypatch):
 
 def test_all_sources_registered():
     assert set(sources.SOURCES) == {"remotive", "jobicy", "himalayas", "arbeitnow", "greenhouse", "lever",
-                                    "ashby", "jsearch", "jooble", "smartrecruiters", "workable"}
+                                    "ashby", "jsearch", "jooble", "smartrecruiters", "workable",
+                                    "recruitee", "personio", "adzuna"}
 
 
 def test_optional_sources():
     assert {s for s, spec in sources.SOURCES.items() if not spec.required} == {
-        "remotive", "jsearch", "jooble", "smartrecruiters", "workable"}
+        "remotive", "jsearch", "jooble", "smartrecruiters", "workable", "recruitee", "personio", "adzuna"}
 
 
 def test_daily_slice_rotates_through_every_pair():
@@ -145,8 +146,10 @@ def test_daily_slice_rotates_through_every_pair():
 def test_keyless_sources_skip_without_calling(monkeypatch):
     monkeypatch.delenv("JSEARCH_API_KEY", raising=False)
     monkeypatch.delenv("JOOBLE_API_KEY", raising=False)
+    monkeypatch.delenv("ADZUNA_APP_ID", raising=False)
+    monkeypatch.setenv("ADZUNA_APP_KEY", "only-the-key")
     monkeypatch.setattr(sources, "_get_json", lambda *a, **k: (_ for _ in ()).throw(AssertionError("called")))
-    for fn in (sources.extract_jsearch, sources.extract_jooble):
+    for fn in (sources.extract_jsearch, sources.extract_jooble, sources.extract_adzuna):
         res = fn()
         assert res.records == [] and "not set" in res.warnings[0]
 
@@ -351,3 +354,106 @@ def test_workable_filters_and_rejects_non_boards(monkeypatch):
 def test_csv_rows_are_valid():
     rows = sources.load_board_rows()
     assert len(rows) > 40 and all(a in sources.BOARD_ATS for a, _ in rows)
+
+
+# ---------------------------------------------------------------- update 17
+PERSONIO_XML = """<?xml version="1.0" encoding="UTF-8"?>
+<workzag-jobs>
+  <position>
+    <id>111</id><subcompany>Acme GmbH</subcompany><office>Berlin</office>
+    <additionalOffices><office>Munich</office></additionalOffices>
+    <department>Tech</department><name>Senior Data Engineer (m/w/d)</name>
+    <jobDescriptions><jobDescription><name>Your tasks</name><value><![CDATA[<p>Spark &amp; dbt</p>]]></value></jobDescription></jobDescriptions>
+    <employmentType>permanent</employmentType><seniority>experienced</seniority>
+    <createdAt>2026-10-01T10:00:00+00:00</createdAt>
+  </position>
+  <position><id>222</id><office>Berlin</office><name>Office Manager</name></position>
+</workzag-jobs>"""
+
+
+def test_personio_parses_xml_filters_and_builds_url(monkeypatch):
+    monkeypatch.setattr(sources, "_get_text", lambda url, params=None: PERSONIO_XML)
+    res = sources.extract_personio(tokens=["acme"], pause_seconds=0,
+                                   meta={"acme": {"company": "Acme", "country": "Germany"}})
+    assert [sources.personio_id(r) for r in res.records] == ["acme:111"]
+    rec = res.records[0]
+    assert rec["additionalOffices"] == ["Munich"]
+    assert rec["jobDescriptions"][0]["value"] == "<p>Spark &amp; dbt</p>"
+    assert rec["job_url"] == "https://acme.jobs.personio.de/job/111"
+    assert rec["board_company"] == "Acme" and rec["board_country"] == "Germany"
+
+
+def test_personio_non_feed_is_not_a_board(monkeypatch):
+    from jobradar import boards
+    monkeypatch.setattr(sources, "_get_text", lambda url, params=None: "<html><body>hi</body></html>")
+    assert boards.validate_board("personio", "nothere") == ("dead", None)
+
+
+def test_recruitee_filters_offers(monkeypatch):
+    fake = {"offers": [{"id": 1, "title": "Backend Engineer", "country_code": "EG"},
+                       {"id": 2, "title": "Accountant"}]}
+    monkeypatch.setattr(sources, "_get_json", lambda url, params=None: fake)
+    res = sources.extract_recruitee(tokens=["acme"], pause_seconds=0)
+    assert [sources.recruitee_id(r) for r in res.records] == ["acme:1"]
+
+
+def test_adzuna_sends_both_keys_filters_and_stops_on_quota(monkeypatch):
+    import requests
+    monkeypatch.setenv("ADZUNA_APP_ID", "id1")
+    monkeypatch.setenv("ADZUNA_APP_KEY", "key1")
+    calls = []
+
+    def fake_get(url, params=None, headers=None):
+        calls.append((url, params))
+        if len(calls) == 2:
+            r = requests.Response(); r.status_code = 429
+            raise requests.HTTPError("quota", response=r)
+        return {"results": [{"id": 9, "title": "<strong>Data</strong> Engineer"}, {"id": 8, "title": "Nurse"}]}
+    monkeypatch.setattr(sources, "_get_json", fake_get)
+    res = sources.extract_adzuna(pairs=[("data engineer", "de"), ("qa engineer", "gb"), ("x", "nl")],
+                                 pause_seconds=0)
+    assert len(calls) == 2  # stopped after the 429
+    assert calls[0][0].endswith("/jobs/de/search/1")
+    assert calls[0][1]["app_id"] == "id1" and calls[0][1]["app_key"] == "key1"
+    assert [r["id"] for r in res.records] == [9] and "429" in res.warnings[0]
+
+
+def test_new_ats_tokens_harvested():
+    from jobradar import boards
+    text = "apply at https://acme.recruitee.com/o/data-engineer or https://beta-co.jobs.personio.de/job/1"
+    assert {("recruitee", "acme"), ("personio", "beta-co")} <= boards.tokens_in_text(text)
+    assert not boards.tokens_in_text("https://www.recruitee.com/")
+
+
+def test_probe_tokens_cover_every_platform():
+    from jobradar import boards
+    pairs = boards.probe_tokens("Delivery Hero")
+    assert ("greenhouse", "deliveryhero") in pairs and ("lever", "delivery-hero") in pairs
+    assert ("smartrecruiters", "DeliveryHero") in pairs
+    assert {a for a, _ in pairs} == set(sources.BOARD_ATS)
+    assert boards.probe_tokens("Bosch", "BoschGroup") == [(a, "BoschGroup" if a == "smartrecruiters" else "boschgroup")
+                                                          for a in sources.BOARD_ATS]
+
+
+def test_probe_checks_the_country(monkeypatch):
+    from jobradar import boards
+    jobs = {"egy": [{"title": "Data Engineer", "location": {"name": "Cairo, Egypt"}}],
+            "other": [{"title": "Data Engineer", "location": {"name": "Austin, TX"}}],
+            "empty": []}
+    monkeypatch.setitem(sources.ATS_FETCHERS, "greenhouse", lambda token: jobs[token])
+    assert boards.probe_board("greenhouse", "egy", "Egypt") == ("active", None)
+    assert boards.probe_board("greenhouse", "other", "Egypt")[0] == "dead"
+    assert boards.probe_board("greenhouse", "empty", "Egypt")[0] == "candidate"
+    # "uae" must be a whole word, not part of another word
+    assert not boards.matches_country([{"t": "Guaeco"}], "United Arab Emirates")
+    assert boards.matches_country([{"t": "Remote - MENA"}], "Saudi Arabia")
+
+
+def test_company_list_is_valid():
+    from jobradar import boards
+    rows = boards.load_companies()
+    assert len(rows) > 200
+    countries = {r["country"] for r in rows}
+    assert {"Egypt", "United Arab Emirates", "Saudi Arabia", "Qatar"} <= countries
+    assert countries <= set(boards.COUNTRY_KEYWORDS) | {"Global"}
+    assert all(r["industry"] for r in rows)

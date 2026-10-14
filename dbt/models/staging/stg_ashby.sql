@@ -30,7 +30,8 @@ select
     'ashby'::text                                           as source,
     source_job_id,
     nullif(trim(p ->> 'title'), '')                         as job_title,
-    initcap(replace(p ->> 'board_token', '-', ' '))         as company_name,
+    coalesce(nullif(p ->> 'board_company', ''), initcap(replace(p ->> 'board_token', '-', ' ')))
+                                                            as company_name,
     locations                                               as location_text,
     case wp when 'remote' then true when 'onsite' then false end
                                                             as is_remote_flag,

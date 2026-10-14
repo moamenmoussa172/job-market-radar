@@ -26,6 +26,12 @@ select
             then case when job_title ~* 'automat|sdet|selenium|cypress|playwright|appium|\mqe\M|software\s+(development\s+)?engineer\s+in\s+test'
                       then 'QA Automation Engineer' else 'QA / Test Engineer' end
 
+        -- ------------------------------------------------- ERP & CRM (SAP, Salesforce, Dynamics, Oracle apps)
+        when job_title ~* '\msap\M|\mabap\M|s/4\s*hana|salesforce|\msfdc\M|dynamics\s*365|dynamics\s+(crm|ax|nav)|\md365\M|business\s+central|oracle\s+(e-?business|ebs|fusion|erp|apps|hcm|scm|financials|cloud\s+(erp|hcm|financials))|servicenow|\modoo\M|power\s+(apps|platform|automate)|\m(erp|crm)\s+(developer|consultant|engineer|specialist|analyst|administrator|architect|lead|manager)'
+         and job_title !~* 'data\s+(engineer|analyst|scientist)|analytics'
+            then case when job_title ~* 'develop|engineer|\mabap\M|\mapex\M|technical|programmer|architect'
+                      then 'ERP / CRM Developer' else 'ERP / CRM Consultant' end
+
         -- --------------------------------------------------------------- Data & AI
         when job_title ~* 'governance|data\s+protection|privacy|datenschutz|data\s+steward|data\s+catalog|\mgdpr\M'
             then 'Data Governance / Privacy'
@@ -37,12 +43,20 @@ select
               and job_title ~* 'data\s*(platforms?|systems?|infrastructure|ops|pipelines?|factory|extraction|lake|integration)|distributed\s+data|\mdataops\M|data\s*&\s*(ai\s+)?(platforms?|systems?)|data\s*/\s*software|data\s+enablement')
           or job_title ~* 'data\s+(and|&)\s+(ai|analytics)\s+(engineer|architect)'
             then 'Data Engineer'
+        when job_title ~* '\mmlops\M|ml\s*ops|machine\s+learning\s+(platform|infrastructure|ops)\s+engineer|\mllmops\M'
+            then 'MLOps Engineer'
+        when job_title ~* '(research|applied)\s+scientist|\mai\s+researcher|research\s+engineer'
+         and job_title !~* 'data\s+scien|clinical|market|ux|user'
+            then 'AI Research Scientist / Engineer'
         when job_title ~* 'data\s+scien|\mscientist\M|scientifique\s+des\s+données|científico\s+de\s+datos'
             then 'Data Scientist'
         when job_title ~* 'machine\s+learning|\mml\M|\mmlops\M|deep\s+learning|\mnlp\M|computer\s+vision|\mai\s+(engineer|developer|researcher|architect)|\mllm\M|genai|\mai(\s*/\s*|\s+)(agent|safety|agentic|platform|applied|research)\s+(engineers?|developers?|scientists?)|agent(ic)?\s+(ai\s+)?engineer|ai\s+safety'
             then 'ML / AI Engineer'
         when job_title ~* 'business\s+intelligence|\mbi\M|power\s*bi|tableau|looker|\mreporting\s+(analyst|developer|engineer|specialist)'
             then 'BI Analyst / Developer'
+
+        when job_title ~* '\mdba\M|\mdbre\M|database\s+(administrator|admin|engineer|reliability|specialist|architect)'
+            then 'Database Administrator'
 
         -- --------------------------------------------------------------- Security
         when job_title ~* '\msecurity\M|\mcyber|\msoc\M|penetration|pen\s*test|\mappsec\M|\minfosec\M|\miam\s+(engineer|analyst)|threat|vulnerabilit|\mgrc\M'
@@ -62,8 +76,14 @@ select
         when job_title ~* 'data\s+analy|analytics|analyst|datenanaly|analyste|analista|insights?\s+(analyst|lead|manager|specialist)'
             then 'Data Analyst'
 
+        -- ---------------------------------------------------------- Networks & telecom
+        when job_title ~* 'telecom|\mrf\s+(engineer|planning|optimi[sz]ation)|\mran\M|\m(5g|lte|volte)\M|core\s+network|transmission\s+engineer|\mmicrowave\M|\mbss\M|\moss\M|packet\s+core'
+            then 'Telecom Engineer'
+        when job_title ~* 'network\s+(engineer|administrator|admin|architect|specialist|analyst|operations|support|lead)|\mnoc\M|\mvoip\M|unified\s+communications|wireless\s+engineer|\mccnp\M|\mccie\M|sd-?wan'
+            then 'Network Engineer'
+
         -- --------------------------------------------------------- IT, DevOps & cloud
-        when job_title ~* 'it\s+support|help\s*desk|service\s+desk|desktop\s+support|sys(tem)?\s*admin|system\s+administrator|systemadministrat|network\s+(engineer|administrator|admin)|it\s+(administrator|technician|specialist|engineer)|fachinformatiker'
+        when job_title ~* 'it\s+support|help\s*desk|service\s+desk|desktop\s+support|sys(tem)?\s*admin|system\s+administrator|systemadministrat|it\s+(administrator|technician|specialist|engineer)|fachinformatiker'
             then 'IT Support / Systems Admin'
         when job_title ~* '\msre\M|site\s+reliability'
             then 'Site Reliability Engineer'
@@ -72,15 +92,26 @@ select
         when job_title ~* 'cloud\s+(engineer|architect|developer|specialist|consultant)|\m(aws|azure|gcp)\s+(engineer|architect|developer)|infrastructure|systems?\s+engineer'
             then 'Cloud / Infrastructure Engineer'
 
-        -- -------------------------------------------------------- delivery / agile
-        when job_title ~* 'scrum\s+master|agile\s+coach|delivery\s+(enabler|manager|lead)|release\s+train\s+engineer'
+        -- -------------------------------------------------------- product & delivery
+        when job_title ~* 'scrum\s+master|agile\s+coach|delivery\s+enabler|release\s+train\s+engineer'
             then 'Scrum Master / Agile Coach'
+        when (job_title ~* '(technical|it|software|digital|engineering|tech|delivery|implementation)\s+(project|program|programme|delivery)\s+(manager|lead)|delivery\s+(manager|lead)|\mpmo\M'
+              or (job_title ~* '(project|program|programme)\s+manager' and job_title ~* '\m(it|software|digital|technology|technical|cloud|platform|erp|data|ai)\M'))
+         and job_title !~* 'construction|civil|mechanical|electrical|clinical|marketing|events?'
+            then 'Technical Project / Program Manager'
+        when job_title ~* 'product\s+(manager|owner|lead|director)|produktmanager|product\s+owner|chef\s+de\s+produit|head\s+of\s+product|\mcpo\M'
+         and job_title !~* '\m(data|daten|données|datos|analytics|bi|ml|insights?)\M|product\s+(marketing|designer)'
+            then 'Product Manager / Owner'
+        when job_title ~* 'technical\s+writer|documentation\s+engineer|technical\s+(content|documentation)\s+(writer|specialist)|api\s+writer'
+            then 'Technical Writer'
 
         -- ------------------------------------------------------- Software engineering
         when job_title ~* 'go[\s-]to[\s-]market\s+engineer|\mgtm\s+engineer'
             then 'Solutions / Support Engineer'
         when job_title ~* '(engineering|software|development|technical)\s+(manager|director)|\m(manager|director|head)\M[^,]*,\s*(software\s+)?engineering|director\s+of\s+(software\s+)?engineering|head\s+of\s+(engineering|software|technology|development)|\mcto\M|vp\s+(of\s+)?engineering|chief\s+technology'
             then 'Engineering Leadership'
+        when job_title ~* 'blockchain|\mweb3\M|solidity|smart\s+contracts?|\mdefi\M'
+            then 'Blockchain Engineer'
         when job_title ~* '\m(ios|android|mobile|flutter|react\s+native|swiftui|kotlin\s+multiplatform|xamarin)\M'
             then 'Mobile Engineer'
         when job_title ~* 'full[\s-]?stack|fullstack'
@@ -115,7 +146,7 @@ select
 
         -- ------------------------------------------------------------ other tech
         when job_title ~* 'product\s+(manager|owner)|produktmanager|chef\s+de\s+produit'
-            then 'Product Manager'
+            then 'Product Manager / Owner'
         else 'Other tech role'
     end as role_family,
 
@@ -158,6 +189,6 @@ from p
 
 select
     c.*,
-    coalesce(rt.track, 'IT & Other tech') as track
+    coalesce(rt.track, 'IT & Support') as track
 from classified c
 left join {{ ref('role_tracks') }} rt using (role_family)

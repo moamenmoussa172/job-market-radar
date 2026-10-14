@@ -29,9 +29,21 @@ jobs as (
     join {{ ref('int_postings_deduped') }} d using (job_id)
 ),
 
-rates as (
+ecb as (
     select rate_date, upper(currency) as currency, units_per_eur
     from {{ source('raw', 'fx_rates') }}
+),
+
+-- Gulf currencies (AED, SAR, QAR, ...) are pegged to the US dollar and not in the
+-- ECB list: derive their EUR rate from the day's USD rate (seeds/currency_pegs.csv).
+rates as (
+    select * from ecb
+    union all
+    select u.rate_date, p.currency, p.units_per_usd * u.units_per_eur
+    from ecb u
+    cross join {{ ref('currency_pegs') }} p
+    where u.currency = 'USD'
+      and p.currency not in (select currency from ecb)
 ),
 
 with_rates as (

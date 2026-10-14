@@ -13,8 +13,11 @@ models:
           - not_null
           - accepted_values:
               arguments:
-                values: ['Data & AI', 'Software Engineering', 'QA & Testing', 'UI/UX Design',
-                         'DevOps & Cloud', 'Security', 'IT & Other tech']
+                values: ['Data & Analytics', 'AI & Machine Learning', 'Software Engineering', 'QA & Testing',
+                         'UI/UX Design', 'DevOps & Cloud', 'Security', 'ERP & CRM', 'Networks & Telecom',
+                         'Product & Delivery', 'IT & Support']
+      - name: industry
+        data_tests: [not_null]
       - name: role_family
         data_tests:
           - not_null

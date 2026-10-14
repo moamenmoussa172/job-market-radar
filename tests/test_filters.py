@@ -27,6 +27,11 @@ KEEP = [
     # AI roles with an engineering / data word stay; agile delivery is collected too
     "AI Engineer", "AI Safety Engineer (Data)", "AI/Agent Engineers", "Head of AI Research",
     "Machine Learning Engineer, Growth", "Scrum Master", "Agile Coach",
+    # ERP & CRM, networks & telecom, product & delivery, databases, docs, web3
+    "SAP FICO Consultant", "Salesforce Developer", "Dynamics 365 Functional Consultant", "ABAP Developer",
+    "ServiceNow Developer", "Odoo Developer", "NOC Engineer", "RF Optimization Engineer", "Telecom Engineer",
+    "Database Administrator", "Product Owner", "Technical Project Manager", "Technical Writer",
+    "Blockchain Developer", "MLOps Engineer",
 ]
 
 DROP = [
@@ -40,6 +45,7 @@ DROP = [
     "Growth Marketer- Reception.ai", "Senior AI Specialist (Operations)", "AI Talent Pool",
     "Analytical Chemistry Specialist - Freelance AI Trainer Project", "Warehouse Employee",
     "Data Assistant", "Medical Data Officer",
+    "Construction Project Manager", "Marketing Project Manager", "Product Marketing Manager",
 ]
 
 

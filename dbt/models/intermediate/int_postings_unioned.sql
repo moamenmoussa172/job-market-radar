@@ -4,9 +4,9 @@
 -- Rotating sources (a different slice of searches each day) can't use that
 -- rule: their jobs stay active if seen within the last N days.
 {% set sources = ['remotive', 'jobicy', 'himalayas', 'arbeitnow', 'greenhouse', 'lever', 'ashby',
-                  'smartrecruiters', 'workable', 'jsearch', 'jooble'] %}
-{% set rotating_sources = ['jsearch', 'jooble'] %}
-{% set rotating_active_days = 14 %}
+                  'smartrecruiters', 'workable', 'recruitee', 'personio', 'jsearch', 'jooble', 'adzuna'] %}
+{% set rotating_sources = ['jsearch', 'jooble', 'adzuna'] %}
+{% set rotating_active_days = 21 %}  {# > one full search cycle (JSearch: ~16 days) #}
 
 with unioned as (
     {% for s in sources %}

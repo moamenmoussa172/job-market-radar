@@ -70,6 +70,18 @@ _TECH_INCLUDE = re.compile(
     | \b(it\ support|help\s?desk|service\ desk|sys(tem)?\s*admin|system\ administrator|network\ (engineer|administrator))\b
     | \b(cto|vp\ (of\ )?engineering|head\ of\ engineering|engineering\ manager)\b
     | scrum\ master | agile\ coach
+    # ERP & CRM platforms
+    | \bsap\b | \babap\b | s/4\s*hana | salesforce | \bsfdc\b | dynamics\s*365 | dynamics\ (crm|ax|nav) | \bd365\b
+    | business\ central | oracle\ (e-?business|ebs|fusion|erp|apps|hcm|scm|financials|cloud|apex|dba|database)
+    | servicenow | \bodoo\b | power\ (apps|platform|automate) | \b(erp|crm)\ (developer|consultant|engineer|specialist|analyst|administrator|architect)
+    # networks & telecom, databases
+    | network\ (engineer|administrator|admin|architect|specialist|operations|support) | \bnoc\b | telecom | \brf\ (engineer|planning|optimi)
+    | \bran\ engineer | core\ network | \b(5g|lte)\b | \bvoip\b | sd-?wan | \bccn[ap]\b | \bccie\b
+    | \bdba\b | database\ (administrator|admin|engineer|reliability|architect)
+    # product & delivery, docs, web3
+    | product\ (manager|owner) | produktmanager | \bpmo\b | delivery\ manager
+    | (technical|it|software|digital|engineering|tech|implementation)\ (project|program|programme)\ manager
+    | technical\ writer | documentation\ engineer | blockchain | \bweb3\b | solidity | smart\ contract
     # German / French / Spanish / Dutch
     | entwickler | softwareentwickl | informatiker | fachinformatiker | systemadministrat | testautomat
     | d[ée]veloppeu | ing[ée]nieur\ (logiciel|devops|cloud|qa|test) | testeur

@@ -35,11 +35,14 @@ keyed as (
             when 'ashby'      then 1
             when 'smartrecruiters' then 1
             when 'workable'   then 1
+            when 'recruitee'  then 1
+            when 'personio'   then 1
             when 'himalayas'  then 2   -- structured eligibility + salary
             when 'jobicy'     then 3
             when 'arbeitnow'  then 4
             when 'jsearch'    then 4   -- full description, original board in tags_text
             when 'jooble'     then 6   -- snippet only
+            when 'adzuna'     then 6   -- snippet only
             else 5
         end as source_priority
     from p

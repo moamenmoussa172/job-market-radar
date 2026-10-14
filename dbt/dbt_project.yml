@@ -52,6 +52,21 @@ seeds:
       +column_types:
         code: text
         country: text
+    currency_pegs:
+      +column_types:
+        currency: text
+        units_per_usd: numeric
+    companies:
+      +column_types:
+        company: text
+        country: text
+        industry: text
+        slugs: text
+    industry_keywords:
+      +column_types:
+        priority: integer
+        industry: text
+        pattern: text
     geo_patterns:
       +column_types:
         pattern: text

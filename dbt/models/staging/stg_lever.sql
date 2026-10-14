@@ -21,7 +21,8 @@ select
     'lever'::text                                           as source,
     source_job_id,
     nullif(trim(p ->> 'text'), '')                          as job_title,
-    initcap(replace(p ->> 'board_token', '-', ' '))         as company_name,
+    coalesce(nullif(p ->> 'board_company', ''), initcap(replace(p ->> 'board_token', '-', ' ')))
+                                                            as company_name,
     nullif(concat_ws(', ', locations, country_name), '')    as location_text,
     case wp when 'remote' then true when 'on-site' then false end
                                                             as is_remote_flag,

@@ -14,6 +14,7 @@ select
     d.job_id,
     d.job_title,
     d.company_name,
+    coalesce(ind.industry, 'Not identified')    as industry,
     d.track,
     d.role_family,
     d.seniority,
@@ -40,6 +41,9 @@ select
     sal.annual_mid_eur                          as salary_annual_mid_eur,
     coalesce(sal.salary_is_plausible, false)    as has_comparable_salary,
     d.employment_type,
+    coalesce(sig.nationals_only, false)            as nationals_only,
+    coalesce(sig.arabic_required, false)           as arabic_required,
+    coalesce(sig.offers_visa_or_relocation, false) as offers_visa_or_relocation,
     d.posted_at,
     d.job_first_seen_date                       as first_seen_date,
     d.job_last_seen_date                        as last_seen_date,
@@ -54,4 +58,6 @@ select
 from d
 left join scope using (posting_key)
 left join {{ ref('int_job_salary') }} sal using (job_id)
+left join {{ ref('int_company_industry') }} ind on ind.company_name = d.company_name
+left join {{ ref('int_job_signals') }} sig using (job_id)
 where d.role_family <> 'Not a tech role'

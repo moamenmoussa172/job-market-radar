@@ -1,0 +1,20 @@
+priority,industry,pattern
+1,Banking & Financial Services,\m(bank|banque|banco|bancaria|sparkasse|credit\s+union|capital\s+markets|asset\s+management|investment|securities|brokerage|hermes)\M
+2,Fintech & Payments,\m(pay|payments?|fintech|wallet|lending|finance|financial|crypto|exchange|remit\w*|money)\M|pay\M
+3,Insurance,\m(insurance|insurtech|assurance|takaful|reinsurance|versicherung)\M
+4,Telecom,\m(telecom\w*|vodafone|orange|etisalat|ooredoo|zain|mobily|stc|du|t-mobile|telefonica|deutsche\s+telekom|telekom|wireless)\M
+5,Healthcare,\m(health\w*|hospital|clinic\w*|medical|pharma\w*|biotech|therapeutics|diagnostics|care)\M
+6,E-commerce & Retail,\m(retail|commerce|e-?commerce|shop\w*|store|marketplace|grocery|fashion|supermarket)\M
+7,Food & Delivery,\m(food\w*|delivery|restaurants?|kitchens?|meal\w*)\M
+8,Logistics & Mobility,\m(logistics|shipping|freight|express|courier|mobility|transport\w*|cargo|ride|fleet|automotive|cars?)\M
+9,Travel & Hospitality,\m(travel|airlines?|airways|hotels?|hospitality|tourism|booking|aviation)\M
+10,Energy & Utilities,\m(energy|oil|gas|petroleum|power|electric\w*|utilities|solar|renewables?)\M
+11,Real Estate & PropTech,\m(real\s+estate|properties|property|realty|homes|developments?|proptech)\M
+12,Education,\m(university|academy|school|education\w*|edtech|learning|college)\M
+13,Government & Public Sector,\m(government|ministry|authority|municipality|public\s+sector|agency|council)\M
+14,IT Services & Consulting,\m(consult\w*|solutions|systems|services|outsourcing|technologies|accenture|deloitte|pwc|kpmg|ey|capgemini|cognizant|infosys|wipro|tcs)\M
+15,Gaming,\m(games?|gaming|studios?|interactive)\M
+16,Media & Entertainment,\m(media|music|entertainment|streaming|news|publishing|broadcast\w*)\M
+17,AI & Data,\m(ai|artificial\s+intelligence|analytics|data)\M
+18,Automotive & Manufacturing,\m(manufactur\w*|industrial|industries|factory|semiconductor\w*|electronics)\M
+19,Software & SaaS,\m(software|saas|cloud|labs?|apps?|tech|technology|\.io|\.ai)\M

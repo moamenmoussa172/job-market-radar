@@ -145,3 +145,28 @@ Agile / Scrum,Practice,\magile\M|\mscrum\M|\mkanban\M
 Jira,Practice,\mjira\M
 System design,Practice,system\s+design|distributed\s+systems|scalab(le|ility)\s+(systems?|architecture)
 Testing practices (TDD),Practice,\mtdd\M|test[\s-]driven|unit\s+tests?|integration\s+tests?
+SAP S/4HANA,ERP & CRM,\msap\M|s/4\s*hana|sap\s+hana
+ABAP,ERP & CRM,\mabap\M
+SAP FICO,ERP & CRM,\mfico\M|sap\s+fi(/|\s*-\s*)co
+Salesforce,ERP & CRM,salesforce|\msfdc\M|lightning\s+web\s+components?|\mlwc\M
+Microsoft Dynamics 365,ERP & CRM,dynamics\s*365|dynamics\s+(crm|ax|nav)|\md365\M|business\s+central
+Oracle ERP / EBS,ERP & CRM,oracle\s+(e-?business|ebs|fusion|erp|cloud\s+erp|hcm|scm|financials)
+ServiceNow,ERP & CRM,servicenow
+Odoo,ERP & CRM,\modoo\M
+Power Platform,ERP & CRM,power\s+(apps|automate|platform)
+Cisco / CCNA,Networking,\mcisco\M|\mccn[ap]\M|\mccie\M
+Routing & switching,Networking,routing\s+(and|&)\s+switching|\mbgp\M|\mospf\M|\mmpls\M
+Firewalls,Networking,\mfirewalls?\M|fortinet|fortigate|palo\s+alto|checkpoint\s+firewall|check\s+point\s+(firewall|ngfw)
+5G / LTE / RAN,Networking,\m5g\M|\mlte\M|\mvolte\M|radio\s+access\s+network|\mo-?ran\M|\mran\s+(engineer|planning|optimi[sz]ation)
+SD-WAN,Networking,sd-?wan
+VMware,DevOps,vmware|vsphere|\mesxi\M
+Windows Server / AD,DevOps,windows\s+server|active\s+directory
+Database administration,Database,\mdba\M|database\s+administrat|backup\s+(and|&)\s+recovery
+Solidity / Web3,Blockchain,solidity|\mweb3\M|smart\s+contracts?|ethereum
+Product discovery,Product,product\s+discovery|user\s+stor(y|ies)|product\s+roadmaps?
+PMP / PRINCE2,Product,\mpmp\M|prince\s*2
+Kanban,Product,\mkanban\M
+RAG / Vector DBs,ML / AI,\mrag\M|retrieval[\s-]augmented|vector\s+(database|db|store)s?|pinecone|weaviate|pgvector
+LangChain / LlamaIndex,ML / AI,langchain|llama\s*index
+Computer vision,ML / AI,computer\s+vision|opencv|\myolo\M
+NLP,ML / AI,\mnlp\M|natural\s+language\s+processing|hugging\s*face

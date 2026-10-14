@@ -1,5 +1,5 @@
 """Self-expanding registry of company career boards (Greenhouse, Lever, Ashby,
-SmartRecruiters, Workable).
+SmartRecruiters, Workable, Recruitee, Personio).
 
 Lifecycle of a board in raw.company_boards:
 
@@ -12,13 +12,23 @@ Lifecycle of a board in raw.company_boards:
   Those tokens are collected from the last days of raw snapshots.
 * validate: each candidate gets one request; a working board becomes active.
   A capped number per day keeps the run short and polite to the APIs.
+* probe: dbt/seeds/companies.csv lists companies (name, country, industry) without
+  knowing which hiring platform they use. Each company's likely board names are tried
+  on every platform; a board is kept only if its tech jobs mention the company's
+  country (so a different company with the same name is not picked up). Once one
+  platform matches, the company's other guesses are skipped.
 * extract: the daily extract uses all active boards (falls back to the CSV seed
   list if the registry is empty), and records success/failure per board.
 """
 from __future__ import annotations
 
+import csv
+import json
 import logging
+import os
 import re
+import time
+from pathlib import Path
 
 import requests
 
@@ -30,6 +40,11 @@ MAX_VALIDATIONS_PER_RUN = 60   # discovered boards checked per run
 MAX_SEED_VALIDATIONS = 300
 DEAD_AFTER_FAILURES = 3
 HARVEST_DAYS = 7
+MAX_PROBES_PER_RUN = int(os.environ.get("BOARD_PROBES_PER_RUN", "800"))
+PROBE_RECHECK_DAYS = 30
+PROBE_PAUSE_SECONDS = 0.3   # a company with no tech jobs today is tried again a month later
+COMPANIES_FILE = Path(os.environ.get("DBT_PROJECT_DIR") or Path(__file__).resolve().parents[2] / "dbt") \
+    / "seeds" / "companies.csv"
 
 DDL = """
 CREATE SCHEMA IF NOT EXISTS raw;
@@ -46,6 +61,10 @@ CREATE TABLE IF NOT EXISTS raw.company_boards (
     data_jobs_last_run    integer,
     PRIMARY KEY (ats, token)
 );
+ALTER TABLE raw.company_boards ADD COLUMN IF NOT EXISTS company_name text;
+ALTER TABLE raw.company_boards ADD COLUMN IF NOT EXISTS country text;
+ALTER TABLE raw.company_boards ADD COLUMN IF NOT EXISTS industry text;
+ALTER TABLE raw.company_boards ADD COLUMN IF NOT EXISTS note text;
 """
 
 # Python and Postgres (ARE) share this regex syntax; one capture group = token.
@@ -55,8 +74,11 @@ TOKEN_PATTERNS = {
     "ashby": r"jobs\.ashbyhq\.com/([A-Za-z0-9_.-]+)",
     "smartrecruiters": r"(?:jobs|careers)\.smartrecruiters\.com/([A-Za-z0-9_-]+)",
     "workable": r"apply\.workable\.com/(?!j/)([A-Za-z0-9_-]+)",  # /j/<code> is a job, not an account
+    "recruitee": r"([A-Za-z0-9-]+)\.recruitee\.com",
+    "personio": r"([A-Za-z0-9-]+)\.jobs\.personio\.(?:de|com)",
 }
-_NOT_TOKENS = {"embed", "api", "v1", "jobs", "job", "j", "boards", "careers", "search", "apply", "oneclick-ui", ""}
+_NOT_TOKENS = {"embed", "api", "v1", "jobs", "job", "j", "boards", "careers", "search", "apply", "oneclick-ui",
+               "www", "app", "help", "support", "docs", "blog", ""}
 
 
 def normalize_token(raw: str, ats: str = "greenhouse") -> str | None:
@@ -151,7 +173,8 @@ def validate_candidates(conn, limit: int = MAX_VALIDATIONS_PER_RUN) -> dict[str,
              where status = 'candidate' and origin = 'seed' order by token limit %s)
             union all
             (select ats, token from raw.company_boards
-             where status = 'candidate' and origin <> 'seed' order by first_seen_at, token limit %s)
+             where status = 'candidate' and origin not in ('seed', 'probe')
+             order by first_seen_at, token limit %s)
             """,
             (MAX_SEED_VALIDATIONS, limit),
         )
@@ -180,6 +203,177 @@ def validate_candidates(conn, limit: int = MAX_VALIDATIONS_PER_RUN) -> dict[str,
         conn.commit()
     log.info("validate: %s checked -> %s", len(todo), counts)
     return counts
+
+
+# --------------------------------------------------------------------------- #
+# Probing: find which hiring platform each listed company uses
+# --------------------------------------------------------------------------- #
+# Words that show a board belongs to a company in that country (searched in its jobs).
+COUNTRY_KEYWORDS = {
+    "Egypt": ["egypt", "cairo", "giza", "alexandria", "mansoura", "6th of october", "new capital"],
+    "United Arab Emirates": ["united arab emirates", "uae", "dubai", "abu dhabi", "sharjah", "ajman"],
+    "Saudi Arabia": ["saudi", "ksa", "riyadh", "jeddah", "dammam", "khobar", "neom"],
+    "Qatar": ["qatar", "doha"],
+    "Kuwait": ["kuwait"],
+    "Bahrain": ["bahrain", "manama"],
+    "Oman": ["oman", "muscat"],
+    "Jordan": ["jordan", "amman"],
+    "Netherlands": ["netherlands", "amsterdam", "rotterdam", "utrecht", "eindhoven", "the hague"],
+    "Germany": ["germany", "deutschland", "berlin", "munich", "münchen", "hamburg", "frankfurt", "cologne"],
+    "United Kingdom": ["united kingdom", "london", "manchester", "edinburgh", "uk"],
+    "Spain": ["spain", "españa", "madrid", "barcelona", "valencia"],
+    "France": ["france", "paris", "lyon"],
+    "Sweden": ["sweden", "stockholm"],
+    "Finland": ["finland", "helsinki"],
+    "Estonia": ["estonia", "tallinn"],
+    "Lithuania": ["lithuania", "vilnius", "kaunas"],
+}
+_MENA = ["mena", "middle east", "gcc"]
+MENA_COUNTRIES = ("Egypt", "United Arab Emirates", "Saudi Arabia", "Qatar", "Kuwait", "Bahrain", "Oman", "Jordan")
+
+
+def load_companies(path: Path = COMPANIES_FILE) -> list[dict]:
+    if not path.exists():
+        log.warning("company list %s not found - probing skipped", path)
+        return []
+    with path.open(encoding="utf-8") as fh:
+        return [r for r in csv.DictReader(fh) if (r.get("company") or "").strip()]
+
+
+def slug_candidates(company: str, slugs: str = "") -> list[str]:
+    """Likely board names: explicit ones from the CSV, else 'mnthalan' and 'mnt-halan'."""
+    explicit = [x.strip() for x in (slugs or "").split(";") if x.strip()]
+    if explicit:
+        return explicit
+    words = re.sub(r"[^A-Za-z0-9]+", " ", company).split()
+    out = ["".join(words).lower(), "-".join(words).lower()]
+    return list(dict.fromkeys(t for t in out if t))
+
+
+def probe_tokens(company: str, slugs: str = "") -> list[tuple[str, str]]:
+    pairs = []
+    for slug in slug_candidates(company, slugs):
+        for ats in sources.BOARD_ATS:
+            if ats in sources.CASE_SENSITIVE_ATS and slug.islower():
+                # SmartRecruiters ids are case-sensitive and usually CamelCase ("DeliveryHero")
+                words = re.sub(r"[^A-Za-z0-9]+", " ", company).split()
+                token = "".join(w[:1].upper() + w[1:] for w in words) if slug == "".join(words).lower() else slug
+            else:
+                token = slug
+            token = normalize_token(token, ats)
+            if token:
+                pairs.append((ats, token))
+    return list(dict.fromkeys(pairs))
+
+
+def seed_probes(conn, companies: list[dict]) -> int:
+    """Insert every (platform, guessed board name) as a probe candidate with company metadata.
+    Boards already in the registry (CSV seeds, discovered) just get the metadata attached."""
+    rows = []
+    for c in companies:
+        if (c.get("country") or "").strip() == "Global":
+            continue  # already in the board list; listed only for their industry
+        for ats, token in probe_tokens(c["company"], c.get("slugs", "")):
+            rows.append((ats, token, c["company"].strip(), (c.get("country") or "").strip() or None,
+                         (c.get("industry") or "").strip() or None))
+    if not rows:
+        return 0
+    with conn.cursor() as cur:
+        cur.executemany(
+            """
+            insert into raw.company_boards (ats, token, origin, company_name, country, industry)
+            values (%s, %s, 'probe', %s, %s, %s)
+            on conflict (ats, token) do update set
+                company_name = coalesce(raw.company_boards.company_name, excluded.company_name),
+                country      = coalesce(raw.company_boards.country, excluded.country),
+                industry     = coalesce(raw.company_boards.industry, excluded.industry)
+            """,
+            rows,
+        )
+    conn.commit()
+    return len(rows)
+
+
+def matches_country(jobs: list[dict], country: str | None) -> bool:
+    if not country or country not in COUNTRY_KEYWORDS:
+        return True  # nothing to check against
+    text = json.dumps(jobs, ensure_ascii=False).lower()
+    words = COUNTRY_KEYWORDS[country] + (_MENA if country in MENA_COUNTRIES else [])
+    return any(re.search(r"(?<![a-z])" + re.escape(w) + r"(?![a-z])", text) for w in words)
+
+
+def probe_board(ats: str, token: str, country: str | None) -> tuple[str, str | None]:
+    """-> (status, note). active = board exists and its tech jobs are in the company's country."""
+    try:
+        jobs = sources.ATS_FETCHERS[ats](token)
+    except requests.HTTPError as exc:
+        code = exc.response.status_code if exc.response is not None else None
+        return ("dead", "not found") if code in (404, 410, None) else ("retry", f"HTTP {code}")
+    except ValueError:
+        return "dead", "not a job board"
+    except (requests.ConnectionError, requests.Timeout):
+        return "retry", "network"
+    if not jobs:
+        return "candidate", "no tech jobs to verify yet"
+    if matches_country(jobs, country):
+        return "active", None
+    return "dead", f"jobs not in {country} (probably a different company)"
+
+
+def validate_probes(conn, limit: int = MAX_PROBES_PER_RUN) -> dict[str, int]:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            select b.ats, b.token, b.country, b.company_name
+            from raw.company_boards b
+            where b.status = 'candidate' and b.origin = 'probe'
+              and (b.last_checked_at is null or b.last_checked_at < now() - %s * interval '1 day')
+              and not exists (select 1 from raw.company_boards a
+                              where a.company_name = b.company_name and a.status = 'active')
+            order by b.last_checked_at nulls first, b.company_name, b.ats
+            limit %s
+            """,
+            (PROBE_RECHECK_DAYS, limit),
+        )
+        todo = cur.fetchall()
+    counts = {"active": 0, "dead": 0, "candidate": 0, "retry": 0, "skipped": 0}
+    found: set[str] = set()
+    for ats, token, country, company in todo:
+        if company in found:
+            counts["skipped"] += 1
+            continue
+        status, note = probe_board(ats, token, country)
+        counts[status] += 1
+        time.sleep(PROBE_PAUSE_SECONDS)
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                update raw.company_boards
+                set status = %s, note = %s,
+                    -- network errors are retried next run; everything else waits for the recheck
+                    last_checked_at = case when %s = 'retry' then null else now() end,
+                    last_ok_at = case when %s = 'active' then now() else last_ok_at end
+                where ats = %s and token = %s
+                """,
+                ("candidate" if status == "retry" else status, note, status, status, ats, token),
+            )
+        conn.commit()
+        if status == "active":
+            found.add(company)
+            log.info("probe: %s uses %s (%s)", company, ats, token)
+    log.info("probe: %s checked -> %s", len(todo), counts)
+    return counts
+
+
+def board_meta(conn, ats: str) -> dict[str, dict]:
+    """token -> {"company", "country"} for active boards that came from the company list."""
+    with conn.cursor() as cur:
+        cur.execute(
+            "select token, company_name, country from raw.company_boards "
+            "where ats = %s and status = 'active' and company_name is not null",
+            (ats,),
+        )
+        return {t: {"company": c, "country": k} for t, c, k in cur.fetchall()}
 
 
 def active_tokens(conn, ats: str) -> list[str]:

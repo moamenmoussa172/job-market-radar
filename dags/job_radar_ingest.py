@@ -1,6 +1,7 @@
 """Daily pipeline: job sources -> raw object storage -> Postgres -> dbt models.
 
     setup ─► sync_boards ─► extract[source] ─► load[source] ─► check ─┬─► dbt_build
+                        └─► probe_companies (find each listed company's hiring platform)
              (mapped over SOURCES, one task per source)              │
     setup ─► fx_rates (ECB rates, for salary conversion) ────────────┘
                                                         load ─► discover_boards
@@ -12,8 +13,8 @@ check:   fails the run if a source returned nothing (pipeline health check).
 fx_rates: last 90 days of ECB reference rates -> S3 + raw.fx_rates. It never
           fails the run: if ECB is unreachable, dbt uses the last known rates.
 dbt_build: seeds + staging/intermediate/marts models + all dbt tests.
-sync_boards / discover_boards: the self-expanding company board registry
-          (see jobradar/boards.py). Neither ever fails the run.
+sync_boards / discover_boards / probe_companies: the self-expanding company
+          board registry (see jobradar/boards.py). None of them ever fails the run.
 """
 from __future__ import annotations
 
@@ -70,6 +71,19 @@ def job_radar_ingest():
         return {"seeded": seeded, **counts}
 
     @task
+    def probe_companies() -> dict:
+        """Find which hiring platform each company in dbt/seeds/companies.csv uses."""
+        conn = PostgresHook(postgres_conn_id=WAREHOUSE_CONN_ID).get_conn()
+        try:
+            boards.seed_probes(conn, boards.load_companies())
+            return boards.validate_probes(conn)
+        except Exception as exc:  # noqa: BLE001 - probing is best-effort
+            log.warning("company probing failed: %s", exc)
+            return {}
+        finally:
+            conn.close()
+
+    @task
     def discover_boards(_loaded: list[dict]) -> int:
         """Harvest board links from today's (and recent) raw payloads -> new candidates."""
         conn = PostgresHook(postgres_conn_id=WAREHOUSE_CONN_ID).get_conn()
@@ -90,7 +104,7 @@ def job_radar_ingest():
             tokens = boards.active_tokens(conn, spec.board_ats)
             log.info("%s: %s active boards in registry", source, len(tokens))
             # empty registry (first run, or sync failed): use the CSV list
-            result = spec.extract(tokens=tokens or None)
+            result = spec.extract(tokens=tokens or None, meta=boards.board_meta(conn, spec.board_ats))
             if tokens:
                 boards.record_extraction(conn, spec.board_ats, result.board_status)
             conn.close()
@@ -167,6 +181,8 @@ def job_radar_ingest():
     s >> synced
     extracted = extract.expand(source=list(SOURCES))
     synced >> extracted
+    # runs next to the extracts; boards it finds are collected from the next run on
+    synced >> probe_companies()
     rates = fx_rates()
     s >> rates
     loaded = load.expand(meta=extracted)

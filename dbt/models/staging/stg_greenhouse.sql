@@ -6,7 +6,7 @@ select
     'greenhouse'::text                                      as source,
     source_job_id,
     nullif(trim(p ->> 'title'), '')                         as job_title,
-    coalesce(nullif(trim(p ->> 'company_name'), ''), p ->> 'board_token')
+    coalesce(nullif(trim(p ->> 'company_name'), ''), nullif(p ->> 'board_company', ''), p ->> 'board_token')
                                                             as company_name,
     nullif(trim(p -> 'location' ->> 'name'), '')            as location_text,
     null::boolean                                           as is_remote_flag,

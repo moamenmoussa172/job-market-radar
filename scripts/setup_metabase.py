@@ -194,12 +194,23 @@ ELIGIBLE_FROM_COUNTRY = """exists (
   )"""
 
 _FILTERS = [
+    ("industry", "f.industry = {{industry}}"),
     ("track", "f.track = {{track}}"),
     ("role", "f.role_family = {{role}}"),
     ("seniority", "f.seniority = {{seniority}}"),
     ("work_mode", "f.work_mode = {{work_mode}}"),
     ("country", ELIGIBLE_FROM_COUNTRY),
+    ("skill", "exists (select 1 from marts.bridge_job_skills sk where sk.job_id = f.job_id and sk.skill = {{skill}})"),
+    ("requirement", "case {{requirement}}"
+                    " when 'Visa / relocation offered' then f.offers_visa_or_relocation"
+                    " when 'Open to all nationalities' then not f.nationals_only"
+                    " when 'Nationals only' then f.nationals_only"
+                    " when 'Arabic required' then f.arabic_required"
+                    " when 'Arabic not required' then not f.arabic_required"
+                    " else true end"),
 ]
+REQUIREMENTS = ["Visa / relocation offered", "Open to all nationalities", "Nationals only",
+                "Arabic required", "Arabic not required"]
 
 
 def where(*skip: str) -> str:
@@ -255,8 +266,8 @@ def usd_k(expr: str) -> str:
     return f"'$' || round({expr} / 1000.0)::int || 'k'"
 
 
-JOB_TABLE_COLUMNS = ["Job title", "Company", "Skill match", "Role", "Seniority", "Work mode",
-                     "Location / who may apply", "Salary (USD / year)", "Skills to add", "Posted", "Found on"]
+JOB_TABLE_COLUMNS = ["Job title", "Company", "Industry", "Skill match", "Role", "Seniority", "Work mode",
+                     "Location / who may apply", "Salary (USD / year)", "Notes", "Skills to add", "Posted", "Found on"]
 JOB_TABLE_VIZ = {
     "table.row_index": False,
     # job_url stays in the result (hidden) so the job title can link to it
@@ -282,12 +293,16 @@ gaps as (
   select job_id, string_agg(skill_name, ', ' order by skill_name) as skills_to_add
   from js where skill not in (select skill from me) group by 1
 )
-select f.job_title as "Job title", f.company_name as "Company",
+select f.job_title as "Job title", f.company_name as "Company", f.industry as "Industry",
        s.known::numeric / nullif(s.total, 0) as "Skill match",
        f.role_family as "Role", f.seniority as "Seniority", f.work_mode as "Work mode",
        coalesce(f.remote_eligibility_text, f.location_text) as "Location / who may apply",
        case when f.has_comparable_salary then
          {usd_k('f.salary_annual_min_usd')} || ' - ' || {usd_k('f.salary_annual_max_usd')} end as "Salary (USD / year)",
+       nullif(concat_ws(', ',
+           case when f.offers_visa_or_relocation then 'Visa / relocation offered' end,
+           case when f.nationals_only then 'Nationals only' end,
+           case when f.arabic_required then 'Arabic required' end), '') as "Notes",
        g.skills_to_add as "Skills to add",
        {POSTED} as "Posted",
        f.listed_on as "Found on",
@@ -313,19 +328,40 @@ group by 1, 2 order by 3 desc"""
 
 TABS = [
     ("overview", "1. Market overview"),
-    ("skills", "2. Skills to learn"),
-    ("where", "3. Where to work"),
-    ("salary", "4. Salary"),
-    ("jobs", "5. Find jobs"),
+    ("mena", "2. Middle East"),
+    ("skills", "3. Skills to learn"),
+    ("where", "4. Where to work"),
+    ("salary", "5. Salary"),
+    ("jobs", "6. Find jobs"),
 ]
+MENA = "f.primary_region = 'MENA'"
 
 # Text cards: (tab, row, height, markdown)
+CLICKS = {  # card key -> {result column: dashboard filter it sets when clicked}
+    "by_track": {"track": "track"}, "work_mode_overview": {"work_mode": "work_mode"},
+    "work_mode": {"work_mode": "work_mode"}, "roles_demand": {"role": "role"},
+    "seniority": {"seniority": "seniority"}, "by_industry": {"industry": "industry"},
+    "top_skills": {"skill": "skill"}, "next_skill": {"skill": "skill"}, "rising_skills": {"skill": "skill"},
+    "my_skill_demand": {"skill": "skill"}, "salary_by_role": {"role": "role"},
+    "salary_by_seniority": {"seniority": "seniority"}, "salary_by_industry": {"industry": "industry"},
+    "salary_by_skill": {"skill": "skill"},
+    "onsite_countries": {"country": "country"}, "me_by_country": {"country": "country"},
+    "me_roles": {"role": "role"},
+}
+
 TEXTS = [
     ("overview", 0, 2,
-     "**Start here.** Use the dropdowns above: pick a **Track** or **Role**, and **Your country** to see only jobs "
+     "**Start here.** Use the dropdowns above: pick a **Track** or **Role**, an **Industry** (banking, fintech, "
+     "telecom, ...), and **Your country** to see only jobs "
      "you can apply to (local office/hybrid jobs plus remote jobs open to your region). Every card follows the "
-     "filters. More detail in the tabs: **Skills to learn**, **Where to work**, **Salary**, **Find jobs**. "
-     "Data: active tech job postings from 11 sources, refreshed daily."),
+     "filters, and you can **click any bar** to filter by it. Pick a **Must-have skill** to see only jobs that "
+     "ask for it. More detail in the tabs: **Middle East**, **Skills to learn**, **Where to work**, **Salary**, "
+     "**Find jobs**. Data: active tech job postings from 14 sources, refreshed daily."),
+    ("mena", 0, 2,
+     "**Middle East.** Tech jobs in Egypt, the Gulf, Jordan and North Africa. *Nationals only* = the posting is "
+     "limited to Saudi / Emirati / Qatari / ... nationals; *Arabic required* = Arabic is a required language; "
+     "*Visa / relocation* = the employer offers sponsorship or relocation (useful for moving abroad). "
+     "Use the **Requirements** filter to hide nationals-only jobs. Click a country or role to filter."),
     ("skills", 0, 2,
      "**What to learn next.** Pick your **Role**, then tick the skills you already have in **My skills**. "
      "*Next skill to learn* shows the one skill that would make you a match (60%+ of a job's listed skills) "
@@ -387,8 +423,16 @@ CARDS = [
              f"group by 1, {SENIORITY_ORDER} order by {SENIORITY_ORDER}"),
     dict(key="map_overview", tab="overview", name="Office & hybrid jobs on the map", display="map",
          pos=(24, 0, 12, 9), viz=MAP_VIZ, sql=MAP_SQL),
+    dict(key="by_industry", tab="overview",
+         name="Tech jobs by industry (company list + name rules; 'Not identified' hidden)", display="row",
+         pos=(33, 0, 24, 10),
+         viz={"graph.dimensions": ["industry", "track"], "graph.metrics": ["jobs"],
+              "stackable.stack_type": "stacked", "graph.max_categories_enabled": False},
+         sql=f"""select f.industry, f.track, count(*) as jobs from {FACT}
+where {where('industry')} and f.industry <> 'Not identified'
+group by 1, 2 order by sum(count(*)) over (partition by f.industry) desc, 1, 2"""),
     dict(key="new_per_day", tab="overview", name="New postings per day (last 30 days)", display="line",
-         pos=(33, 0, 24, 6),
+         pos=(43, 0, 24, 6),
          viz={"graph.dimensions": ["posted_date"], "graph.metrics": ["jobs"], "graph.x_axis.title_text": ""},
          sql=f"select {POSTED} as posted_date, count(*) as jobs from {FACT} "
              f"where {where()} and {POSTED} >= current_date - 30 group by 1 order by 1"),
@@ -402,16 +446,83 @@ from {FACT} where {where()} and f.company_name is not null
 group by 1 order by 2 desc, 1 limit 50"""),
 
     dict(key="newest_jobs", tab="overview", name="Newest jobs for you (click a job title to open it)",
-         display="table", pos=(39, 0, 24, 12), viz=JOB_TABLE_VIZ, sql=job_table_sql("newest", 100)),
+         display="table", pos=(49, 0, 24, 12), viz=JOB_TABLE_VIZ, sql=job_table_sql("newest", 100)),
 
-    # =========================== 2. Skills to learn ===========================
-    dict(key="top_skills", tab="skills", name="Top skills employers ask for (% of jobs)", display="row",
+    # =========================== 2. Middle East ===========================
+    dict(key="me_jobs", tab="mena", name="Tech jobs in the Middle East", display="scalar", pos=(2, 0, 6, 3),
+         viz={}, sql=f"select count(*) as jobs from {FACT} where {where('country')} and {MENA}"),
+    dict(key="me_nationals", tab="mena", name="Limited to nationals", display="scalar", pos=(2, 6, 6, 3),
+         viz={"column_settings": col("share", **PCT)},
+         sql=f"select avg(f.nationals_only::int)::numeric as share from {FACT} "
+             f"where {where('country', 'requirement')} and {MENA}"),
+    dict(key="me_arabic", tab="mena", name="Arabic required", display="scalar", pos=(2, 12, 6, 3),
+         viz={"column_settings": col("share", **PCT)},
+         sql=f"select avg(f.arabic_required::int)::numeric as share from {FACT} "
+             f"where {where('country', 'requirement')} and {MENA}"),
+    dict(key="me_salary", tab="mena", name="Median salary (USD / year)", display="scalar", pos=(2, 18, 6, 3),
+         viz={"column_settings": col("median_usd", **USD)},
+         sql=f"select round(percentile_cont(0.5) within group (order by f.salary_annual_mid_usd)::numeric, -3) "
+             f"as median_usd from {FACT} where {where('country')} and {MENA} and f.has_comparable_salary"),
+    dict(key="me_by_country", tab="mena", name="Jobs by country and track (click a country to filter)",
+         display="row", pos=(5, 0, 14, 10),
+         viz={"graph.dimensions": ["country", "track"], "graph.metrics": ["jobs"],
+              "stackable.stack_type": "stacked", "graph.max_categories_enabled": False},
+         sql=f"""select f.primary_country as country, f.track, count(*) as jobs from {FACT}
+where {where('country')} and {MENA} and f.primary_country is not null
+group by 1, 2 order by sum(count(*)) over (partition by f.primary_country) desc, 1, 2"""),
+    dict(key="me_country_table", tab="mena", name="Compare Middle East countries", display="table",
+         pos=(5, 14, 10, 10),
+         viz={"column_settings": {**col("Nationals only", **PCT), **col("Arabic required", **PCT),
+                                  **col("Median salary (USD)", **USD)}},
+         sql=f"""select f.primary_country as "Country", count(*) as "Jobs",
+       avg(f.nationals_only::int)::numeric as "Nationals only",
+       avg(f.arabic_required::int)::numeric as "Arabic required",
+       count(*) filter (where f.work_mode = 'Remote') as "Remote",
+       case when count(*) filter (where f.has_comparable_salary) >= 3 then
+         round(percentile_cont(0.5) within group (order by f.salary_annual_mid_usd)
+               filter (where f.has_comparable_salary)::numeric, -3) end as "Median salary (USD)"
+from {FACT}
+where {where('country', 'requirement')} and {MENA} and f.primary_country is not null
+group by 1 order by 2 desc"""),
+    dict(key="me_roles", tab="mena", name="Most in-demand roles in the Middle East", display="row",
+         pos=(15, 0, 12, 10),
+         viz={"graph.dimensions": ["role"], "graph.metrics": ["jobs"], "graph.show_values": True},
+         sql=f"""select f.role_family as role, count(*) as jobs from {FACT}
+where {where('role', 'country')} and {MENA} group by 1 order by 2 desc limit 15"""),
+    dict(key="me_companies", tab="mena", name="Middle East companies hiring the most", display="table",
+         pos=(15, 12, 12, 10), viz={},
+         sql=f"""select f.company_name as "Company", f.industry as "Industry",
+       string_agg(distinct f.primary_country, ', ') as "Countries", count(*) as "Open jobs"
+from {FACT} where {where('country')} and {MENA} and f.company_name is not null
+group by 1, 2 order by 4 desc, 1 limit 50"""),
+    dict(key="relocation_jobs", tab="mena",
+         name="Jobs abroad that offer visa sponsorship or relocation (click a job title to open it)",
+         display="table", pos=(25, 0, 24, 12),
+         viz={"table.row_index": False,
+              "table.columns": [{"name": c, "enabled": True} for c in
+                                ["Job title", "Company", "Country", "Role", "Seniority", "Work mode", "Industry",
+                                 "Salary (USD / year)", "Posted"]] + [{"name": "job_url", "enabled": False}],
+              "column_settings": col("Job title", view_as="link", link_url="{{job_url}}")},
+         sql=f"""select f.job_title as "Job title", f.company_name as "Company", f.primary_country as "Country",
+       f.role_family as "Role", f.seniority as "Seniority", f.work_mode as "Work mode", f.industry as "Industry",
+       case when f.has_comparable_salary then
+         {usd_k('f.salary_annual_min_usd')} || ' - ' || {usd_k('f.salary_annual_max_usd')} end as "Salary (USD / year)",
+       {POSTED} as "Posted", f.job_url
+from {FACT}
+where {where('country', 'requirement')} and f.offers_visa_or_relocation
+order by {POSTED} desc, 1 limit 300"""),
+
+    # =========================== 3. Skills to learn ===========================
+    dict(key="top_skills", tab="skills",
+         name="Top skills employers ask for (% of jobs) - pick a Must-have skill to see what goes with it",
+         display="row",
          pos=(2, 0, 12, 10),
          viz={"graph.dimensions": ["skill"], "graph.metrics": ["pct_of_jobs"],
               "graph.max_categories_enabled": False, "graph.show_values": True},
          sql=f"""with j as (select f.job_id from {FACT} where {where()})
 select s.skill, round(100.0 * count(distinct s.job_id) / nullif((select count(*) from j), 0), 1) as pct_of_jobs
 from marts.bridge_job_skills s join j using (job_id)
+where 1 = 1 [[and s.skill <> {{{{skill}}}}]]
 group by 1 order by 2 desc limit 15"""),
     dict(key="skill_areas", tab="skills", name="Skill areas employers ask for (% of jobs)", display="row",
          pos=(2, 12, 12, 10),
@@ -456,7 +567,7 @@ from js where js.skill in (select skill from me)
 group by js.skill order by 2 desc"""),
     dict(key="rising_skills", tab="skills",
          name="Rising skills: share in jobs posted in the last 14 days minus share in older jobs (points)",
-         display="row", pos=(22, 0, 12, 9),
+         display="row", pos=(22, 0, 24, 9),
          viz={"graph.dimensions": ["skill"], "graph.metrics": ["change_pts"], "graph.show_values": True},
          sql=f"""with j as (
   select f.job_id, {POSTED} >= current_date - 14 as is_new from {FACT} where {where()}
@@ -473,12 +584,6 @@ select s.skill,
 from s cross join n
 where n.new_jobs >= 20 and n.old_jobs >= 20 and s.new_with + s.old_with >= 10
 order by 2 desc limit 12"""),
-    dict(key="skill_pairs", tab="skills",
-         name="Skills that go together: jobs asking for the chosen skill also ask for (%)", display="row",
-         pos=(22, 12, 12, 9),
-         viz={"graph.dimensions": ["skill_b"], "graph.metrics": ["pct_of_skill_a_jobs"], "graph.show_values": True},
-         sql="select skill_b, pct_of_skill_a_jobs from reporting.rpt_skill_pairs "
-             "where skill_a = coalesce([[{{skill}}, ]] 'SQL') order by 2 desc limit 15"),
     dict(key="trend", tab="skills", name="Skill trend: % of listed jobs each day (top 8 skills)", display="line",
          pos=(31, 0, 24, 8),
          viz={"graph.dimensions": ["snapshot_date", "skill"], "graph.metrics": ["pct_of_jobs"],
@@ -581,9 +686,18 @@ group by 1, {SENIORITY_ORDER} having count(*) >= 3 order by {SENIORITY_ORDER}"""
 from {FACT}
 where {where('country')} and f.has_comparable_salary
 group by 1 having count(*) >= 3 order by median_usd desc limit 15"""),
+    dict(key="salary_by_industry", tab="salary", name="Median salary by industry (USD / year)", display="row",
+         pos=(22, 0, 24, 8),
+         viz={"graph.dimensions": ["industry"], "graph.metrics": ["median_usd"], "graph.show_values": True},
+         sql=f"""select f.industry,
+       round(percentile_cont(0.5) within group (order by f.salary_annual_mid_usd)::numeric, -3) as median_usd,
+       count(*) as jobs_with_salary
+from {FACT}
+where {where('industry')} and f.has_comparable_salary and f.industry <> 'Not identified'
+group by 1 having count(*) >= 3 order by median_usd desc"""),
     dict(key="salary_by_skill", tab="salary",
          name="Best-paid skills: median salary of jobs that ask for the skill (USD / year)", display="row",
-         pos=(22, 0, 24, 9),
+         pos=(30, 0, 24, 9),
          viz={"graph.dimensions": ["skill"], "graph.metrics": ["median_usd"], "graph.show_values": True},
          sql=f"""select s.skill,
        round(percentile_cont(0.5) within group (order by f.salary_annual_mid_usd)::numeric, -3) as median_usd,
@@ -597,12 +711,15 @@ group by 1 having count(*) >= 5 order by median_usd desc limit 15"""),
          pos=(2, 0, 24, 16), viz=JOB_TABLE_VIZ, sql=job_table_sql("match", 500)),
 ]
 
-FILTER_ORDER = ("track", "role", "seniority", "work_mode", "country", "my_skills", "skill")
-TAG_LABELS = {"track": "Track", "role": "Role", "seniority": "Seniority", "work_mode": "Work mode",
-              "country": "Your country", "my_skills": "My skills", "skill": "Skill to pair"}
+FILTER_ORDER = ("industry", "track", "role", "seniority", "work_mode", "country", "skill", "requirement",
+                "my_skills")
+TAG_LABELS = {"industry": "Industry", "track": "Track", "role": "Role", "seniority": "Seniority", "work_mode": "Work mode",
+              "country": "Your country", "my_skills": "My skills", "skill": "Must-have skill",
+              "requirement": "Requirements"}
 
 # Each card's filter tags are derived from the {{variables}} its SQL uses.
 for _card in CARDS:
+    _card["click"] = CLICKS.get(_card["key"], {})
     _used = set(re.findall(r"\{\{(\w+)\}\}", _card["sql"]))
     _card["tags"] = [t for t in FILTER_ORDER if t in _used]
 
@@ -618,6 +735,7 @@ def _dropdown(pid: str, values: list[str], multi: bool = False, default: list[st
 
 def build_dashboard_parameters(skills_as_field: bool = True) -> list[dict]:
     params = [
+        _dropdown("industry", seed_values("companies.csv", "industry") + ["Not identified"]),
         _dropdown("track", tracks()),
         _dropdown("role", roles()),
         _dropdown("seniority", SENIORITIES),
@@ -631,7 +749,8 @@ def build_dashboard_parameters(skills_as_field: bool = True) -> list[dict]:
         params.append({"id": "my_skills", "name": "My skills (comma-separated)", "slug": "my_skills",
                        "type": "string/=", "sectionId": "string", "isMultiSelect": False,
                        "values_query_type": "none", "default": [", ".join(DEFAULT_MY_SKILLS)]})
-    params.append(_dropdown("skill", seed_values("skills.csv", "skill"), default=["SQL"]))
+    params[6:6] = [_dropdown("skill", seed_values("skills.csv", "skill")),
+                   _dropdown("requirement", REQUIREMENTS)]
     return params
 
 
@@ -663,6 +782,16 @@ def find_skill_field(c: Client, db_id: int, wait_s: int = 180) -> int | None:
                 return None
             synced = True
         time.sleep(10)
+
+
+def click_to_filter(spec: dict) -> dict:
+    """Metabase cross-filtering: clicking a bar sets the matching dashboard filter."""
+    mapping = {}
+    for column, param in (spec.get("click") or {}).items():
+        mapping[param] = {"id": param,
+                          "source": {"type": "column", "id": column, "name": column},
+                          "target": {"type": "parameter", "id": param}}
+    return {"click_behavior": {"type": "crossfilter", "parameterMapping": mapping}} if mapping else {}
 
 
 def create_card(c: Client, db_id: int, spec: dict, skill_field_id: int | None) -> int:
@@ -727,7 +856,7 @@ def create_dashboard(c: Client, db_id: int) -> int:
             "row": row, "col": col_, "size_x": size_x, "size_y": size_y,
             # Show the clean title on the dashboard (the saved card keeps the JMR prefix,
             # which is how re-runs find and replace their own cards).
-            "visualization_settings": {"card.title": spec["name"]},
+            "visualization_settings": {"card.title": spec["name"], **click_to_filter(spec)},
             "parameter_mappings": [_mapping(t, card_id, skill_field_id) for t in spec["tags"]],
         })
         next_id -= 1

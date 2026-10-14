@@ -19,7 +19,7 @@ select
     'workable'::text                                        as source,
     source_job_id,
     nullif(trim(p ->> 'title'), '')                         as job_title,
-    coalesce(nullif(trim(p ->> 'account_name'), ''), p ->> 'board_token')
+    coalesce(nullif(trim(p ->> 'account_name'), ''), nullif(p ->> 'board_company', ''), p ->> 'board_token')
                                                             as company_name,
     loc                                                     as location_text,
     case wp when 'remote' then true when 'onsite' then false end
