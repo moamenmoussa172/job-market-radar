@@ -122,6 +122,9 @@ select
         -- mobile: cross-platform first ("Flutter Developer (iOS & Android)" is cross-platform)
         when job_title ~* 'flutter|react[\s-]+native|xamarin|\.net\s+maui|\mmaui\M|kotlin\s+multiplatform|\mkmp\M|ionic|cross[\s-]?platform\s+(mobile|app|developer|engineer)'
             then 'Cross-platform Mobile Engineer'
+        -- native for both platforms: "Native Mobile Developer", "iOS & Android Engineer"
+        when job_title ~* 'native\s+(mobile|app)|mobile\s+native|\mios\s*(&|and|/|\+)\s*android\M|\mandroid\s*(&|and|/|\+)\s*ios\M'
+            then 'Native Mobile Engineer (iOS + Android)'
         when job_title ~* '\mios\M|swiftui|\mswift\s+(developer|engineer)|objective[\s-]?c|iphone'
          and job_title !~* '\mandroid\M'
             then 'iOS Engineer'

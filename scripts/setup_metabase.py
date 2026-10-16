@@ -26,8 +26,8 @@ MB_URL = os.environ.get("MB_URL", "http://metabase:3000").rstrip("/")
 ADMIN_EMAIL = os.environ.get("MB_ADMIN_EMAIL", "")
 ADMIN_PASSWORD = os.environ.get("MB_ADMIN_PASSWORD", "")
 DB_NAME = "Job Market Radar"
-DASHBOARD_NAME = "Tech Job Market Radar"
-LEGACY_DASHBOARD_NAMES = ["Data Job Market Radar"]  # archived on re-run
+DASHBOARD_NAME = "Radarak: Tech Job Market"
+LEGACY_DASHBOARD_NAMES = ["Data Job Market Radar", "Tech Job Market Radar"]  # archived on re-run
 CARD_PREFIX = "JMR - "
 SEEDS_DIR = os.environ.get("SEEDS_DIR", "/opt/airflow/dbt/seeds")
 

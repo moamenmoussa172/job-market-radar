@@ -1,4 +1,4 @@
-/* Job Radar - static site. Data: data/meta.json + data/jobs.json (refreshed daily by the pipeline). */
+/* Radarak - static site. Data: data/meta.json + data/jobs.json (refreshed daily by the pipeline). */
 (() => {
   "use strict";
 
@@ -11,7 +11,8 @@
   // ------------------------------------------------------------------ text
   const T = {
     en: {
-      brand: "Job Radar", code: "Source code", skip: "Skip to jobs",
+      brand: "Radarak", code: "Source code", skip: "Skip to jobs",
+      browseTracks: "Browse by track", allTracks: "All tech",
       ask1: "I live in", ask2: "and I'm looking for", ask3: "jobs.", country: "Country", role: "Role",
       anyCountry: "any country", anyRole: "any tech", allOf: (x) => `${x} (all roles)`,
       countLabel: "jobs you can apply to", countAll: "open tech jobs", share: "Share this search", copied: "Link copied",
@@ -62,7 +63,8 @@
       cvShowRole: (r) => `Show ${r} jobs`, cvShowBest: "Show my best matches", cvClear: "Forget my CV skills",
     },
     ar: {
-      brand: "رادار الوظائف", code: "الكود المصدري", skip: "انتقل للوظايف",
+      brand: "رادارك", code: "الكود المصدري", skip: "انتقل للوظايف",
+      browseTracks: "تصفّح حسب المجال", allTracks: "كل التك",
       ask1: "أنا عايش في", ask2: "وبدوّر على وظايف", ask3: "", country: "الدولة", role: "الوظيفة",
       anyCountry: "أي دولة", anyRole: "أي مجال تقني", allOf: (x) => `${x} (كل الوظايف)`,
       countLabel: "وظيفة تقدر تقدّم عليها", countAll: "وظيفة تقنية متاحة", share: "شارك البحث ده", copied: "اتنسخ اللينك",
@@ -116,7 +118,7 @@
   const ABOUT = {
     en: `
       <h2>What this is</h2>
-      <p>Job Radar collects tech job postings every day from company career pages and job APIs, and shows the ones you can actually apply to from where you live: office and hybrid jobs in your country, plus remote jobs that are open to your country or region.</p>
+      <p>Radarak (Arabic for "your radar") collects tech job postings every day from company career pages and job APIs, and shows the ones you can actually apply to from where you live: office and hybrid jobs in your country, plus remote jobs that are open to your country or region.</p>
       <h2>How "jobs you can apply to" works</h2>
       <p>Many remote jobs are only open to people in certain countries. Each posting's location and eligibility text is mapped to countries and regions, so picking your country hides remote jobs you aren't allowed to take.</p>
       <h2>Your skills and matching</h2>
@@ -135,7 +137,7 @@
       <p>The data is collected automatically and can miss jobs or contain mistakes. Saved jobs and your skills stay in your browser. The project is open source.</p>`,
     ar: `
       <h2>ده إيه</h2>
-      <p>رادار الوظائف بيجمع وظايف التك كل يوم من صفحات التوظيف بتاعة الشركات ومن مواقع الوظايف، ويوريك اللي تقدر تقدّم عليها فعلًا من البلد اللي إنت فيها: وظايف المكتب والهايبرد في بلدك، والوظايف الريموت المفتوحة لبلدك أو منطقتك.</p>
+      <p>رادارك بيجمع وظايف التك كل يوم من صفحات التوظيف بتاعة الشركات ومن مواقع الوظايف، ويوريك اللي تقدر تقدّم عليها فعلًا من البلد اللي إنت فيها: وظايف المكتب والهايبرد في بلدك، والوظايف الريموت المفتوحة لبلدك أو منطقتك.</p>
       <h2>"وظايف تقدر تقدّم عليها" معناها إيه</h2>
       <p>وظايف ريموت كتير مفتوحة لناس في دول معينة بس. بنقرا مكان كل وظيفة وشروطها ونربطها بالدول والمناطق، فلما تختار بلدك بنخفي الوظايف اللي مش مسموح لك تقدّم عليها.</p>
       <h2>مهاراتك والتطابق</h2>
@@ -170,6 +172,14 @@
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const num = (n) => Number(n).toLocaleString("en-US");
   const weekAgo = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10);
+  // every track has its own colour (style.css: --t-<key>), used on job rows, chips, bars and the radar
+  const TRACK_KEY = {
+    "Data & Analytics": "data", "AI & Machine Learning": "ai", "Software Engineering": "sw", "Mobile Development": "mob",
+    "QA & Testing": "qa", "UI/UX Design": "ux", "DevOps & Cloud": "ops", "Security": "sec", "ERP & CRM": "erp",
+    "Networks & Telecom": "net", "Product & Delivery": "prod", "IT & Support": "it",
+  };
+  const trackOfRole = {};
+  const tc = (track) => `--tc:var(--t-${TRACK_KEY[track] || "it"})`;
 
   // ------------------------------------------------------------------ setup
   function fillSelect(el, options, anyLabel) {
@@ -260,8 +270,8 @@
     return job.w === "Remote" && (job.ww === 1 || job.rg.includes(regionOf[country]) || job.rg.includes("Worldwide"));
   }
 
-  function filtered() {
-    const country = $("country").value, role = $("role").value, sen = $("seniority").value, wm = $("workMode").value;
+  function filtered(ignoreRole) {
+    const country = $("country").value, role = ignoreRole ? "" : $("role").value, sen = $("seniority").value, wm = $("workMode").value;
     const ind = $("industry").value, skill = $("skill").value, ar = $("arabic").value;
     const q = $("q").value.trim().toLowerCase();
     const skillIdx = skill ? meta.skills.indexOf(skill) : -1;
@@ -331,7 +341,7 @@
       f & FLAG.visa ? `<span class="tag visa">${t("visaTag")}</span>` : "",
       f & FLAG.nationals ? `<span class="tag nat">${t("natTag")}</span>` : "",
       f & FLAG.arabic ? `<span class="tag ar">${t("arTag")}</span>` : "",
-      `<span class="tag plain">${esc(j.r)}</span>`,
+      `<span class="tag role">${esc(j.r)}</span>`,
       j.s && j.s !== "Not stated" ? `<span class="tag plain">${esc(j.s)}</span>` : "",
       j.by ? `<span class="tag plain">${esc(j.by)}</span>` : "",
     ].join("");
@@ -340,7 +350,7 @@
       + (ks.length > SKILLS_SHOWN ? `<span class="sk">+${ks.length - SKILLS_SHOWN}</span>` : "");
     const isSaved = !!savedJobs[j.id];
     const locsOpen = openLocs.has(g.key);
-    return `<li class="job">
+    return `<li class="job" style="${tc(j.tr)}">
       <div>
         <h3><a href="${esc(j.u)}" target="_blank" rel="noopener nofollow">${esc(j.t)}</a></h3>
         <p class="where"><b>${esc(j.c || "")}</b><span>${esc(j.l || "")}</span>${others > 0
@@ -407,7 +417,8 @@
     el.innerHTML = rows.map((r) => {
       const tag = opts.click ? "button" : "div";
       const attrs = opts.click ? ` type="button" data-value="${esc(r.key ?? r.name)}"` : "";
-      return `<${tag} class="bar"${attrs}><span class="name" title="${esc(r.name)}">${esc(r.name)}</span>
+      const color = r.tr ? ` style="${tc(r.tr)}"` : "";
+      return `<${tag} class="bar${r.tr ? " tracked" : ""}"${attrs}${color}><span class="name" title="${esc(r.name)}">${esc(r.name)}</span>
         <span class="track"><span class="fill" style="width:${Math.max(2, (100 * r.v) / max)}%"></span></span>
         <span class="val">${opts.fmt ? opts.fmt(r.v) : num(r.v)}</span></${tag}>`;
     }).join("");
@@ -459,7 +470,7 @@
     const byRole = new Map();
     js.filter((j) => j.$).forEach((j) => { const a = byRole.get(j.r) || []; a.push((j.$[0] + j.$[1]) / 2); byRole.set(j.r, a); });
     bars($("salaryBars"), [...byRole.entries()].filter(([, v]) => v.length >= 3)
-      .map(([r, v]) => ({ name: r, v: Math.round(median(v)) })).sort((a, b) => b.v - a.v).slice(0, 10),
+      .map(([r, v]) => ({ name: r, v: Math.round(median(v)), tr: trackOfRole[r] })).sort((a, b) => b.v - a.v).slice(0, 10),
       { fmt: (v) => "$" + v + "k", click: (r) => { $("role").value = "role:" + r; update(); } });
 
     const places = countBy(js.filter((j) => j.w !== "Remote"), (j) => j.co[0]).slice(0, 8).map(([k, v]) => ({ name: k, v }));
@@ -468,7 +479,7 @@
 
     $("companyList").innerHTML = countBy(js, (j) => j.c).slice(0, 10)
       .map(([c, v]) => `<li>${esc(c)} <span>(${num(v)})</span></li>`).join("") || `<p class="none">${t("tooFew")}</p>`;
-    bars($("roleBars"), countBy(js, (j) => j.r).slice(0, 10).map(([k, v]) => ({ name: k, v })),
+    bars($("roleBars"), countBy(js, (j) => j.r).slice(0, 10).map(([k, v]) => ({ name: k, v, tr: trackOfRole[k] })),
       { click: (r) => { $("role").value = "role:" + r; update(); } });
   }
 
@@ -609,6 +620,34 @@
     }
   }
 
+  // ------------------------------------------------------------------ track pills + radar
+  function renderTracks() {
+    const base = filtered(true);
+    const counts = new Map(countBy(base, (j) => j.tr));
+    const role = $("role").value;
+    const active = role.startsWith("track:") ? role.slice(6) : role.startsWith("role:") ? trackOfRole[role.slice(5)] : "";
+    const pill = (value, label, n, track) => `<button type="button" class="tpill${(value === "" ? !role : active === track) ? " on" : ""}"
+      data-track="${esc(value)}"${track ? ` style="${tc(track)}"` : ""}><span class="dot"></span>${esc(label)} <span class="n">${num(n)}</span></button>`;
+    $("trackPills").innerHTML = pill("", t("allTracks"), base.length, "")
+      + meta.tracks.filter((tr) => counts.get(tr.name)).map((tr) => pill("track:" + tr.name, tr.name, counts.get(tr.name), tr.name)).join("");
+    // on phones the pills scroll sideways: keep the chosen one in view (without scrolling the page)
+    const wrap = $("trackPills"), on = wrap.querySelector(".tpill.on");
+    if (on && wrap.scrollWidth > wrap.clientWidth) {
+      const w = wrap.getBoundingClientRect(), r = on.getBoundingClientRect();
+      if (r.left < w.left || r.right > w.right) wrap.scrollLeft += r.left - w.left - (w.width - r.width) / 2;
+    }
+    // radar blips: one per track, bigger and closer to the centre when it has more jobs
+    const max = Math.max(1, ...counts.values());
+    $("blips").innerHTML = meta.tracks.map((tr, i) => {
+      const n = counts.get(tr.name) || 0;
+      if (!n) return "";
+      const share = n / max, angle = (i / meta.tracks.length) * 2 * Math.PI - Math.PI / 2 + 0.4;
+      const rad = 175 - 110 * share, x = 200 + rad * Math.cos(angle), y = 200 + rad * Math.sin(angle);
+      return `<circle class="blip${active && active !== tr.name ? " dim" : ""}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}"
+        r="${(5 + 9 * Math.sqrt(share)).toFixed(1)}" style="${tc(tr.name)};animation-delay:${(i * 0.12).toFixed(2)}s"><title>${esc(tr.name)}: ${num(n)}</title></circle>`;
+    }).join("");
+  }
+
   // ------------------------------------------------------------------ wiring
   function update(keepPage) {
     current = filtered();
@@ -619,6 +658,7 @@
     $("countLabel").textContent = $("country").value ? t("countLabel") : t("countAll");
     const extra = ["seniority", "workMode", "industry", "skill", "arabic", "q"].filter((f) => $(f).value).length;
     $("filterSummary").textContent = extra ? t("moreFiltersOn")(extra) : t("moreFilters");
+    renderTracks();
     renderSkills();
     renderJobs();
     renderSaved();
@@ -669,6 +709,10 @@
       quick[b.dataset.flag] = !quick[b.dataset.flag]; syncToggles(); update();
     }));
     $("more").addEventListener("click", () => { shown += PAGE; renderJobs(); });
+    $("trackPills").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-track]");
+      if (b) { $("role").value = b.dataset.track; update(); }
+    });
     $("reset").addEventListener("click", resetFilters);
     $("share").addEventListener("click", share);
     document.querySelectorAll('[role="tab"]').forEach((b) => b.addEventListener("click", () => selectTab(b.getAttribute("aria-controls"))));
@@ -728,6 +772,7 @@
       return;
     }
     meta.countries.forEach((c) => { regionOf[c.name] = c.region; });
+    meta.tracks.forEach((tr) => tr.roles.forEach((r) => { trackOfRole[r] = tr.name; }));
     jobs.forEach((j) => { j._text = [j.t, j.c, j.r, ...j.k.map((k) => meta.skills[k])].join(" ").toLowerCase(); });
     applyLanguage();
     const saved = store.get("country", "");

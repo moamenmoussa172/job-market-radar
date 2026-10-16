@@ -83,7 +83,7 @@ _TECH_INCLUDE = re.compile(
     | (technical|it|software|digital|engineering|tech|implementation)\ (project|program|programme)\ manager
     | technical\ writer | documentation\ engineer | blockchain | \bweb3\b | solidity | smart\ contract
     # mobile, RPA / low-code, GIS, robotics, games & XR
-    | \bios\b | \bandroid\b | flutter | react[\s-]native | xamarin | objective[\s-]?c | swiftui | jetpack\ compose
+    | \bios\b | \bandroid\b | flutter | native\ (mobile|app) | react[\s-]native | xamarin | objective[\s-]?c | swiftui | jetpack\ compose
     | \brpa\b | uipath | blue\s*prism | automation\ anywhere | outsystems | mendix | \bappian\b | \bpega\b | low[\s-]?code
     | \bgis\b | arcgis | geospatial | robotics?\ (software\ )?(engineer|developer|programmer) | \bros2?\b | \bunity\ (developer|engineer) | \bunreal\b
     | \b(ar|vr|xr)\s*/?\s*(vr|ar)?\ (developer|engineer) | augmented\ reality | virtual\ reality | game\ (developer|programmer|engineer)

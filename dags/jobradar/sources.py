@@ -369,7 +369,7 @@ JOBICY_URL = "https://jobicy.com/api/v2/remote-jobs"
 JOBICY_INDUSTRIES = ["data-science", "engineering", "design-multimedia"]
 # Keyword searches catch roles listed under other industries.
 JOBICY_TAGS = ["data engineer", "data analyst", "analytics", "machine learning",
-               "qa", "tester", "devops", "ux"]
+               "qa", "tester", "devops", "ux", "ios", "android", "flutter", "react native"]
 
 
 def extract_jobicy(industries: list[str] | None = None, pause_seconds: float = 2.0,
@@ -419,6 +419,7 @@ HIMALAYAS_QUERIES = [
     "data scientist", "machine learning engineer", "bi developer", "data platform", "analytics", "etl",
     # software, QA, design, devops, security
     "software engineer", "frontend", "backend", "full stack", "mobile developer",
+    "ios developer", "android developer", "flutter developer", "react native",
     "qa engineer", "test automation", "ux designer", "product designer", "ui designer",
     "devops", "site reliability", "cloud engineer", "security engineer",
 ]
@@ -478,7 +479,7 @@ SEARCH_COUNTRIES = [  # (ISO code, name used in free-text queries)
 # Countries first, so each day's slice spreads over several countries.
 SEARCH_ROLES = ["software engineer", "data engineer", "data analyst", "developer", "devops engineer",
                 "qa engineer", "cyber security", "network engineer", "sap consultant", "product manager",
-                "ux designer", "machine learning engineer"]
+                "ux designer", "machine learning engineer", "mobile developer", "flutter developer"]
 ADZUNA_ROLES = ["data engineer", "data analyst", "software engineer", "frontend developer",
                 "backend developer", "qa engineer", "ux designer", "devops engineer",
                 "mobile developer", "data scientist", "cyber security", "sap consultant"]
@@ -541,7 +542,7 @@ JOOBLE_PER_DAY = int(os.environ.get("JOOBLE_REQUESTS_PER_DAY", "3"))
 
 
 def jooble_pairs() -> list[tuple[str, str]]:
-    roles = ["software developer", "data", "it", "network engineer", "qa tester", "ux designer"]
+    roles = ["software developer", "data", "it", "network engineer", "qa tester", "ux designer", "mobile developer"]
     return [(role, name) for role in roles for _, name in SEARCH_COUNTRIES]
 
 
@@ -626,7 +627,8 @@ BA_URL = "https://rest.arbeitsagentur.de/jobboerse/jobsuche-service/pc/v4/jobs"
 BA_KEY = "jobboerse-jobsuche"  # public key published with the API, not a secret
 BA_QUERIES = ["Softwareentwickler", "Software Engineer", "Data Engineer", "Data Scientist", "Data Analyst",
               "DevOps", "Cloud Engineer", "Frontend Developer", "Backend Developer", "Fullstack",
-              "IT-Security", "SAP Berater", "Mobile Developer", "QA Engineer", "UX Designer",
+              "IT-Security", "SAP Berater", "Mobile Developer", "iOS Developer", "Android Developer", "Flutter",
+              "QA Engineer", "UX Designer",
               "Machine Learning", "Systemadministrator", "Netzwerkadministrator"]
 BA_PAGES = int(os.environ.get("BA_PAGES_PER_QUERY", "2"))
 

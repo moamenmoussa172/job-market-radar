@@ -3,25 +3,26 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Job Radar: tech jobs you can actually apply to</title>
+  <title>Radarak: your radar for tech jobs you can actually get</title>
   <meta name="description" content="Free, daily-updated tech jobs for Egypt, the Gulf and Europe. Pick the country you live in and see which jobs you can apply to, what skills they ask for and what they pay. Arabic and English.">
-  <meta name="theme-color" content="#0B7A75">
+  <meta name="theme-color" content="#5B3FE0">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Job Radar: tech jobs you can actually apply to">
+  <meta property="og:title" content="Radarak: your radar for tech jobs you can actually get">
   <meta property="og:description" content="Daily tech jobs filtered by where you live: Egypt, the Gulf, Europe and remote. Skills, salaries, visa sponsorship. Free, Arabic and English.">
   <!-- Link previews need an absolute URL: change it if you publish the site somewhere else. -->
   <meta property="og:image" content="https://moamenmoussa172.github.io/job-market-radar/og.png">
   <meta name="twitter:card" content="summary_large_image">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='none' stroke='%230B7A75' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='7' fill='none' stroke='%230B7A75' stroke-width='3'/%3E%3Ccircle cx='22' cy='10' r='3' fill='%230B7A75'/%3E%3C/svg%3E">
-  <link rel="preload" href="fonts/ibm-plex-sans-arabic-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%235B3FE0'/%3E%3Ccircle cx='16' cy='16' r='8' fill='none' stroke='%23fff' stroke-opacity='.55' stroke-width='2'/%3E%3Ccircle cx='22' cy='10' r='3' fill='%23FFB020'/%3E%3Ccircle cx='10' cy='19' r='2.4' fill='%23FF5E3A'/%3E%3Ccircle cx='19' cy='22' r='2' fill='%2310B981'/%3E%3C/svg%3E">
+  <link rel="preload" href="fonts/bricolage-grotesque-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <a class="skip" href="#results" data-i18n="skip">Skip to jobs</a>
   <header class="topbar">
-    <a class="brand" href="./" aria-label="Job Radar">
-      <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="13"/><circle cx="16" cy="16" r="6.5"/><circle class="blip" cx="22" cy="10" r="2.6"/></svg>
-      <span data-i18n="brand">Job Radar</span>
+    <a class="brand" href="./" aria-label="Radarak">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><circle class="disc" cx="16" cy="16" r="15"/><circle class="ring" cx="16" cy="16" r="8.5"/>
+        <circle cx="22.5" cy="9.5" r="3" fill="#FFB020"/><circle cx="9.5" cy="19.5" r="2.5" fill="#FF5E3A"/><circle cx="19.5" cy="22.5" r="2.1" fill="#10B981"/></svg>
+      <span data-i18n="brand">Radarak</span>
     </a>
     <nav class="topnav">
       <button id="lang" class="linkbtn" type="button" lang="ar">العربية</button>
@@ -32,8 +33,11 @@
   <main>
     <section class="hero" aria-labelledby="ask">
       <svg class="rings" viewBox="0 0 400 400" aria-hidden="true">
+        <defs><radialGradient id="sweepFill" cx="200" cy="200" r="190" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="#5B3FE0" stop-opacity=".05"/><stop offset="1" stop-color="#5B3FE0" stop-opacity=".22"/></radialGradient></defs>
         <circle cx="200" cy="200" r="190"/><circle cx="200" cy="200" r="135"/><circle cx="200" cy="200" r="80"/>
         <path class="sweep" d="M200 200 L200 10 A190 190 0 0 1 334 66 Z"/>
+        <g id="blips"></g>
       </svg>
       <h1 id="ask" class="ask">
         <span data-i18n="ask1">I live in</span>
@@ -47,6 +51,10 @@
         <button id="share" class="sharebtn" type="button" data-i18n="share">Share this search</button>
       </div>
       <p class="fresh" id="fresh"></p>
+      <div class="trackpicker" aria-labelledby="trackTitle">
+        <p id="trackTitle" class="pickertitle" data-i18n="browseTracks">Browse by track</p>
+        <div id="trackPills" class="trackpills"></div>
+      </div>
     </section>
 
     <section class="skillsbox" aria-labelledby="skillsTitle">

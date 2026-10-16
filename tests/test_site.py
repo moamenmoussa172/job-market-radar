@@ -1,5 +1,6 @@
 """Public website: static files + publishing to GitHub Pages (GitHub API mocked)."""
 import json
+from pathlib import Path
 
 from jobradar import site_export
 
@@ -84,3 +85,20 @@ def test_cv_reader_libraries_are_self_hosted():
     files = site_export.site_files()
     assert {"vendor/pdf.min.js", "vendor/pdf.worker.min.js", "vendor/mammoth.browser.min.js"} <= set(files)
     assert "vendor/pdf.min.js" in files["app.js"].decode()       # loaded from the site itself, only when a CV is added
+
+
+def test_every_track_has_a_colour():
+    """site/app.js colours jobs by track; a new track in role_tracks.csv needs a colour too."""
+    import csv
+    import re
+    root = Path(__file__).resolve().parents[1]
+    with open(root / "dbt" / "seeds" / "role_tracks.csv", newline="") as f:
+        tracks = {r["track"] for r in csv.DictReader(f)} - {"Not tech"}
+    app = (root / "site" / "app.js").read_text(encoding="utf-8")
+    block = re.search(r"const TRACK_KEY = \{(.*?)\};", app, re.S).group(1)
+    coloured = set(re.findall(r'"([^"]+)":\s*"', block))
+    assert tracks <= coloured, tracks - coloured
+    css = (root / "site" / "style.css").read_text(encoding="utf-8")
+    for key in re.findall(r':\s*"(\w+)"', block):
+        assert f"--t-{key}:" in css, key
+    assert "Radarak" in (root / "site" / "index.html").read_text(encoding="utf-8")

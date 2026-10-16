@@ -1,9 +1,9 @@
-# Tech Job Market Radar
+# Radarak (رادارك): your radar for tech jobs you can actually get
 
 **Which tech jobs can I actually get from where I live, what should I learn next, and what do they pay?**
 
-An end-to-end data engineering project that collects thousands of tech job postings every day (data & AI,
-software engineering, QA & testing, UI/UX design, DevOps & cloud, security, IT) from 15 public and licensed sources, models them with dbt, and answers those questions in a
+**Radarak** (Arabic for "your radar") is an end-to-end data engineering project that collects thousands of tech job postings every day (data & AI,
+software, mobile (iOS, Android, Flutter), QA & testing, UI/UX design, DevOps & cloud, security, ERP, networks, product, IT) from 15 public and licensed sources, models them with dbt, and answers those questions in a
 self-service dashboard, from the point of view of *one specific person* (their country, role and skills).
 
 **Live site: https://moamenmoussa172.github.io/job-market-radar/** (Arabic + English, updated daily)
@@ -101,7 +101,7 @@ Every job gets a **track** and a **role family** from rule-based title classific
 | Data & Analytics | Data Engineer, Analytics Engineer, Data Analyst, BI, Data Scientist, Database Administrator, GIS Specialist, ... |
 | AI & Machine Learning | ML / AI Engineer, MLOps Engineer, AI Research Scientist / Engineer |
 | Software Engineering | Frontend, Backend, Full-Stack, Embedded, Game / XR, Robotics, Blockchain, Software Engineer, Engineering Leadership |
-| Mobile Development | iOS Engineer, Android Engineer, Cross-platform (Flutter / React Native), Mobile Engineer |
+| Mobile Development | iOS Engineer, Android Engineer, Native Mobile Engineer (iOS + Android), Cross-platform (Flutter / React Native), Mobile Engineer |
 | QA & Testing | QA Automation Engineer, QA / Test Engineer |
 | UI/UX Design | UX / Product Designer, UI / Visual Designer, UX Researcher |
 | DevOps & Cloud | DevOps / Platform, SRE, Cloud / Infrastructure |
