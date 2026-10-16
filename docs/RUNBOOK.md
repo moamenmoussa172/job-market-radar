@@ -72,6 +72,21 @@ go in code or git; if a key is exposed, regenerate it. Daily budgets: `JSEARCH_R
 To add companies: add rows and run the DAG. Check what was found:
 `select company_name, ats, token, status, note from raw.company_boards where origin = 'probe' and status = 'active';`
 
+## Public website (GitHub Pages)
+
+One-time setup:
+1. Create a fine-grained token: github.com/settings/tokens?type=beta, "Only select repositories" ->
+   `job-market-radar`, permission **Contents: Read and write**. Put it in `.env` as `SITE_GITHUB_TOKEN`
+   (plus `SITE_REPO=moamenmoussa172/job-market-radar`, `SITE_BRANCH=gh-pages`), then `docker compose up -d`.
+2. Publish once (or wait for the daily run):
+   `Get-Content scripts\publish_site.py -Raw | docker compose exec -T airflow-scheduler python -`
+3. On GitHub: repository **Settings -> Pages -> Build and deployment -> Deploy from a branch ->
+   `gh-pages` / `(root)`**. The site appears at https://moamenmoussa172.github.io/job-market-radar/ within a minute or two.
+
+Every successful daily run then replaces the `gh-pages` branch with one fresh commit (no growing history).
+Edit the site in `site/` (index.html, style.css, app.js); changes go live with the next publish.
+If the token expires, the run still succeeds and logs "website not published".
+
 ## Daily operation
 
 - The DAG runs daily at 05:00 UTC (08:00 Cairo). The machine and Docker must be running;

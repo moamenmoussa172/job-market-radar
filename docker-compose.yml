@@ -39,9 +39,11 @@ x-airflow-common: &airflow-common
     DBT_PROFILES_DIR: /opt/airflow/dbt
     DBT_TARGET_PATH: /tmp/dbt/target
     DBT_LOG_PATH: /tmp/dbt/logs
+    SITE_DIR: /opt/airflow/site
   volumes:
     - ./dbt:/opt/airflow/dbt
     - ./dags:/opt/airflow/dags
+    - ./site:/opt/airflow/site
     - ./logs:/opt/airflow/logs
     - ./config:/opt/airflow/config
     - ./plugins:/opt/airflow/plugins

@@ -4,6 +4,7 @@
                         └─► probe_companies (find each listed company's hiring platform)
              (mapped over SOURCES, one task per source)              │
     setup ─► fx_rates (ECB rates, for salary conversion) ────────────┘
+                                                      dbt_build ─► publish_site
                                                         load ─► discover_boards
 
 extract: calls the source API, writes an untouched gzip JSON envelope to S3.
@@ -13,6 +14,8 @@ check:   fails the run if a source returned nothing (pipeline health check).
 fx_rates: last 90 days of ECB reference rates -> S3 + raw.fx_rates. It never
           fails the run: if ECB is unreachable, dbt uses the last known rates.
 dbt_build: seeds + staging/intermediate/marts models + all dbt tests.
+publish_site: exports jobs + stats to JSON and pushes the public website (site/) to
+          GitHub Pages. Skipped if SITE_GITHUB_TOKEN is not set; never fails the run.
 sync_boards / discover_boards / probe_companies: the self-expanding company
           board registry (see jobradar/boards.py). None of them ever fails the run.
 """
@@ -26,7 +29,7 @@ from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.providers.standard.operators.bash import BashOperator
 from airflow.sdk import dag, get_current_context, task
 
-from jobradar import boards, fx, storage, warehouse
+from jobradar import boards, fx, site_export, storage, warehouse
 from jobradar.sources import SOURCES, load_board_rows
 
 log = logging.getLogger(__name__)
@@ -69,6 +72,18 @@ def job_radar_ingest():
             conn.close()
         log.info("boards: %s new seeds; validation %s", seeded, counts)
         return {"seeded": seeded, **counts}
+
+    @task(retries=1)
+    def publish_site() -> str | None:
+        """Export today's jobs + stats and push the public website to GitHub Pages."""
+        conn = PostgresHook(postgres_conn_id=WAREHOUSE_CONN_ID).get_conn()
+        try:
+            return site_export.publish_from_env(conn)
+        except Exception as exc:  # noqa: BLE001 - the website never fails the data run
+            log.warning("website not published: %s", exc)
+            return None
+        finally:
+            conn.close()
 
     @task
     def probe_companies() -> dict:
@@ -187,6 +202,7 @@ def job_radar_ingest():
     s >> rates
     loaded = load.expand(meta=extracted)
     [check(loaded), rates] >> dbt_build
+    dbt_build >> publish_site()
     discover_boards(loaded)
 
 

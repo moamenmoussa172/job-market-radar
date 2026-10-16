@@ -6,7 +6,9 @@ An end-to-end data engineering project that collects thousands of tech job posti
 software engineering, QA & testing, UI/UX design, DevOps & cloud, security, IT) from 14 public and licensed sources, models them with dbt, and answers those questions in a
 self-service dashboard, from the point of view of *one specific person* (their country, role and skills).
 
-![CI](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg)
+**Live site: https://moamenmoussa172.github.io/job-market-radar/** (Arabic + English, updated daily)
+
+![CI](https://github.com/moamenmoussa172/job-market-radar/actions/workflows/ci.yml/badge.svg)
 
 ![Dashboard](docs/images/dashboard.png)
 
@@ -24,6 +26,18 @@ Job boards answer "what jobs exist?". Job seekers need different answers:
 | *What does it pay?* | Salaries in any period/currency normalized to annual USD and EUR with daily ECB exchange rates. |
 | *Is demand rising or falling?* | Daily snapshots give skill trends and how long each job stays open; "rising skills" compares jobs posted in the last 14 days with older ones. |
 | *Which jobs should I apply to?* | Every job is scored against the skills you pick, with the skills you would still need to add. |
+
+### The public website
+
+`site/` is a static, mobile-first website in Arabic and English, published to GitHub Pages by the
+pipeline's last task (`publish_site`). Visitors complete one sentence, "I live in [country] and I'm
+looking for [role] jobs", and get the jobs they can apply to, with filters (seniority, work mode,
+industry, must-have skill, Arabic, visa/relocation, hide nationals-only) and live insights: top skills,
+the next skill to learn for *their* skills, pay by role, where the jobs are and who is hiring.
+All filtering happens in the browser on two JSON files (`data/jobs.json`, `data/meta.json`) exported
+from the marts; links are shareable (filters live in the URL). Listings from sources that ask not to be
+re-posted (Remotive, Himalayas) count in the statistics but are not listed; Adzuna/Jooble/JSearch/Jobicy
+jobs carry their credit.
 
 ### The dashboard
 
