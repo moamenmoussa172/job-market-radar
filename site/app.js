@@ -134,7 +134,7 @@
       <p>Only jobs that publish pay are counted. Salaries in any currency and period are turned into a yearly amount in US dollars.</p>
       <h2>Sources</h2>
       <p>Company career boards (Greenhouse, Lever, Ashby, SmartRecruiters, Workable, Recruitee, Personio) and job APIs. Every job links to its original posting, where you apply. Some jobs carry their source's credit (for example, Jobs by Adzuna).</p>
-      <p>The data is collected automatically and can miss jobs or contain mistakes. Saved jobs and your skills stay in your browser. The project is open source.</p>`,
+      <p>The data is collected automatically and can miss jobs or contain mistakes. Saved jobs and your skills stay in your browser. The site counts visits and clicks anonymously (GoatCounter, no cookies, nothing that identifies you) to know how many people it helps. The project is open source.</p>`,
     ar: `
       <h2>ده إيه</h2>
       <p>رادارك بيجمع وظايف التك كل يوم من صفحات التوظيف بتاعة الشركات ومن مواقع الوظايف، ويوريك اللي تقدر تقدّم عليها فعلًا من البلد اللي إنت فيها: وظايف المكتب والهايبرد في بلدك، والوظايف الريموت المفتوحة لبلدك أو منطقتك.</p>
@@ -153,7 +153,7 @@
       <p>بنحسب بس الوظايف اللي بتعلن المرتب، وبنحوّل أي مرتب بأي عملة لمبلغ سنوي بالدولار.</p>
       <h2>المصادر</h2>
       <p>صفحات التوظيف بتاعة الشركات (Greenhouse و Lever و Ashby و SmartRecruiters و Workable و Recruitee و Personio) ومواقع وظايف. كل وظيفة فيها لينك للإعلان الأصلي، والتقديم بيكون هناك.</p>
-      <p>البيانات بتتجمع أوتوماتيك وممكن يفوتها وظايف أو يكون فيها أخطاء. الوظايف المحفوظة ومهاراتك بتفضل في المتصفح بتاعك. المشروع مفتوح المصدر.</p>`,
+      <p>البيانات بتتجمع أوتوماتيك وممكن يفوتها وظايف أو يكون فيها أخطاء. الوظايف المحفوظة ومهاراتك بتفضل في المتصفح بتاعك. الموقع بيعدّ الزيارات والضغطات من غير ما يعرف إنت مين (GoatCounter، من غير كوكيز) عشان نعرف بنساعد كام واحد. المشروع مفتوح المصدر.</p>`,
   };
 
   // ------------------------------------------------------------------ state
@@ -171,6 +171,10 @@
   const t = (k) => T[lang][k] ?? T.en[k] ?? k;
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const num = (n) => Number(n).toLocaleString("en-US");
+  // anonymous usage counts (GoatCounter: no cookies, no personal data). Does nothing if analytics isn't set up.
+  function track(name) {
+    try { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: name, title: name, event: true }); } catch { /* never break the page */ }
+  }
   const weekAgo = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10);
   // every track has its own colour (style.css: --t-<key>), used on job rows, chips, bars and the radar
   const TRACK_KEY = {
@@ -579,6 +583,7 @@
     if (!skills.length) { cvStatus(t("cvNoSkills"), true); return; }
     cvStatus("");
     const years = findYears(text), role = guessRole(text);
+    track("cv-read");
     mySkills = new Set(skills); store.set("mySkills", [...mySkills]);
     $("sort").value = "match";
     update();
@@ -606,7 +611,7 @@
         <button type="button" class="sharebtn" id="cvBestBtn">${t("cvShowBest")}</button>
         <button type="button" class="linkbtn" id="cvClearBtn">${t("cvClear")}</button>
       </div>`;
-    if (role) $("cvRoleBtn").addEventListener("click", () => { $("role").value = "role:" + role; update(); goToJobs(); });
+    if (role) $("cvRoleBtn").addEventListener("click", () => { track("cv-show-role"); $("role").value = "role:" + role; update(); goToJobs(); });
     $("cvBestBtn").addEventListener("click", goToJobs);
     $("cvClearBtn").addEventListener("click", () => { mySkills.clear(); store.set("mySkills", []); r.hidden = true; $("sort").value = "new"; update(); });
   }
@@ -713,6 +718,7 @@
   }
 
   async function share() {
+    track("share");
     const url = location.href;
     try {
       if (navigator.share) { await navigator.share({ title: document.title, url }); return; }
@@ -730,15 +736,15 @@
     $("more").addEventListener("click", () => { shown += PAGE; renderJobs(); });
     $("trackPills").addEventListener("click", (e) => {
       const b = e.target.closest("[data-track]");
-      if (b) { $("role").value = b.dataset.track; update(); }
+      if (b) { $("role").value = b.dataset.track; update(); track("track/" + (b.dataset.track.slice(6) || "all")); }
     });
     $("reset").addEventListener("click", resetFilters);
     $("share").addEventListener("click", share);
     document.querySelectorAll('[role="tab"]').forEach((b) => b.addEventListener("click", () => selectTab(b.getAttribute("aria-controls"))));
     $("lang").addEventListener("click", () => {
-      lang = lang === "ar" ? "en" : "ar"; store.set("lang", lang); applyLanguage(); readHash(); update(true);
+      lang = lang === "ar" ? "en" : "ar"; store.set("lang", lang); track("language-" + lang); applyLanguage(); readHash(); update(true);
     });
-    $("country").addEventListener("change", () => store.set("country", $("country").value));
+    $("country").addEventListener("change", () => { store.set("country", $("country").value); track("country/" + ($("country").value || "any")); });
     $("mySkillInput").addEventListener("change", (e) => { if (addSkill(e.target.value)) e.target.value = ""; });
     $("cvBtn").addEventListener("click", () => $("cvFile").click());
     $("cvFile").addEventListener("change", (e) => readCvFile(e.target.files[0]));
@@ -760,7 +766,7 @@
       else if (el.dataset.add) addSkill(el.dataset.add);
       else if (el.dataset.id) {
         const id = el.dataset.id, j = jobs.find((x) => x.id === id);
-        if (savedJobs[id]) delete savedJobs[id]; else if (j) savedJobs[id] = { t: j.t, c: j.c, u: j.u };
+        if (savedJobs[id]) delete savedJobs[id]; else if (j) { savedJobs[id] = { t: j.t, c: j.c, u: j.u }; track("save-job"); }
         store.set("saved", savedJobs);
         el.setAttribute("aria-pressed", String(!!savedJobs[id]));
         el.textContent = savedJobs[id] ? t("saved") : t("save");
@@ -770,6 +776,14 @@
         if (openLocs.has(k)) openLocs.delete(k); else openLocs.add(k);
         renderJobs();
       }
+    });
+    // which kinds of jobs people open (the track only, nothing about the visitor)
+    document.addEventListener("click", (e) => {
+      const a = e.target.closest(".job h3 a, .locs a");
+      if (!a) return;
+      const li = a.closest(".job"), id = li && li.querySelector("[data-id]") && li.querySelector("[data-id]").dataset.id;
+      const j = id && jobs.find((x) => x.id === id);
+      track("job-open/" + (j ? j.tr : "unknown"));
     });
     window.addEventListener("hashchange", () => { readHash(); update(); });
     window.addEventListener("resize", sizeHero);

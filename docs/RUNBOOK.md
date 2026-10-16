@@ -87,6 +87,17 @@ Every successful daily run then replaces the `gh-pages` branch with one fresh co
 Edit the site in `site/` (index.html, style.css, app.js); changes go live with the next publish.
 If the token expires, the run still succeeds and logs "website not published".
 
+### Visitor analytics (optional)
+
+The site can count visits and clicks anonymously with [GoatCounter](https://www.goatcounter.com)
+(free for non-commercial sites, no cookies, so no consent banner). Sign up, choose a site code
+(e.g. `radarak` -> `radarak.goatcounter.com`), put it in `.env` as `GOATCOUNTER_CODE=radarak`,
+restart the scheduler and publish. The tag is added to `index.html` only at publish time.
+
+Besides page views, the site sends these events (no personal data): `cv-read`, `cv-show-role`,
+`job-open/<track>`, `save-job`, `share`, `country/<country>`, `track/<track>`, `language-<en|ar>`.
+They appear under "Events" / the paths list in the GoatCounter dashboard.
+
 ## Daily operation
 
 - The DAG runs daily at 05:00 UTC (08:00 Cairo). The machine and Docker must be running;

@@ -15,6 +15,7 @@ import datetime as dt
 import json
 import logging
 import os
+import re
 from pathlib import Path
 
 import requests
@@ -144,12 +145,28 @@ def export_site_data(conn, generated_at: dt.datetime | None = None) -> dict[str,
     return {"data/jobs.json": dump(jobs), "data/meta.json": dump(meta)}
 
 
-def site_files(site_dir: Path = SITE_DIR) -> dict[str, bytes]:
-    """The static website (HTML/CSS/JS) that goes next to the data files."""
+def analytics_snippet(code: str | None) -> str:
+    """GoatCounter tag (anonymous, cookie-free visit counts) for the site code from goatcounter.com."""
+    code = (code or "").strip().lower()
+    if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,49}", code):
+        return ""
+    return (f'<script data-goatcounter="https://{code}.goatcounter.com/count" '
+            f'async src="https://gc.zgo.at/count.js"></script>')
+
+
+def site_files(site_dir: Path = SITE_DIR, analytics_code: str | None = None) -> dict[str, bytes]:
+    """The static website (HTML/CSS/JS) that goes next to the data files.
+    With a GoatCounter code (env GOATCOUNTER_CODE) the counting tag is added to index.html."""
+    if analytics_code is None:
+        analytics_code = os.environ.get("GOATCOUNTER_CODE", "")
     files = {}
     for path in sorted(site_dir.rglob("*")):
         if path.is_file() and not path.name.startswith(".") and "data" not in path.relative_to(site_dir).parts:
             files[path.relative_to(site_dir).as_posix()] = path.read_bytes()
+    tag = analytics_snippet(analytics_code)
+    if tag and "index.html" in files:
+        html = files["index.html"].decode("utf-8")
+        files["index.html"] = html.replace("</body>", f"  {tag}\n</body>", 1).encode("utf-8")
     files[".nojekyll"] = b""  # serve files as-is (no Jekyll processing)
     return files
 

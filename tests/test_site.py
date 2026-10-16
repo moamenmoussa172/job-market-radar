@@ -102,3 +102,15 @@ def test_every_track_has_a_colour():
     for key in re.findall(r':\s*"(\w+)"', block):
         assert f"--t-{key}:" in css, key
     assert "Radarak" in (root / "site" / "index.html").read_text(encoding="utf-8")
+
+
+def test_analytics_tag_only_with_a_valid_code(tmp_path):
+    (tmp_path / "index.html").write_text("<html><body><p>x</p></body></html>", encoding="utf-8")
+    plain = site_export.site_files(tmp_path, analytics_code="")["index.html"].decode()
+    assert "goatcounter" not in plain
+    tagged = site_export.site_files(tmp_path, analytics_code="radarak")["index.html"].decode()
+    assert 'data-goatcounter="https://radarak.goatcounter.com/count"' in tagged
+    assert tagged.index("goatcounter") < tagged.index("</body>")
+    # anything that isn't a plain site code is ignored (no HTML injection through the env var)
+    bad = site_export.site_files(tmp_path, analytics_code='x"><script>alert(1)</script>')["index.html"].decode()
+    assert "goatcounter" not in bad and "alert" not in bad
