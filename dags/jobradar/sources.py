@@ -512,7 +512,7 @@ def extract_jsearch(pairs: list | None = None, pause_seconds: float = 1.0) -> Ex
     for role, code, name in pairs:
         try:
             payload = _get_json(JSEARCH_URL, headers={"x-api-key": key},
-                                params={"query": f"{role} jobs in {name}", "country": code})
+                                params={"query": f"{role} jobs in {name}", "country": code, "language": "en"})
         except requests.HTTPError as exc:
             warnings.append(f"jsearch '{role}' in {code} failed: {exc}")
             if exc.response is not None and exc.response.status_code in (401, 403, 429):

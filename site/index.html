@@ -4,21 +4,28 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Job Radar: tech jobs you can actually apply to</title>
-  <meta name="description" content="Free, daily-updated tech jobs for Egypt, the Gulf and Europe. Filter by the country you live in, see which jobs you can apply to, what skills they ask for and what they pay.">
+  <meta name="description" content="Free, daily-updated tech jobs for Egypt, the Gulf and Europe. Pick the country you live in and see which jobs you can apply to, what skills they ask for and what they pay. Arabic and English.">
+  <meta name="theme-color" content="#0B7A75">
+  <meta property="og:type" content="website">
   <meta property="og:title" content="Job Radar: tech jobs you can actually apply to">
-  <meta property="og:description" content="Daily tech jobs filtered by where you live: Egypt, the Gulf, Europe and remote. Skills, salaries, visa sponsorship and more.">
+  <meta property="og:description" content="Daily tech jobs filtered by where you live: Egypt, the Gulf, Europe and remote. Skills, salaries, visa sponsorship. Free, Arabic and English.">
+  <!-- Link previews need an absolute URL: change it if you publish the site somewhere else. -->
+  <meta property="og:image" content="https://moamenmoussa172.github.io/job-market-radar/og.png">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='none' stroke='%230B7A75' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='7' fill='none' stroke='%230B7A75' stroke-width='3'/%3E%3Ccircle cx='22' cy='10' r='3' fill='%230B7A75'/%3E%3C/svg%3E">
+  <link rel="preload" href="fonts/ibm-plex-sans-arabic-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <a class="skip" href="#results" data-i18n="skip">Skip to jobs</a>
   <header class="topbar">
-    <a class="brand" href="#" aria-label="Job Radar home">
+    <a class="brand" href="./" aria-label="Job Radar">
       <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="13"/><circle cx="16" cy="16" r="6.5"/><circle class="blip" cx="22" cy="10" r="2.6"/></svg>
       <span data-i18n="brand">Job Radar</span>
     </a>
     <nav class="topnav">
       <button id="lang" class="linkbtn" type="button" lang="ar">العربية</button>
-      <a class="linkbtn" href="https://github.com/moamenmoussa172/job-market-radar" target="_blank" rel="noopener" data-i18n="code">Source code</a>
+      <a class="linkbtn hide-s" href="https://github.com/moamenmoussa172/job-market-radar" target="_blank" rel="noopener" data-i18n="code">Source code</a>
     </nav>
   </header>
 
@@ -35,40 +42,77 @@
         <label class="inline"><span class="sr" data-i18n="role">Role</span><select id="role"></select></label>
         <span id="ask3" data-i18n="ask3">jobs.</span>
       </h1>
-      <p class="answer" aria-live="polite">
-        <strong id="count">…</strong>
-        <span id="countLabel" data-i18n="countLabel">jobs you can apply to</span>
-      </p>
+      <div class="answer" aria-live="polite">
+        <p><strong id="count">…</strong> <span id="countLabel" data-i18n="countLabel">jobs you can apply to</span></p>
+        <button id="share" class="sharebtn" type="button" data-i18n="share">Share this search</button>
+      </div>
       <p class="fresh" id="fresh"></p>
     </section>
 
-    <details class="filterbox" id="filterBox" open>
-    <summary id="filterSummary" data-i18n="filters">Filters</summary>
-    <section class="filters" aria-label="Filters">
-      <div class="search">
-        <label for="q" class="sr" data-i18n="search">Search</label>
-        <input id="q" type="search" autocomplete="off" data-i18n-placeholder="searchPh" placeholder="Search a title, company or skill">
+    <section class="skillsbox" aria-labelledby="skillsTitle">
+      <div class="skillshead">
+        <h2 id="skillsTitle" data-i18n="yourSkills">Your skills</h2>
+        <p class="hint" data-i18n="yourSkillsHint">Add what you know. Jobs are ranked by how many of their skills you have, and your skills are ticked on each job.</p>
       </div>
-      <label><span data-i18n="seniority">Seniority</span><select id="seniority"></select></label>
-      <label><span data-i18n="workMode">Work mode</span><select id="workMode"></select></label>
-      <label><span data-i18n="industry">Industry</span><select id="industry"></select></label>
-      <label><span data-i18n="skill">Must-have skill</span><select id="skill"></select></label>
-      <label><span data-i18n="arabic">Arabic</span><select id="arabic"></select></label>
-      <label class="check"><input id="visa" type="checkbox"> <span data-i18n="visa">Visa or relocation offered</span></label>
-      <label class="check"><input id="hideNationals" type="checkbox" checked> <span data-i18n="hideNationals">Hide jobs limited to nationals</span></label>
-      <button id="reset" class="linkbtn" type="button" data-i18n="reset">Clear filters</button>
+      <div class="skillsrow">
+        <label class="sr" for="mySkillInput" data-i18n="addSkill">Add a skill you have</label>
+        <input id="mySkillInput" list="skillList" autocomplete="off" data-i18n-placeholder="addSkill" placeholder="Add a skill you have">
+        <datalist id="skillList"></datalist>
+        <div id="mySkills" class="chips"></div>
+      </div>
+      <div class="suggest" id="suggestRow" hidden>
+        <span data-i18n="suggest">Often asked for these jobs:</span>
+        <div id="suggest" class="chips"></div>
+      </div>
     </section>
+
+    <section class="quick" aria-label="Quick filters">
+      <button type="button" class="toggle" data-flag="remote" aria-pressed="false" data-i18n="qRemote">Remote</button>
+      <button type="button" class="toggle" data-flag="visa" aria-pressed="false" data-i18n="qVisa">Visa or relocation</button>
+      <button type="button" class="toggle" data-flag="junior" aria-pressed="false" data-i18n="qJunior">Junior &amp; intern</button>
+      <button type="button" class="toggle" data-flag="pay" aria-pressed="false" data-i18n="qPay">Shows salary</button>
+      <button type="button" class="toggle" data-flag="week" aria-pressed="false" data-i18n="qWeek">Posted this week</button>
+      <button type="button" class="toggle" data-flag="hideNat" aria-pressed="true" data-i18n="qHideNat">Hide nationals-only</button>
+    </section>
+
+    <details class="filterbox" id="filterBox">
+      <summary id="filterSummary" data-i18n="moreFilters">More filters</summary>
+      <section class="filters" aria-label="More filters">
+        <div class="search">
+          <label for="q" data-i18n="search">Search</label>
+          <input id="q" type="search" autocomplete="off" data-i18n-placeholder="searchPh" placeholder="A title, company or skill">
+        </div>
+        <label><span data-i18n="seniority">Seniority</span><select id="seniority"></select></label>
+        <label><span data-i18n="workMode">Work mode</span><select id="workMode"></select></label>
+        <label><span data-i18n="industry">Industry</span><select id="industry"></select></label>
+        <label><span data-i18n="skill">Must-have skill</span><select id="skill"></select></label>
+        <label><span data-i18n="arabic">Arabic</span><select id="arabic"></select></label>
+        <button id="reset" class="linkbtn" type="button" data-i18n="reset">Clear all filters</button>
+      </section>
     </details>
 
     <div class="tabs" role="tablist">
-      <button role="tab" id="tab-jobs" aria-controls="jobs" aria-selected="true" data-i18n="tabJobs">Jobs</button>
-      <button role="tab" id="tab-insights" aria-controls="insights" aria-selected="false" data-i18n="tabInsights">What to learn &amp; pay</button>
-      <button role="tab" id="tab-about" aria-controls="about" aria-selected="false" data-i18n="tabAbout">How it works</button>
+      <button role="tab" id="tab-jobs" aria-controls="jobs" aria-selected="true"><span data-i18n="tabJobs">Jobs</span></button>
+      <button role="tab" id="tab-insights" aria-controls="insights" aria-selected="false"><span data-i18n="tabInsights">Skills &amp; pay</span></button>
+      <button role="tab" id="tab-saved" aria-controls="saved" aria-selected="false"><span data-i18n="tabSaved">Saved</span> <span id="savedCount" class="pill" hidden></span></button>
+      <button role="tab" id="tab-about" aria-controls="about" aria-selected="false"><span data-i18n="tabAbout">How it works</span></button>
     </div>
 
     <section id="jobs" role="tabpanel" aria-labelledby="tab-jobs">
-      <ol id="jobList" class="joblist"></ol>
-      <p id="empty" class="empty" hidden></p>
+      <div class="resultsbar" id="results">
+        <p id="resultSummary" class="summary"></p>
+        <label class="sort"><span data-i18n="sortBy">Sort by</span>
+          <select id="sort">
+            <option value="new" data-i18n="sortNew">Newest</option>
+            <option value="match" data-i18n="sortMatch">Best match for my skills</option>
+            <option value="pay" data-i18n="sortPay">Highest pay</option>
+          </select>
+        </label>
+      </div>
+      <ol id="jobList" class="joblist" aria-busy="true">
+        <li class="skeleton"></li><li class="skeleton"></li><li class="skeleton"></li>
+      </ol>
+      <div id="empty" class="empty" hidden></div>
       <button id="more" class="more" type="button" hidden></button>
     </section>
 
@@ -77,17 +121,12 @@
       <div class="grid">
         <article class="panel">
           <h2 data-i18n="topSkills">Skills these jobs ask for</h2>
-          <p class="hint" data-i18n="topSkillsHint">Share of jobs that mention each skill. Tap one to only see jobs that need it.</p>
+          <p class="hint" data-i18n="topSkillsHint">Share of jobs that mention each skill. Tap one to see only jobs that need it.</p>
           <div id="skillBars" class="bars"></div>
         </article>
         <article class="panel">
           <h2 data-i18n="nextSkill">The next skill to learn</h2>
-          <p class="hint" data-i18n="nextSkillHint">Add the skills you have. A job is a match when you have 60% or more of the skills it lists.</p>
-          <div class="myskills">
-            <input id="mySkillInput" list="skillList" autocomplete="off" data-i18n-placeholder="addSkill" placeholder="Add a skill you have">
-            <datalist id="skillList"></datalist>
-            <div id="mySkills" class="chips"></div>
-          </div>
+          <p class="hint" id="nextHint"></p>
           <p id="matchLine" class="matchline"></p>
           <div id="nextBars" class="bars"></div>
         </article>
@@ -110,6 +149,12 @@
           <div id="roleBars" class="bars"></div>
         </article>
       </div>
+    </section>
+
+    <section id="saved" role="tabpanel" aria-labelledby="tab-saved" hidden>
+      <p class="hint" data-i18n="savedHint">Jobs you save are kept on this device. A job disappears from the list below when it's no longer open.</p>
+      <ol id="savedList" class="joblist"></ol>
+      <div id="savedEmpty" class="empty" hidden></div>
     </section>
 
     <section id="about" role="tabpanel" aria-labelledby="tab-about" hidden>

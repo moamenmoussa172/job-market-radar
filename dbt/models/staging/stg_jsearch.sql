@@ -8,6 +8,8 @@ shaped as (
         base.*,
         cc.country as country_name,
         nullif(concat_ws(', ', p ->> 'job_city', p ->> 'job_state', cc.country), '') as loc,
+        -- some results come back localized ("أبو ظبي • عبر Halian"): keep the place, drop "• via <site>"
+        nullif(trim(regexp_replace(p ->> 'job_location', '\s*(•|·|\|).*$', '')), '') as raw_loc,
         case
             when lower(coalesce(p ->> 'work_arrangement', '')) like '%hybrid%' then 'hybrid'
             when (p ->> 'job_is_remote')::boolean then 'remote'
@@ -16,7 +18,7 @@ shaped as (
         end as wp
     from base
     left join {{ ref('country_codes') }} cc
-      on cc.code = upper(p ->> 'job_country')
+      on cc.code = upper(coalesce(nullif(p ->> 'job_country', ''), p ->> 'search_country'))
 )
 
 select
@@ -24,11 +26,11 @@ select
     source_job_id,
     nullif(trim(p ->> 'job_title'), '')                     as job_title,
     nullif(trim(p ->> 'employer_name'), '')                 as company_name,
-    coalesce(loc, p ->> 'job_location')                     as location_text,
+    coalesce(loc, concat_ws(', ', raw_loc, country_name))                     as location_text,
     case wp when 'remote' then true when 'onsite' then false end
                                                             as is_remote_flag,
     wp                                                      as workplace_type,
-    case when wp = 'remote' then coalesce(loc, p ->> 'job_location') end
+    case when wp = 'remote' then coalesce(loc, concat_ws(', ', raw_loc, country_name)) end
                                                             as geo_restriction_text,
     null::text                                              as timezone_restriction_text,
     p ->> 'job_description'                                 as description_html,

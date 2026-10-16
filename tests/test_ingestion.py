@@ -170,7 +170,7 @@ def test_jsearch_filters_dedupes_and_sends_key(monkeypatch):
     res = sources.extract_jsearch(pairs=[("data engineer", "eg", "Egypt")], pause_seconds=0)
     assert [sources.jsearch_id(r) for r in res.records] == ["j1"]
     assert calls[0][1] == {"x-api-key": "k123"}
-    assert calls[0][0] == {"query": "data engineer jobs in Egypt", "country": "eg"}
+    assert calls[0][0] == {"query": "data engineer jobs in Egypt", "country": "eg", "language": "en"}
 
 
 def test_jsearch_stops_on_quota(monkeypatch):

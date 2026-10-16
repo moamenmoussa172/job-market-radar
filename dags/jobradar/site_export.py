@@ -25,6 +25,7 @@ log = logging.getLogger(__name__)
 # Their jobs still count in the warehouse/dashboard, but are not listed publicly.
 PUBLIC_LIST_EXCLUDED = ("remotive", "himalayas")
 MAX_PUBLIC_JOBS = int(os.environ.get("SITE_MAX_JOBS", "15000"))
+STALE_POSTING_DAYS = 45  # posted more than this long before we first saw it = long-open listing
 SITE_DIR = Path(os.environ.get("SITE_DIR") or Path(__file__).resolve().parents[2] / "site")
 GITHUB_API = "https://api.github.com"
 SOURCE_CREDITS = {
@@ -59,7 +60,10 @@ select j.job_id, j.job_title, j.company_name, j.track, j.role_family, j.seniorit
        coalesce(g.countries, '{}'), coalesce(g.regions, '{}'), j.remote_scope = 'Worldwide' as worldwide,
        case when j.has_comparable_salary then round(j.salary_annual_min_usd / 1000.0) end as sal_min_k,
        case when j.has_comparable_salary then round(j.salary_annual_max_usd / 1000.0) end as sal_max_k,
-       coalesce(j.posted_at::date, j.first_seen_date) as posted,
+       -- long-open listings ("evergreen" roles posted years ago) show when we first saw them
+       case when j.posted_at::date < j.first_seen_date - %(stale_days)s then j.first_seen_date
+            else coalesce(j.posted_at::date, j.first_seen_date) end as posted,
+       j.posted_at::date < j.first_seen_date - %(stale_days)s as long_open,
        j.job_url, coalesce(s.skills, '{}'),
        j.offers_visa_or_relocation, j.nationals_only, j.arabic_required, j.primary_source
 from jobs j
@@ -77,14 +81,15 @@ def _rows(conn, sql: str, params: dict | None = None) -> list[tuple]:
 
 def export_site_data(conn, generated_at: dt.datetime | None = None) -> dict[str, bytes]:
     generated_at = generated_at or dt.datetime.now(dt.timezone.utc)
-    rows = _rows(conn, JOBS_SQL, {"excluded": list(PUBLIC_LIST_EXCLUDED), "limit": MAX_PUBLIC_JOBS})
+    rows = _rows(conn, JOBS_SQL, {"excluded": list(PUBLIC_LIST_EXCLUDED), "limit": MAX_PUBLIC_JOBS,
+                                  "stale_days": STALE_POSTING_DAYS})
 
-    skills = sorted({s for r in rows for s in r[16]}, key=str.lower)
+    skills = sorted({s for r in rows for s in r[17]}, key=str.lower)
     skill_idx = {s: i for i, s in enumerate(skills)}
     jobs = []
     for (job_id, title, company, track, role, seniority, work_mode, industry, loc, countries, regions,
-         worldwide, sal_min, sal_max, posted, url, job_skills, visa, nationals, arabic, source) in rows:
-        flags = (1 if visa else 0) | (2 if nationals else 0) | (4 if arabic else 0)
+         worldwide, sal_min, sal_max, posted, long_open, url, job_skills, visa, nationals, arabic, source) in rows:
+        flags = (1 if visa else 0) | (2 if nationals else 0) | (4 if arabic else 0) | (8 if long_open else 0)
         job = {"id": job_id[:12], "t": title, "c": company, "tr": track, "r": role, "s": seniority,
                "w": work_mode, "i": industry, "l": loc, "co": list(countries), "rg": list(regions),
                "p": posted.isoformat(), "u": url, "k": [skill_idx[s] for s in job_skills]}

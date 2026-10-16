@@ -102,3 +102,11 @@ pattern,country,region
 "\m(thailand|bangkok)\M",Thailand,APAC
 "\m(australia|sydney|melbourne|brisbane|perth)\M",Australia,APAC
 "\m(new\s+zealand|auckland|wellington)\M",New Zealand,APAC
+"(القاهرة|الجيزة|الإسكندرية|الاسكندرية|مصر)",Egypt,MENA
+"(دبي|أبو ظبي|أبوظبي|ابوظبي|الشارقة|عجمان|الإمارات|الامارات)",United Arab Emirates,MENA
+"(الرياض|جدة|الدمام|الظهران|الخبر|مكة|المدينة المنورة|السعودية)",Saudi Arabia,MENA
+"(الدوحة|قطر)",Qatar,MENA
+"(الكويت)",Kuwait,MENA
+"(المنامة|البحرين)",Bahrain,MENA
+"(مسقط|سلطنة عمان|سلطنة عُمان)",Oman,MENA
+"(عمّان|الأردن|الاردن)",Jordan,MENA
