@@ -622,8 +622,16 @@
 
   // ------------------------------------------------------------------ track pills + radar
   function renderTracks() {
-    const base = filtered(true);
-    const counts = new Map(countBy(base, (j) => j.tr));
+    // count jobs the way the list shows them: the same title at the same company counts once
+    const keys = new Map(), all = new Set();
+    for (const j of filtered(true)) {
+      const k = j.t.toLowerCase() + "|" + (j.c || "").toLowerCase();
+      all.add(k);
+      if (!keys.has(j.tr)) keys.set(j.tr, new Set());
+      keys.get(j.tr).add(k);
+    }
+    const counts = new Map([...keys].map(([tr, set]) => [tr, set.size]));
+    const base = { length: all.size };
     const role = $("role").value;
     const active = role.startsWith("track:") ? role.slice(6) : role.startsWith("role:") ? trackOfRole[role.slice(5)] : "";
     const pill = (value, label, n, track) => `<button type="button" class="tpill${(value === "" ? !role : active === track) ? " on" : ""}"
