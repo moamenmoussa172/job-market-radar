@@ -11,6 +11,7 @@ Data Product Management,Data & Analytics,1
 Solutions / Consulting,Data & Analytics,1
 Data Leadership,Data & Analytics,1
 Other data role,Data & Analytics,1
+GIS Specialist,Data & Analytics,1
 ML / AI Engineer,AI & Machine Learning,2
 MLOps Engineer,AI & Machine Learning,2
 AI Research Scientist / Engineer,AI & Machine Learning,2
@@ -18,30 +19,35 @@ Software Engineer,Software Engineering,3
 Backend Engineer,Software Engineering,3
 Frontend Engineer,Software Engineering,3
 Full-Stack Engineer,Software Engineering,3
-Mobile Engineer,Software Engineering,3
 Embedded / Firmware Engineer,Software Engineering,3
-Game Developer,Software Engineering,3
+Game / XR Developer,Software Engineering,3
+Robotics Engineer,Software Engineering,3
 Blockchain Engineer,Software Engineering,3
 Engineering Leadership,Software Engineering,3
-QA Automation Engineer,QA & Testing,4
-QA / Test Engineer,QA & Testing,4
-UX / Product Designer,UI/UX Design,5
-UI / Visual Designer,UI/UX Design,5
-UX Researcher,UI/UX Design,5
-DevOps / Platform Engineer,DevOps & Cloud,6
-Site Reliability Engineer,DevOps & Cloud,6
-Cloud / Infrastructure Engineer,DevOps & Cloud,6
-Security Engineer / Analyst,Security,7
-ERP / CRM Consultant,ERP & CRM,8
-ERP / CRM Developer,ERP & CRM,8
-Network Engineer,Networks & Telecom,9
-Telecom Engineer,Networks & Telecom,9
-Product Manager / Owner,Product & Delivery,10
-Technical Project / Program Manager,Product & Delivery,10
-Scrum Master / Agile Coach,Product & Delivery,10
-IT Support / Systems Admin,IT & Support,11
-Systems / IT Analyst,IT & Support,11
-Solutions / Support Engineer,IT & Support,11
-Technical Writer,IT & Support,11
-Other tech role,IT & Support,11
+iOS Engineer,Mobile Development,4
+Android Engineer,Mobile Development,4
+Cross-platform Mobile Engineer,Mobile Development,4
+Mobile Engineer,Mobile Development,4
+QA Automation Engineer,QA & Testing,5
+QA / Test Engineer,QA & Testing,5
+UX / Product Designer,UI/UX Design,6
+UI / Visual Designer,UI/UX Design,6
+UX Researcher,UI/UX Design,6
+DevOps / Platform Engineer,DevOps & Cloud,7
+Site Reliability Engineer,DevOps & Cloud,7
+Cloud / Infrastructure Engineer,DevOps & Cloud,7
+Security Engineer / Analyst,Security,8
+ERP / CRM Consultant,ERP & CRM,9
+ERP / CRM Developer,ERP & CRM,9
+RPA / Low-code Developer,ERP & CRM,9
+Network Engineer,Networks & Telecom,10
+Telecom Engineer,Networks & Telecom,10
+Product Manager / Owner,Product & Delivery,11
+Technical Project / Program Manager,Product & Delivery,11
+Scrum Master / Agile Coach,Product & Delivery,11
+IT Support / Systems Admin,IT & Support,12
+Systems / IT Analyst,IT & Support,12
+Solutions / Support Engineer,IT & Support,12
+Technical Writer,IT & Support,12
+Other tech role,IT & Support,12
 Not a tech role,Not tech,99

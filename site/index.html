@@ -52,8 +52,21 @@
     <section class="skillsbox" aria-labelledby="skillsTitle">
       <div class="skillshead">
         <h2 id="skillsTitle" data-i18n="yourSkills">Your skills</h2>
-        <p class="hint" data-i18n="yourSkillsHint">Add what you know. Jobs are ranked by how many of their skills you have, and your skills are ticked on each job.</p>
+        <p class="hint" data-i18n="yourSkillsHint">Upload your CV or add what you know. Jobs are ranked by how many of their skills you have, and your skills are ticked on each job.</p>
       </div>
+      <div class="cvrow">
+        <button id="cvBtn" class="cvbtn" type="button" data-i18n="cvUpload">Upload your CV</button>
+        <input id="cvFile" type="file" accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" hidden>
+        <button id="cvPasteBtn" class="linkbtn" type="button" aria-expanded="false" data-i18n="cvPaste">or paste its text</button>
+        <span class="privacy" data-i18n="cvPrivacy">Read on your device. Your CV is never uploaded or stored.</span>
+      </div>
+      <div id="cvPasteBox" class="cvpaste" hidden>
+        <label for="cvText" class="sr" data-i18n="cvPasteLabel">Your CV text</label>
+        <textarea id="cvText" rows="6" data-i18n-placeholder="cvPastePh" placeholder="Paste the text of your CV here"></textarea>
+        <button id="cvRead" class="cvbtn" type="button" data-i18n="cvRead">Find my skills</button>
+      </div>
+      <div id="cvStatus" class="cvstatus" role="status" aria-live="polite"></div>
+      <div id="cvResult" class="cvresult" hidden></div>
       <div class="skillsrow">
         <label class="sr" for="mySkillInput" data-i18n="addSkill">Add a skill you have</label>
         <input id="mySkillInput" list="skillList" autocomplete="off" data-i18n-placeholder="addSkill" placeholder="Add a skill you have">

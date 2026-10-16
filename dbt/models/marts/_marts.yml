@@ -13,7 +13,7 @@ models:
           - not_null
           - accepted_values:
               arguments:
-                values: ['Data & Analytics', 'AI & Machine Learning', 'Software Engineering', 'QA & Testing',
+                values: ['Data & Analytics', 'AI & Machine Learning', 'Software Engineering', 'Mobile Development', 'QA & Testing',
                          'UI/UX Design', 'DevOps & Cloud', 'Security', 'ERP & CRM', 'Networks & Telecom',
                          'Product & Delivery', 'IT & Support']
       - name: industry

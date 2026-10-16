@@ -17,7 +17,7 @@
       countLabel: "jobs you can apply to", countAll: "open tech jobs", share: "Share this search", copied: "Link copied",
       updated: (d) => `Updated ${d}. New jobs are added every morning.`,
       yourSkills: "Your skills", addSkill: "Add a skill you have",
-      yourSkillsHint: "Add what you know. Jobs are ranked by how many of their skills you have, and your skills are ticked on each job.",
+      yourSkillsHint: "Upload your CV or add what you know. Jobs are ranked by how many of their skills you have, and your skills are ticked on each job.",
       suggest: "Often asked for these jobs:", removeSkill: (s) => `Remove ${s}`,
       qRemote: "Remote", qVisa: "Visa or relocation", qJunior: "Junior & intern", qPay: "Shows salary",
       qWeek: "Posted this week", qHideNat: "Hide nationals-only",
@@ -49,6 +49,17 @@
       statPayNone: "no published pay yet", tooFew: "Not enough data for these filters yet.",
       listedOf: (a, b) => `${a} of ${b} tracked jobs are listed here.`,
       loadError: "The job list couldn't be loaded. Check your connection and refresh the page.",
+      cvUpload: "Upload your CV", cvPaste: "or paste its text", cvPrivacy: "Read on your device. Your CV is never uploaded or stored.",
+      cvPasteLabel: "Your CV text", cvPastePh: "Paste the text of your CV here", cvRead: "Find my skills",
+      cvReading: (f) => `Reading ${f}…`, cvTooBig: "That file is over 10 MB. Try a smaller PDF or Word file.",
+      cvType: "Use a PDF, Word (.docx) or text file.", cvNoText: "No text could be read from this file. If it's a scanned PDF, paste your CV text instead.",
+      cvFail: "This file couldn't be read. Try saving it as PDF, or paste the text.",
+      cvNoSkills: "No known tech skills were found in this text. Add your skills by hand below.",
+      cvTitle: "From your CV", cvSkills: "skills found", cvYears: "years of experience", cvRole: "looks like",
+      cvMatches: "jobs you match (60%+ of their skills)", cvAdded: "Your skills below were updated from your CV. Remove any that are wrong.",
+      cvGapTitle: "Worth adding to your CV, if you have them:",
+      cvGapHint: "These skills appear in many jobs close to your profile but not in your CV.",
+      cvShowRole: (r) => `Show ${r} jobs`, cvShowBest: "Show my best matches", cvClear: "Forget my CV skills",
     },
     ar: {
       brand: "رادار الوظائف", code: "الكود المصدري", skip: "انتقل للوظايف",
@@ -57,7 +68,7 @@
       countLabel: "وظيفة تقدر تقدّم عليها", countAll: "وظيفة تقنية متاحة", share: "شارك البحث ده", copied: "اتنسخ اللينك",
       updated: (d) => `آخر تحديث ${d}. وظايف جديدة بتتضاف كل يوم الصبح.`,
       yourSkills: "مهاراتك", addSkill: "ضيف مهارة عندك",
-      yourSkillsHint: "ضيف اللي بتعرفه. بنرتب الوظايف حسب عدد مهاراتها اللي عندك، ومهاراتك بتظهر عليها علامة ✓.",
+      yourSkillsHint: "ارفع الـ CV أو ضيف اللي بتعرفه. بنرتب الوظايف حسب عدد مهاراتها اللي عندك، ومهاراتك بتظهر عليها علامة ✓.",
       suggest: "مطلوبة كتير في الوظايف دي:", removeSkill: (s) => `شيل ${s}`,
       qRemote: "ريموت", qVisa: "فيزا أو انتقال", qJunior: "جونيور وتدريب", qPay: "فيها مرتب",
       qWeek: "اتنشرت الأسبوع ده", qHideNat: "اخفي اللي للمواطنين بس",
@@ -89,6 +100,17 @@
       statPayNone: "مفيش مرتبات معلنة لسه", tooFew: "مفيش بيانات كفاية للفلاتر دي لسه.",
       listedOf: (a, b) => `${a} من ${b} وظيفة بنتابعها معروضة هنا.`,
       loadError: "مقدرناش نحمّل الوظايف. اتأكد من النت واعمل تحديث للصفحة.",
+      cvUpload: "ارفع الـ CV بتاعك", cvPaste: "أو الصق النص", cvPrivacy: "بيتقري على جهازك. الـ CV مش بيترفع ولا بيتحفظ في أي مكان.",
+      cvPasteLabel: "نص الـ CV", cvPastePh: "الصق نص الـ CV هنا", cvRead: "طلّع مهاراتي",
+      cvReading: (f) => `بنقرا ${f}…`, cvTooBig: "الملف أكبر من 10 ميجا. جرّب PDF أو Word أصغر.",
+      cvType: "استخدم ملف PDF أو Word (.docx) أو نص.", cvNoText: "مقدرناش نقرا نص من الملف ده. لو PDF متصوّر، الصق نص الـ CV بدل كده.",
+      cvFail: "مقدرناش نقرا الملف ده. جرّب تحفظه PDF أو الصق النص.",
+      cvNoSkills: "ملقيناش مهارات تقنية معروفة في النص ده. ضيف مهاراتك بإيدك تحت.",
+      cvTitle: "من الـ CV بتاعك", cvSkills: "مهارة لقيناها", cvYears: "سنين خبرة", cvRole: "شكلك",
+      cvMatches: "وظيفة مناسبة لك (60%+ من مهاراتها)", cvAdded: "مهاراتك تحت اتحدّثت من الـ CV. شيل أي مهارة غلط.",
+      cvGapTitle: "تستاهل تضيفها للـ CV لو بتعرفها:",
+      cvGapHint: "المهارات دي مطلوبة في وظايف كتير قريبة من بروفايلك ومش مكتوبة في الـ CV.",
+      cvShowRole: (r) => `اعرض وظايف ${r}`, cvShowBest: "اعرض أنسب وظايف ليا", cvClear: "امسح مهارات الـ CV",
     },
   };
   const ABOUT = {
@@ -282,7 +304,8 @@
       g.flags = g.all.reduce((f, x) => f | (x.f || 0), 0) & ~(g.all.every((x) => (x.f || 0) & FLAG.longOpen) ? 0 : FLAG.longOpen);
       const k = g.job.k;
       g.have = mine.size ? k.filter((i) => mine.has(i)).length : 0;
-      g.match = mine.size && k.length ? g.have / k.length : -1;
+      // a job listing only 1-2 skills is weak evidence: "4 of 5" should rank above "1 of 1"
+      g.match = mine.size && k.length ? g.have / Math.max(k.length, 4) : -1;
     }
     const sort = $("sort").value;
     const byNew = (a, b) => (a.job.p < b.job.p ? 1 : a.job.p > b.job.p ? -1 : 0);
@@ -449,6 +472,143 @@
       { click: (r) => { $("role").value = "role:" + r; update(); } });
   }
 
+  // ------------------------------------------------------------------ CV (read in the browser, never uploaded)
+  const loaded = {};
+  function loadScript(src) {
+    loaded[src] = loaded[src] || new Promise((ok, fail) => {
+      const s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = () => fail(new Error("load " + src));
+      document.head.appendChild(s);
+    });
+    return loaded[src];
+  }
+  async function pdfText(buf) {
+    await loadScript("vendor/pdf.min.js");
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = "vendor/pdf.worker.min.js";
+    const doc = await window.pdfjsLib.getDocument({ data: buf }).promise;
+    const parts = [];
+    for (let i = 1; i <= Math.min(doc.numPages, 15); i++) {
+      const page = await doc.getPage(i);
+      const content = await page.getTextContent();
+      parts.push(content.items.map((it) => it.str + (it.hasEOL ? "\n" : " ")).join(""));
+    }
+    return parts.join("\n");
+  }
+  async function docxText(buf) {
+    await loadScript("vendor/mammoth.browser.min.js");
+    return (await window.mammoth.extractRawText({ arrayBuffer: buf })).value;
+  }
+
+  let skillRegex = null;
+  function findSkills(text) {
+    skillRegex = skillRegex || (meta.skill_patterns || []).map((p) => { try { return p ? new RegExp(p, "i") : null; } catch { return null; } });
+    return meta.skills.filter((s, i) => skillRegex[i] && skillRegex[i].test(text));
+  }
+  function findYears(text) {
+    const now = new Date().getFullYear();
+    let best = 0;
+    for (const m of text.matchAll(/(\d{1,2})\s*\+?\s*(?:years|yrs|year)\b(?:\s+of)?(?:\s+\w+){0,3}\s+experience/gi)) best = Math.max(best, +m[1]);
+    for (const m of text.matchAll(/\b(\d{1,2})\s*\+?\s*(?:years|yrs)\b/gi)) if (+m[1] <= 40 && best === 0) best = Math.max(best, +m[1]);
+    // work-history ranges: "2019 - Present", "03/2018 – 2021"
+    let first = null;
+    const school = /universit|bachelor|faculty|school|college|degree|b\.?sc|m\.?sc|master|diploma|جامعة|كلية|بكالوريوس/i;
+    for (const line of text.split(/\n+/)) {
+      if (school.test(line)) continue;               // study years are not work experience
+      for (const m of line.matchAll(/\b((?:19|20)\d{2})\s*(?:-|–|—|to)\s*(present|current|now|today|(?:19|20)\d{2})\b/gi)) {
+        const start = +m[1];
+        if (start >= 1980 && start <= now) first = first === null ? start : Math.min(first, start);
+      }
+    }
+    const fromRanges = first !== null ? now - first : 0;
+    const years = best || fromRanges;              // what the CV says beats what the dates suggest
+    return years > 0 && years <= 45 ? years : null;
+  }
+  const ROLE_HINTS = [
+    [/\bdata engineer/gi, "Data Engineer"], [/\banalytics engineer/gi, "Analytics Engineer"],
+    [/\bdata scientist/gi, "Data Scientist"], [/\bdata analyst/gi, "Data Analyst"],
+    [/\b(bi|business intelligence|power bi) (developer|analyst)/gi, "BI Analyst / Developer"],
+    [/\b(machine learning|ml|ai) engineer/gi, "ML / AI Engineer"], [/\bmlops/gi, "MLOps Engineer"],
+    [/\bback[\s-]?end (developer|engineer)/gi, "Backend Engineer"], [/\bfront[\s-]?end (developer|engineer)/gi, "Frontend Engineer"],
+    [/\bfull[\s-]?stack (developer|engineer)/gi, "Full-Stack Engineer"], [/\bios (developer|engineer)/gi, "iOS Engineer"],
+    [/\bandroid (developer|engineer)/gi, "Android Engineer"], [/\b(flutter|react native) (developer|engineer)/gi, "Cross-platform Mobile Engineer"],
+    [/\bdevops/gi, "DevOps / Platform Engineer"], [/\bsite reliability|\bsre\b/gi, "Site Reliability Engineer"],
+    [/\bcloud (engineer|architect)/gi, "Cloud / Infrastructure Engineer"],
+    [/\b(qa|test automation|sdet|quality assurance) (engineer|analyst|tester)|\bsoftware tester/gi, "QA Automation Engineer"],
+    [/\b(ux|ui|product) designer|\bux\/ui|\bui\/ux/gi, "UX / Product Designer"],
+    [/\b(security|soc|cyber ?security) (engineer|analyst)|penetration tester/gi, "Security Engineer / Analyst"],
+    [/\b(sap|abap|salesforce|dynamics 365|oracle ebs) (consultant|developer)/gi, "ERP / CRM Consultant"],
+    [/\bnetwork engineer|\bnoc engineer/gi, "Network Engineer"], [/\bproduct (manager|owner)/gi, "Product Manager / Owner"],
+    [/\bsoftware (engineer|developer)/gi, "Software Engineer"],
+  ];
+  function guessRole(text) {
+    const known = new Set(meta.tracks.flatMap((t) => t.roles));
+    let best = null, score = 0;
+    for (const [re, role] of ROLE_HINTS) {
+      const n = (text.match(re) || []).length;
+      if (n > score && known.has(role)) { best = role; score = n; }
+    }
+    return best;
+  }
+
+  function cvStatus(msg, err) { const el = $("cvStatus"); el.textContent = msg || ""; el.classList.toggle("err", !!err); }
+
+  function useCvText(text) {
+    if (!text || text.trim().length < 80) { cvStatus(t("cvNoText"), true); return; }
+    const skills = findSkills(text);
+    if (!skills.length) { cvStatus(t("cvNoSkills"), true); return; }
+    cvStatus("");
+    const years = findYears(text), role = guessRole(text);
+    mySkills = new Set(skills); store.set("mySkills", [...mySkills]);
+    $("sort").value = "match";
+    update();
+    // jobs close to this profile: matches plus near-matches; what do they ask for that the CV doesn't mention?
+    const mine = mySkillIdx();
+    const near = current.filter((j) => j.k.length >= 3 && j.k.filter((k) => mine.has(k)).length / j.k.length >= 0.4);
+    const matched = current.filter((j) => j.k.length && j.k.filter((k) => mine.has(k)).length / j.k.length >= MATCH).length;
+    const gap = new Map();
+    near.forEach((j) => j.k.forEach((k) => { if (!mine.has(k)) gap.set(k, (gap.get(k) || 0) + 1); }));
+    const gaps = [...gap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([k]) => meta.skills[k]);
+    const r = $("cvResult");
+    r.hidden = false;
+    r.innerHTML = `<h3>${t("cvTitle")}</h3>
+      <div class="facts">
+        <div><b>${skills.length}</b><span>${t("cvSkills")}</span></div>
+        ${years ? `<div><b>${years}</b><span>${t("cvYears")}</span></div>` : ""}
+        <div><b>${num(matched)}</b><span>${t("cvMatches")}</span></div>
+        ${role ? `<div><b>${esc(role)}</b><span>${t("cvRole")}</span></div>` : ""}
+      </div>
+      <p class="hint">${t("cvAdded")}</p>
+      ${gaps.length ? `<div class="gap"><p><b>${t("cvGapTitle")}</b></p><p class="hint">${t("cvGapHint")}</p>
+        <div class="chips">${gaps.map((s) => `<button type="button" class="chip add" data-add="${esc(s)}">+ ${esc(s)}</button>`).join("")}</div></div>` : ""}
+      <div class="actions">
+        ${role ? `<button type="button" class="cvbtn" id="cvRoleBtn">${esc(t("cvShowRole")(role))}</button>` : ""}
+        <button type="button" class="sharebtn" id="cvBestBtn">${t("cvShowBest")}</button>
+        <button type="button" class="linkbtn" id="cvClearBtn">${t("cvClear")}</button>
+      </div>`;
+    if (role) $("cvRoleBtn").addEventListener("click", () => { $("role").value = "role:" + role; update(); goToJobs(); });
+    $("cvBestBtn").addEventListener("click", goToJobs);
+    $("cvClearBtn").addEventListener("click", () => { mySkills.clear(); store.set("mySkills", []); r.hidden = true; $("sort").value = "new"; update(); });
+  }
+  function goToJobs() { selectTab("jobs"); $("results").scrollIntoView({ behavior: "smooth", block: "start" }); }
+
+  async function readCvFile(file) {
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) { cvStatus(t("cvTooBig"), true); return; }
+    const name = file.name.toLowerCase();
+    const kind = name.endsWith(".pdf") || file.type === "application/pdf" ? "pdf"
+      : name.endsWith(".docx") ? "docx" : name.endsWith(".txt") || file.type.startsWith("text/") ? "txt" : null;
+    if (!kind) { cvStatus(t("cvType"), true); return; }
+    $("cvBtn").disabled = true; cvStatus(t("cvReading")(file.name));
+    try {
+      const text = kind === "txt" ? await file.text()
+        : kind === "pdf" ? await pdfText(await file.arrayBuffer()) : await docxText(await file.arrayBuffer());
+      useCvText(text);
+    } catch {
+      cvStatus(t("cvFail"), true);
+    } finally {
+      $("cvBtn").disabled = false; $("cvFile").value = "";
+    }
+  }
+
   // ------------------------------------------------------------------ wiring
   function update(keepPage) {
     current = filtered();
@@ -517,6 +677,17 @@
     });
     $("country").addEventListener("change", () => store.set("country", $("country").value));
     $("mySkillInput").addEventListener("change", (e) => { if (addSkill(e.target.value)) e.target.value = ""; });
+    $("cvBtn").addEventListener("click", () => $("cvFile").click());
+    $("cvFile").addEventListener("change", (e) => readCvFile(e.target.files[0]));
+    $("cvPasteBtn").addEventListener("click", () => {
+      const box = $("cvPasteBox"); box.hidden = !box.hidden; $("cvPasteBtn").setAttribute("aria-expanded", String(!box.hidden));
+      if (!box.hidden) $("cvText").focus();
+    });
+    $("cvRead").addEventListener("click", () => useCvText($("cvText").value));
+    // drop a CV file anywhere on the skills box
+    const box = document.querySelector(".skillsbox");
+    box.addEventListener("dragover", (e) => { e.preventDefault(); });
+    box.addEventListener("drop", (e) => { e.preventDefault(); readCvFile(e.dataTransfer.files[0]); });
     $("mySkillInput").addEventListener("keydown", (e) => { if (e.key === "Enter" && addSkill(e.target.value)) e.target.value = ""; });
     // delegated clicks: remove/add skill chips, save buttons, location toggles
     document.addEventListener("click", (e) => {

@@ -43,6 +43,7 @@ keyed as (
             when 'jsearch'    then 4   -- full description, original board in tags_text
             when 'jooble'     then 6   -- snippet only
             when 'adzuna'     then 6   -- snippet only
+            when 'bundesagentur' then 7  -- no description at all
             else 5
         end as source_priority
     from p

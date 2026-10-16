@@ -26,6 +26,10 @@ select
             then case when job_title ~* 'automat|sdet|selenium|cypress|playwright|appium|\mqe\M|software\s+(development\s+)?engineer\s+in\s+test'
                       then 'QA Automation Engineer' else 'QA / Test Engineer' end
 
+        -- ------------------------------------------------- RPA / low-code platforms
+        when job_title ~* '\mrpa\M|uipath|blue\s*prism|automation\s+anywhere|power\s+automate|low[\s-]?code|no[\s-]?code|outsystems|mendix|appian|\mpega(systems)?\M|intelligent\s+automation'
+            then 'RPA / Low-code Developer'
+
         -- ------------------------------------------------- ERP & CRM (SAP, Salesforce, Dynamics, Oracle apps)
         when job_title ~* '\msap\M|\mabap\M|s/4\s*hana|salesforce|\msfdc\M|dynamics\s*365|dynamics\s+(crm|ax|nav)|\md365\M|business\s+central|oracle\s+(e-?business|ebs|fusion|erp|apps|hcm|scm|financials|cloud\s+(erp|hcm|financials))|servicenow|\modoo\M|power\s+(apps|platform|automate)|\m(erp|crm)\s+(developer|consultant|engineer|specialist|analyst|administrator|architect|lead|manager)'
          and job_title !~* 'data\s+(engineer|analyst|scientist)|analytics'
@@ -68,6 +72,9 @@ select
                       when job_title ~* '\mui\M|visual|web\s+designer|motion' and job_title !~* '\mux\M|product' then 'UI / Visual Designer'
                       else 'UX / Product Designer' end
 
+        when job_title ~* '\mgis\M|arcgis|geospatial|\mqgis\M|geographic\s+information|remote\s+sensing|cartograph'
+            then 'GIS Specialist'
+
         -- -------------------------------------- analyst roles (data track unless clearly IT)
         when job_title ~* '\m(systems?|it|technical|functional|software|application|erp|sap|crm|salesforce)\s+(business\s+)?analyst'
             then 'Systems / IT Analyst'
@@ -83,7 +90,7 @@ select
             then 'Network Engineer'
 
         -- --------------------------------------------------------- IT, DevOps & cloud
-        when job_title ~* 'it\s+support|help\s*desk|service\s+desk|desktop\s+support|sys(tem)?\s*admin|system\s+administrator|systemadministrat|it\s+(administrator|technician|specialist|engineer)|fachinformatiker'
+        when job_title ~* 'it\s+support|help\s*desk|service\s+desk|desktop\s+support|sys(tem)?\s*admin|system\s+administrator|systemadministrat|it\s+(administrator|technician|specialist|engineer)|fachinformatiker(?!.*anwendungsentwicklung)'
             then 'IT Support / Systems Admin'
         when job_title ~* '\msre\M|site\s+reliability'
             then 'Site Reliability Engineer'
@@ -112,8 +119,19 @@ select
             then 'Engineering Leadership'
         when job_title ~* 'blockchain|\mweb3\M|solidity|smart\s+contracts?|\mdefi\M'
             then 'Blockchain Engineer'
-        when job_title ~* '\m(ios|android|mobile|flutter|react\s+native|swiftui|kotlin\s+multiplatform|xamarin)\M'
+        -- mobile: cross-platform first ("Flutter Developer (iOS & Android)" is cross-platform)
+        when job_title ~* 'flutter|react[\s-]+native|xamarin|\.net\s+maui|\mmaui\M|kotlin\s+multiplatform|\mkmp\M|ionic|cross[\s-]?platform\s+(mobile|app|developer|engineer)'
+            then 'Cross-platform Mobile Engineer'
+        when job_title ~* '\mios\M|swiftui|\mswift\s+(developer|engineer)|objective[\s-]?c|iphone'
+         and job_title !~* '\mandroid\M'
+            then 'iOS Engineer'
+        when job_title ~* '\mandroid\M|jetpack\s+compose'
+         and job_title !~* '\mios\M'
+            then 'Android Engineer'
+        when job_title ~* '\m(ios|android|mobile)\M|mobile\s+app'
             then 'Mobile Engineer'
+        when job_title ~* 'robotics?\s+(software\s+)?(engineer|developer|programmer)|\mros2?\M|autonomous\s+(systems?|vehicles?|driving)\s+engineer|perception\s+engineer'
+            then 'Robotics Engineer'
         when job_title ~* 'full[\s-]?stack|fullstack'
             then 'Full-Stack Engineer'
         when job_title ~* 'front[\s-]?end|frontend|\mui\s+(engineer|developer)|web\s+(developer|engineer)|javascript|typescript|\mreact\M|angular|\mvue\M|svelte|wordpress|shopify\s+developer'
@@ -122,8 +140,8 @@ select
             then 'Backend Engineer'
         when job_title ~* 'embedded|firmware|\mc\+\+|\mrtos\M'
             then 'Embedded / Firmware Engineer'
-        when job_title ~* 'game\s+(developer|engineer|programmer)|unity\s+developer|unreal'
-            then 'Game Developer'
+        when job_title ~* 'game\s+(developer|engineer|programmer|designer)|gameplay|\munity\s+(developer|engineer|programmer)|\munreal\M|\m(ar|vr|xr)\s*/?\s*(vr|ar)?\s*(developer|engineer)|augmented\s+reality|virtual\s+reality|mixed\s+reality|metaverse'
+            then 'Game / XR Developer'
         when job_title ~* '(solutions?|sales|pre-?sales|customer|support|integration|implementation|forward\s+deployed)\s+(engineer|architect|consultant)|technical\s+account\s+manager'
          and job_title !~* 'data|analytics'
             then 'Solutions / Support Engineer'

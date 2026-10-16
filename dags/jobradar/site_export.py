@@ -30,7 +30,7 @@ SITE_DIR = Path(os.environ.get("SITE_DIR") or Path(__file__).resolve().parents[2
 GITHUB_API = "https://api.github.com"
 SOURCE_CREDITS = {
     "adzuna": "Jobs by Adzuna", "jooble": "via Jooble", "jsearch": "via Google for Jobs (JSearch)",
-    "jobicy": "via Jobicy", "arbeitnow": "via Arbeitnow",
+    "jobicy": "via Jobicy", "arbeitnow": "via Arbeitnow", "bundesagentur": "via Bundesagentur für Arbeit",
 }
 
 JOBS_SQL = """
@@ -73,6 +73,11 @@ order by posted desc, j.job_id
 """
 
 
+def pg_regex_to_js(pattern: str) -> str:
+    """Postgres ARE word boundaries -> JavaScript: \\m = start of a word, \\M = end of a word."""
+    return pattern.replace("\\m", "(?<!\\w)(?=\\w)").replace("\\M", "(?<=\\w)(?!\\w)")
+
+
 def _rows(conn, sql: str, params: dict | None = None) -> list[tuple]:
     with conn.cursor() as cur:
         cur.execute(sql, params or {})
@@ -110,6 +115,7 @@ def export_site_data(conn, generated_at: dt.datetime | None = None) -> dict[str,
         select track, array_agg(role_family order by role_family) from seeds.role_tracks
         where track <> 'Not tech' group by track order by min(track_order), track""")
     total_active = _rows(conn, "select count(*) from marts.fct_job_postings where is_active")[0][0]
+    patterns = dict(_rows(conn, "select skill, pattern from seeds.skills"))
 
     def distinct(key: str, order: list[str] | None = None) -> list[str]:
         values = {j[key] for j in jobs if j.get(key)}
@@ -129,6 +135,9 @@ def export_site_data(conn, generated_at: dt.datetime | None = None) -> dict[str,
         "work_modes": distinct("w", ["Remote", "Hybrid", "Onsite"]),
         "industries": distinct("i"),
         "credits": sorted(set(SOURCE_CREDITS.values())),
+        # same rules the pipeline uses to find skills in job descriptions, for reading a CV in the browser
+        # (case-insensitive JavaScript regexes, aligned with "skills")
+        "skill_patterns": [pg_regex_to_js(patterns.get(s, "")) for s in skills],
     }
     dump = lambda obj: json.dumps(obj, ensure_ascii=False, separators=(",", ":")).encode("utf-8")  # noqa: E731
     log.info("site export: %s of %s active jobs listed, %s skills", len(jobs), total_active, len(skills))

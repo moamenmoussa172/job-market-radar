@@ -218,6 +218,8 @@ COUNTRY_KEYWORDS = {
     "Bahrain": ["bahrain", "manama"],
     "Oman": ["oman", "muscat"],
     "Jordan": ["jordan", "amman"],
+    # remote-first employers: accept the board if its tech jobs are remote
+    "Remote": ["remote", "anywhere", "worldwide", "work from home", "distributed"],
     "Netherlands": ["netherlands", "amsterdam", "rotterdam", "utrecht", "eindhoven", "the hague"],
     "Germany": ["germany", "deutschland", "berlin", "munich", "münchen", "hamburg", "frankfurt", "cologne"],
     "United Kingdom": ["united kingdom", "london", "manchester", "edinburgh", "uk"],
@@ -227,6 +229,8 @@ COUNTRY_KEYWORDS = {
     "Finland": ["finland", "helsinki"],
     "Estonia": ["estonia", "tallinn"],
     "Lithuania": ["lithuania", "vilnius", "kaunas"],
+    "Denmark": ["denmark", "copenhagen", "aarhus"],
+    "Czechia": ["czech", "czechia", "prague", "brno"],
 }
 _MENA = ["mena", "middle east", "gcc"]
 MENA_COUNTRIES = ("Egypt", "United Arab Emirates", "Saudi Arabia", "Qatar", "Kuwait", "Bahrain", "Oman", "Jordan")

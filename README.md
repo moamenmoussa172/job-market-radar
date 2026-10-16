@@ -3,7 +3,7 @@
 **Which tech jobs can I actually get from where I live, what should I learn next, and what do they pay?**
 
 An end-to-end data engineering project that collects thousands of tech job postings every day (data & AI,
-software engineering, QA & testing, UI/UX design, DevOps & cloud, security, IT) from 14 public and licensed sources, models them with dbt, and answers those questions in a
+software engineering, QA & testing, UI/UX design, DevOps & cloud, security, IT) from 15 public and licensed sources, models them with dbt, and answers those questions in a
 self-service dashboard, from the point of view of *one specific person* (their country, role and skills).
 
 **Live site: https://moamenmoussa172.github.io/job-market-radar/** (Arabic + English, updated daily)
@@ -34,6 +34,9 @@ pipeline's last task (`publish_site`). Visitors complete one sentence, "I live i
 looking for [role] jobs", and get the jobs they can apply to, with filters (seniority, work mode,
 industry, must-have skill, Arabic, visa/relocation, hide nationals-only) and live insights: top skills,
 the next skill to learn for *their* skills, pay by role, where the jobs are and who is hiring.
+Visitors can **upload their CV** (PDF or Word) or paste its text: it is read in the browser (pdf.js and mammoth,
+self-hosted) with the same skill rules the pipeline uses on job descriptions, and never leaves the device.
+They get their skills, years of experience, likely role, best-matching jobs and "skills worth adding to your CV".
 All filtering happens in the browser on two JSON files (`data/jobs.json`, `data/meta.json`) exported
 from the marts; links are shareable (filters live in the URL). Listings from sources that ask not to be
 re-posted (Remotive, Himalayas) count in the statistics but are not listed; Adzuna/Jooble/JSearch/Jobicy
@@ -95,14 +98,15 @@ Every job gets a **track** and a **role family** from rule-based title classific
 
 | Track | Role families |
 |---|---|
-| Data & Analytics | Data Engineer, Analytics Engineer, Data Analyst, BI, Data Scientist, Database Administrator, ... |
+| Data & Analytics | Data Engineer, Analytics Engineer, Data Analyst, BI, Data Scientist, Database Administrator, GIS Specialist, ... |
 | AI & Machine Learning | ML / AI Engineer, MLOps Engineer, AI Research Scientist / Engineer |
-| Software Engineering | Frontend, Backend, Full-Stack, Mobile, Embedded, Game, Blockchain, Software Engineer, Engineering Leadership |
+| Software Engineering | Frontend, Backend, Full-Stack, Embedded, Game / XR, Robotics, Blockchain, Software Engineer, Engineering Leadership |
+| Mobile Development | iOS Engineer, Android Engineer, Cross-platform (Flutter / React Native), Mobile Engineer |
 | QA & Testing | QA Automation Engineer, QA / Test Engineer |
 | UI/UX Design | UX / Product Designer, UI / Visual Designer, UX Researcher |
 | DevOps & Cloud | DevOps / Platform, SRE, Cloud / Infrastructure |
 | Security | Security Engineer / Analyst |
-| ERP & CRM | ERP / CRM Consultant, ERP / CRM Developer (SAP, Salesforce, Dynamics 365, Oracle apps, ServiceNow, Odoo) |
+| ERP & CRM | ERP / CRM Consultant, ERP / CRM Developer (SAP, Salesforce, Dynamics 365, Oracle apps, ServiceNow, Odoo), RPA / Low-code Developer (UiPath, OutSystems, Power Automate) |
 | Networks & Telecom | Network Engineer, Telecom Engineer (RF, RAN, core network) |
 | Product & Delivery | Product Manager / Owner, Technical Project / Program Manager, Scrum Master / Agile Coach |
 | IT & Support | IT Support / Sysadmin, Systems / IT Analyst, Solutions / Support Engineer, Technical Writer |
@@ -192,7 +196,8 @@ More detail: [docs/design-decisions.md](docs/design-decisions.md).
 | Source | What it adds | Usage notes |
 |---|---|---|
 | Greenhouse, Lever, Ashby, SmartRecruiters, Workable, Recruitee, Personio public job boards | Company career pages: full descriptions; Lever/Ashby/SmartRecruiters/Recruitee state work mode and often salary | **Self-expanding registry**: seeds in `dags/jobradar/company_boards.csv`; ~230 companies in Egypt, the Gulf and Europe in `dbt/seeds/companies.csv` whose hiring platform is detected automatically; plus boards discovered from other sources' apply links |
-| Adzuna | UK and EU job search (10 countries), short snippets; only real (not Adzuna-predicted) salaries are kept | API id + key; 40 rotating searches/day. Jobs by Adzuna |
+| Adzuna | UK and EU job search (10 countries, 12 roles), short snippets; only real (not Adzuna-predicted) salaries are kept | API id + key; 80 rotating searches/day. Jobs by Adzuna |
+| Bundesagentur für Arbeit | Germany's federal job agency (official public API): IT jobs across Germany; no descriptions, so no skills | Public key; 18 searches × up to 2 pages a day |
 | Himalayas | Remote jobs with country and timezone restrictions | Links back to Himalayas kept; no re-posting |
 | Jobicy | Remote jobs with eligibility, level and salary | Polled once a day; source URL kept |
 | Arbeitnow | European jobs, onsite and remote | Newest pages each day |

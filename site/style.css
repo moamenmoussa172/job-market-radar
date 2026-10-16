@@ -125,6 +125,35 @@ main, .topbar, .foot { max-width: 1080px; margin-inline: auto; padding-inline: 1
 .chip.add:hover { box-shadow: inset 0 0 0 1px var(--teal); }
 .suggest { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 12px; font-size: 14px; color: var(--muted); }
 
+/* ---------- CV */
+.cvrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 14px; }
+.cvbtn {
+  font: 600 15px/1 var(--font); color: #fff; background: var(--teal); border: 0;
+  border-radius: var(--radius-s); padding: 11px 16px; cursor: pointer;
+}
+.cvbtn:hover { background: var(--teal-strong); }
+.cvbtn[disabled] { opacity: .6; cursor: progress; }
+:root[data-theme="dark"] .cvbtn { color: #062523; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .cvbtn { color: #062523; } }
+.privacy { font-size: 13px; color: var(--muted); }
+.cvpaste { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.cvpaste textarea {
+  font: 400 14px/1.45 var(--font); color: var(--ink); background: var(--paper);
+  border: 1px solid var(--line); border-radius: var(--radius-s); padding: 10px; resize: vertical; width: 100%;
+}
+.cvpaste .cvbtn { align-self: flex-start; }
+.cvstatus { margin-top: 8px; font-size: 14px; color: var(--muted); }
+.cvstatus:empty { display: none; }
+.cvstatus.err { color: var(--nat-ink); }
+.cvresult { margin-top: 12px; padding: 14px 16px; border-radius: var(--radius-m); background: var(--paper); border: 1px solid var(--line); }
+.cvresult h3 { margin: 0 0 4px; font-size: 16px; font-weight: 600; }
+.cvresult p { margin: 4px 0; font-size: 15px; }
+.cvresult .facts { display: flex; flex-wrap: wrap; gap: 4px 22px; margin: 8px 0; }
+.cvresult .facts b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
+.cvresult .facts span { font-size: 13px; color: var(--muted); }
+.cvresult .gap { margin-top: 10px; }
+.cvresult .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+
 /* ---------- quick toggles */
 .quick { display: flex; flex-wrap: wrap; gap: 8px; padding: 16px 0 6px; }
 .toggle {

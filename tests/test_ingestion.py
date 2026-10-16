@@ -123,12 +123,13 @@ def test_himalayas_paginates_filters_and_dedupes(monkeypatch):
 def test_all_sources_registered():
     assert set(sources.SOURCES) == {"remotive", "jobicy", "himalayas", "arbeitnow", "greenhouse", "lever",
                                     "ashby", "jsearch", "jooble", "smartrecruiters", "workable",
-                                    "recruitee", "personio", "adzuna"}
+                                    "recruitee", "personio", "adzuna", "bundesagentur"}
 
 
 def test_optional_sources():
     assert {s for s, spec in sources.SOURCES.items() if not spec.required} == {
-        "remotive", "jsearch", "jooble", "smartrecruiters", "workable", "recruitee", "personio", "adzuna"}
+        "remotive", "jsearch", "jooble", "smartrecruiters", "workable", "recruitee", "personio", "adzuna",
+        "bundesagentur"}
 
 
 def test_daily_slice_rotates_through_every_pair():
@@ -457,3 +458,20 @@ def test_company_list_is_valid():
     assert {"Egypt", "United Arab Emirates", "Saudi Arabia", "Qatar"} <= countries
     assert countries <= set(boards.COUNTRY_KEYWORDS) | {"Global"}
     assert all(r["industry"] for r in rows)
+
+
+def test_bundesagentur_pages_filters_and_sends_public_key(monkeypatch):
+    calls = []
+
+    def fake_get(url, params=None, headers=None):
+        calls.append((params["was"], params["page"], headers))
+        if params["page"] == 1:
+            return {"stellenangebote": [{"refnr": f"R{i}", "titel": "Softwareentwickler (m/w/d)"} for i in range(99)]
+                    + [{"refnr": "X1", "beruf": "Koch/Köchin"}]}
+        return {"stellenangebote": [{"refnr": "R200", "beruf": "Data Engineer"}]}
+    monkeypatch.setattr(sources, "_get_json", fake_get)
+    res = sources.extract_bundesagentur(queries=["Softwareentwickler"], pages=3, pause_seconds=0)
+    assert [c[1] for c in calls] == [1, 2]            # stops when a page has < 100 results
+    assert calls[0][2] == {"X-API-Key": "jobboerse-jobsuche"}
+    ids = {sources.bundesagentur_id(r) for r in res.records}
+    assert "X1" not in ids and "R200" in ids and len(ids) == 100

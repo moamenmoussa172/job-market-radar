@@ -170,3 +170,12 @@ RAG / Vector DBs,ML / AI,\mrag\M|retrieval[\s-]augmented|vector\s+(database|db|s
 LangChain / LlamaIndex,ML / AI,langchain|llama\s*index
 Computer vision,ML / AI,computer\s+vision|opencv|\myolo\M
 NLP,ML / AI,\mnlp\M|natural\s+language\s+processing|hugging\s*face
+SwiftUI,Mobile,swiftui
+Objective-C,Mobile,objective[\s-]?c
+Jetpack Compose,Mobile,jetpack\s+compose
+Xamarin / .NET MAUI,Mobile,xamarin|\.net\s+maui|\mmaui\M
+UiPath / RPA,ERP & CRM,uipath|\mrpa\M|blue\s*prism|automation\s+anywhere
+ArcGIS / GIS,Data,arcgis|\mqgis\M|\mgis\M|geospatial
+Unity,Game & XR,\munity\s*(3d|engine|developer|engineer)|\munity\s*(/|and|&)\s*(c#|unreal)|c#\s*(/|and|&)\s*unity
+Unreal Engine,Game & XR,unreal\s+engine|\mue[45]\M
+ROS,Robotics,\mros2?\M|robot\s+operating\s+system

@@ -72,3 +72,15 @@ def test_site_files_are_complete():
 def test_public_list_excludes_sources_that_forbid_reposting():
     assert set(site_export.PUBLIC_LIST_EXCLUDED) == {"remotive", "himalayas"}
     assert site_export.SOURCE_CREDITS["adzuna"] == "Jobs by Adzuna"
+
+
+def test_skill_patterns_are_converted_for_the_browser():
+    js = site_export.pg_regex_to_js(r"\mpython\M|\mpyspark\M")
+    assert "\\m" not in js and "\\M" not in js
+    assert js == r"(?<!\w)(?=\w)python(?<=\w)(?!\w)|(?<!\w)(?=\w)pyspark(?<=\w)(?!\w)"
+
+
+def test_cv_reader_libraries_are_self_hosted():
+    files = site_export.site_files()
+    assert {"vendor/pdf.min.js", "vendor/pdf.worker.min.js", "vendor/mammoth.browser.min.js"} <= set(files)
+    assert "vendor/pdf.min.js" in files["app.js"].decode()       # loaded from the site itself, only when a CV is added

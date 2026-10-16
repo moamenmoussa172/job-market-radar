@@ -87,7 +87,7 @@ def remotive_id(record: dict) -> str:
 ARBEITNOW_URL = "https://www.arbeitnow.com/api/job-board-api"
 
 
-def extract_arbeitnow(max_pages: int = 10, pause_seconds: float = 1.0) -> ExtractResult:
+def extract_arbeitnow(max_pages: int = 30, pause_seconds: float = 1.0) -> ExtractResult:
     keep: list[dict] = []
     seen = 0
     for page in range(1, max_pages + 1):
@@ -480,7 +480,8 @@ SEARCH_ROLES = ["software engineer", "data engineer", "data analyst", "developer
                 "qa engineer", "cyber security", "network engineer", "sap consultant", "product manager",
                 "ux designer", "machine learning engineer"]
 ADZUNA_ROLES = ["data engineer", "data analyst", "software engineer", "frontend developer",
-                "backend developer", "qa engineer", "ux designer", "devops engineer"]
+                "backend developer", "qa engineer", "ux designer", "devops engineer",
+                "mobile developer", "data scientist", "cyber security", "sap consultant"]
 
 
 def daily_slice(pairs: list, per_day: int, day: dt.date | None = None) -> list:
@@ -579,7 +580,7 @@ def jooble_id(record: dict) -> str:
 # so a fixed daily budget walks through (role, country) pairs. Attribution
 # ("Jobs by Adzuna") is required wherever the data is shown.
 ADZUNA_URL = "https://api.adzuna.com/v1/api/jobs/{country}/search/1"
-ADZUNA_PER_DAY = int(os.environ.get("ADZUNA_REQUESTS_PER_DAY", "40"))
+ADZUNA_PER_DAY = int(os.environ.get("ADZUNA_REQUESTS_PER_DAY", "80"))  # free plan: ~2,500 a month
 ADZUNA_COUNTRIES = ["gb", "de", "nl", "fr", "es", "it", "pl", "at", "be", "ch"]
 
 
@@ -618,6 +619,47 @@ def adzuna_id(record: dict) -> str:
     return str(record["id"])
 
 
+# Bundesagentur für Arbeit (Germany's federal employment agency): official public job
+# search API with a published key. Search results have title, employer and place but no
+# description, so these jobs have no skills. Rotating source (see dbt).
+BA_URL = "https://rest.arbeitsagentur.de/jobboerse/jobsuche-service/pc/v4/jobs"
+BA_KEY = "jobboerse-jobsuche"  # public key published with the API, not a secret
+BA_QUERIES = ["Softwareentwickler", "Software Engineer", "Data Engineer", "Data Scientist", "Data Analyst",
+              "DevOps", "Cloud Engineer", "Frontend Developer", "Backend Developer", "Fullstack",
+              "IT-Security", "SAP Berater", "Mobile Developer", "QA Engineer", "UX Designer",
+              "Machine Learning", "Systemadministrator", "Netzwerkadministrator"]
+BA_PAGES = int(os.environ.get("BA_PAGES_PER_QUERY", "2"))
+
+
+def extract_bundesagentur(queries: list | None = None, pages: int | None = None,
+                          pause_seconds: float = 1.0) -> ExtractResult:
+    keep: dict[str, dict] = {}
+    warnings: list[str] = []
+    for query in queries if queries is not None else BA_QUERIES:
+        for page in range(1, (pages or BA_PAGES) + 1):
+            try:
+                payload = _get_json(BA_URL, headers={"X-API-Key": BA_KEY}, params={
+                    "was": query, "angebotsart": 1, "veroeffentlichtseit": 30, "page": page, "size": 100})
+            except requests.HTTPError as exc:
+                code = exc.response.status_code if exc.response is not None else "?"
+                warnings.append(f"bundesagentur '{query}' page {page} failed: HTTP {code}")
+                break
+            items = payload.get("stellenangebote") or []
+            for job in items:
+                title = job.get("titel") or job.get("beruf")
+                if job.get("refnr") and is_tech_role(title):
+                    keep[job["refnr"]] = {**job, "search_query": query}
+            if len(items) < 100:
+                break
+            time.sleep(pause_seconds)
+    log.info("bundesagentur: %s tech jobs", len(keep))
+    return ExtractResult("bundesagentur", list(keep.values()), warnings)
+
+
+def bundesagentur_id(record: dict) -> str:
+    return str(record["refnr"])
+
+
 # --------------------------------------------------------------------------- #
 @dataclass(frozen=True)
 class SourceSpec:
@@ -644,4 +686,5 @@ SOURCES: dict[str, SourceSpec] = {
     "jsearch": SourceSpec(extract_jsearch, jsearch_id, required=False),
     "jooble": SourceSpec(extract_jooble, jooble_id, required=False),
     "adzuna": SourceSpec(extract_adzuna, adzuna_id, required=False),
+    "bundesagentur": SourceSpec(extract_bundesagentur, bundesagentur_id, required=False),
 }
