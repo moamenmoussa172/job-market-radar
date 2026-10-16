@@ -541,9 +541,11 @@
     [/\bback[\s-]?end (developer|engineer)/gi, "Backend Engineer"], [/\bfront[\s-]?end (developer|engineer)/gi, "Frontend Engineer"],
     [/\bfull[\s-]?stack (developer|engineer)/gi, "Full-Stack Engineer"], [/\bios (developer|engineer)/gi, "iOS Engineer"],
     [/\bandroid (developer|engineer)/gi, "Android Engineer"], [/\b(flutter|react native) (developer|engineer)/gi, "Cross-platform Mobile Engineer"],
-    [/\bdevops/gi, "DevOps / Platform Engineer"], [/\bsite reliability|\bsre\b/gi, "Site Reliability Engineer"],
+    // "Azure DevOps" is a tool (boards, pipelines) that testers and developers list too, not the DevOps role
+    [/(?<!azure\s)\bdevops( ?\/ ?\w+)? (engineer|specialist|lead|architect)|\bplatform engineer/gi, "DevOps / Platform Engineer"], [/\bsite reliability|\bsre\b/gi, "Site Reliability Engineer"],
     [/\bcloud (engineer|architect)/gi, "Cloud / Infrastructure Engineer"],
-    [/\b(qa|test automation|sdet|quality assurance) (engineer|analyst|tester)|\bsoftware tester/gi, "QA Automation Engineer"],
+    [/\b(qa|test automation|automation test(ing)?|sdet|quality assurance)( \/ test automation)? (engineer|analyst|tester|specialist)|\bsdet\b/gi, "QA Automation Engineer"],
+    [/\b(software |manual |qa |qc )?test(ing)? (engineer|analyst|specialist)|\b(software |manual )?tester\b/gi, "QA / Test Engineer"],
     [/\b(ux|ui|product) designer|\bux\/ui|\bui\/ux/gi, "UX / Product Designer"],
     [/\b(security|soc|cyber ?security) (engineer|analyst)|penetration tester/gi, "Security Engineer / Analyst"],
     [/\b(sap|abap|salesforce|dynamics 365|oracle ebs) (consultant|developer)/gi, "ERP / CRM Consultant"],
@@ -552,11 +554,20 @@
   ];
   function guessRole(text) {
     const known = new Set(meta.tracks.flatMap((t) => t.roles));
-    let best = null, score = 0;
+    const top = text.slice(0, 300);  // the title under the name says the most
+    const scores = new Map();
     for (const [re, role] of ROLE_HINTS) {
-      const n = (text.match(re) || []).length;
-      if (n > score && known.has(role)) { best = role; score = n; }
+      if (!known.has(role)) continue;
+      const n = (text.match(re) || []).length + 3 * (top.match(re) || []).length;
+      if (n) scores.set(role, (scores.get(role) || 0) + n);
     }
+    // a tester who also automates is an automation tester
+    if (scores.has("QA Automation Engineer") && scores.has("QA / Test Engineer")) {
+      scores.set("QA Automation Engineer", scores.get("QA Automation Engineer") + scores.get("QA / Test Engineer"));
+      scores.delete("QA / Test Engineer");
+    }
+    let best = null, score = 0;
+    for (const [role, n] of scores) if (n > score) { best = role; score = n; }
     return best;
   }
 
