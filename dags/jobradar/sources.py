@@ -133,7 +133,7 @@ PROBE_ATS = ("greenhouse", "lever", "ashby", "smartrecruiters", "workable", "rec
 # they come from company_boards.csv or from job links that point to them (harvest).
 BOARD_ATS = PROBE_ATS + ("workday", "successfactors")
 # SmartRecruiters company identifiers are case-sensitive (e.g. "BoschGroup"); so are Workday site names.
-CASE_SENSITIVE_ATS = ("smartrecruiters", "workday")
+CASE_SENSITIVE_ATS = ("smartrecruiters", "workday", "lever")   # Lever: jobs.lever.co/Bosta, /Yassir
 
 # Workday board id = "<tenant>.<wdN>/<site>", from https://<tenant>.<wdN>.myworkdayjobs.com/[en-US/]<site>
 _WORKDAY_RE = re.compile(
@@ -248,16 +248,18 @@ def _fetch_teamtailor(token: str) -> list[dict]:
 
 
 def _fetch_lever(token: str) -> list[dict]:
-    # Lever has a global and an EU instance; a company exists on only one.
+    # Lever has a global and an EU instance; a company exists on only one. Some site names are
+    # capitalised (jobs.lever.co/Bosta): the name is tried as written, in lower case, and Capitalised.
     last_exc: Exception | None = None
-    for url in LEVER_URLS:
-        try:
-            postings = _get_json(url.format(token=token), params={"mode": "json"})
-        except requests.HTTPError as exc:
-            last_exc = exc
-            continue
-        if isinstance(postings, list):
-            return [j for j in postings if is_tech_role(j.get("text"))]
+    for name in dict.fromkeys([token, token.lower(), token[:1].upper() + token[1:].lower()]):
+        for url in LEVER_URLS:
+            try:
+                postings = _get_json(url.format(token=name), params={"mode": "json"})
+            except requests.HTTPError as exc:
+                last_exc = exc
+                continue
+            if isinstance(postings, list):
+                return [j for j in postings if is_tech_role(j.get("text"))]
     raise last_exc or requests.HTTPError(f"lever board '{token}' not found")
 
 
@@ -536,7 +538,8 @@ def _fetch_workday(token: str) -> list[dict]:
 # Board id = the career site host. Sites that switched the feed off are marked dead.
 # --------------------------------------------------------------------------- #
 SUCCESSFACTORS_RSS = "https://{host}/services/rss/job/"
-SUCCESSFACTORS_ROWS = int(os.environ.get("SUCCESSFACTORS_ROWS", "20000"))  # the feed has no paging; default 20
+SUCCESSFACTORS_ROWS = int(os.environ.get("SUCCESSFACTORS_ROWS", "5000"))   # no paging; the default is only 20
+SUCCESSFACTORS_MAX_SECONDS = int(os.environ.get("SUCCESSFACTORS_MAX_SECONDS", "240"))  # per board: big feeds are slow
 
 
 def split_title_location(title: str) -> tuple[str, str | None]:
@@ -553,44 +556,75 @@ def split_title_location(title: str) -> tuple[str, str | None]:
     return title, None
 
 
-def parse_successfactors_rss(xml_text: str) -> list[dict]:
-    if xml_text.lstrip().startswith("<xml>"):  # the feed answers malformed queries with <xml>Error: ...</xml>
-        raise ValueError(f"successfactors feed error: {xml_text.strip()[:120]}")
-    root = ET.fromstring(xml_text)
-    channel = root.find("channel")
-    if root.tag != "rss" or channel is None:
-        raise ValueError(f"not an RSS feed (root <{root.tag}>)")
-    jobs = []
-    for item in channel.findall("item"):
-        title, location = split_title_location(item.findtext("title") or "")
-        jobs.append({
-            "title": title,
-            "location": location,
-            "link": (item.findtext("link") or "").strip(),
-            "guid": (item.findtext("guid") or item.findtext("link") or "").strip(),
-            "description": item.findtext("description") or "",
-            "pubDate": (item.findtext("pubDate") or "").strip(),
-        })
+def _sf_item(item: ET.Element) -> dict:
+    title, location = split_title_location(item.findtext("title") or "")
+    return {
+        "title": title,
+        "location": location,
+        "link": (item.findtext("link") or "").strip(),
+        "guid": (item.findtext("guid") or item.findtext("link") or "").strip(),
+        "description": item.findtext("description") or "",
+        "pubDate": (item.findtext("pubDate") or "").strip(),
+    }
+
+
+def parse_successfactors_stream(chunks, deadline: float | None = None) -> list[dict]:
+    """Parse the RSS feed while it downloads. Big employers' feeds are many megabytes: if the
+    connection drops or the time is up, the jobs read so far are kept instead of losing them all."""
+    parser = ET.XMLPullParser(events=("start", "end"))
+    jobs: list[dict] = []
+    head, seen_root = b"", False
+    try:
+        for chunk in chunks:
+            if isinstance(chunk, str):
+                chunk = chunk.encode("utf-8")
+            if len(head) < 64:
+                head += chunk[:64]
+                if head.lstrip().startswith(b"<xml>"):  # malformed query: <xml>Error: ...</xml>
+                    raise ValueError(f"successfactors feed error: {head.decode('utf-8', 'replace').strip()[:120]}")
+            parser.feed(chunk)
+            for event, el in parser.read_events():
+                if event == "start" and not seen_root:
+                    seen_root = True
+                    if el.tag != "rss":
+                        raise ValueError(f"not an RSS feed (root <{el.tag}>)")
+                if event == "end" and el.tag == "item":
+                    jobs.append(_sf_item(el))
+                    el.clear()
+            if deadline and time.monotonic() > deadline:
+                log.warning("successfactors feed: time limit reached, keeping %s jobs read so far", len(jobs))
+                break
+    except (requests.RequestException, ET.ParseError) as exc:
+        if not jobs:
+            raise ValueError(f"successfactors feed could not be read: {exc}") from exc
+        log.warning("successfactors feed cut off (%s), keeping %s jobs read so far", exc, len(jobs))
     return jobs
 
 
-def _successfactors_feed(host: str, params: dict) -> str:
+def parse_successfactors_rss(xml_text: str) -> list[dict]:
+    if xml_text.lstrip().startswith("<xml>"):
+        raise ValueError(f"successfactors feed error: {xml_text.strip()[:120]}")
+    root = ET.fromstring(xml_text)
+    if root.tag != "rss" or root.find("channel") is None:
+        raise ValueError(f"not an RSS feed (root <{root.tag}>)")
+    return parse_successfactors_stream([xml_text])
+
+
+def _successfactors_chunks(host: str, params: dict):
     # the feed only answers when RSS is asked for (406 for JSON or application/xml)
-    resp = requests.get(SUCCESSFACTORS_RSS.format(host=host), params=params, timeout=TIMEOUT,
+    resp = requests.get(SUCCESSFACTORS_RSS.format(host=host), params=params, timeout=(15, 60), stream=True,
                         headers={"User-Agent": USER_AGENT, "Accept": "application/rss+xml"})
     resp.raise_for_status()
-    return resp.text
+    return resp.iter_content(chunk_size=64 * 1024)
 
 
 def _fetch_successfactors(token: str) -> list[dict]:
     last_exc: Exception | None = None
     for params in ({"rows": SUCCESSFACTORS_ROWS}, {}):   # all jobs; else the default first 20
         try:
-            jobs = parse_successfactors_rss(_successfactors_feed(token, params))
+            deadline = time.monotonic() + SUCCESSFACTORS_MAX_SECONDS
+            jobs = parse_successfactors_stream(_successfactors_chunks(token, params), deadline)
             return [j for j in jobs if is_tech_role(j.get("title"))]
-        except ET.ParseError as exc:
-            last_exc = ValueError(f"successfactors '{token}' did not return an RSS feed")
-            last_exc.__cause__ = exc
         except ValueError as exc:
             last_exc = exc
     raise last_exc or ValueError(f"successfactors '{token}' failed")
@@ -624,7 +658,7 @@ def extract_company_boards(ats: str, tokens: list[str] | None = None,
     for token in tokens:
         try:
             jobs = fetch(token)
-        except (requests.HTTPError, requests.ConnectionError, requests.Timeout, ValueError) as exc:
+        except (requests.RequestException, ValueError, ET.ParseError) as exc:  # any network/feed problem
             warnings.append(f"{ats} board '{token}' failed: {exc}")
             status[token] = None
             continue

@@ -283,12 +283,12 @@ def probe_tokens(company: str, slugs: str = "") -> list[tuple[str, str]]:
     pairs = []
     for slug in slug_candidates(company, slugs):
         for ats in sources.PROBE_ATS:
-            if ats in sources.CASE_SENSITIVE_ATS and slug.islower():
+            if ats == "smartrecruiters" and slug.islower():
                 # SmartRecruiters ids are case-sensitive and usually CamelCase ("DeliveryHero")
                 words = re.sub(r"[^A-Za-z0-9]+", " ", company).split()
                 token = "".join(w[:1].upper() + w[1:] for w in words) if slug == "".join(words).lower() else slug
             else:
-                token = slug
+                token = slug.lower() if ats == "lever" else slug   # the Lever reader also tries "Bosta"
             token = normalize_token(token, ats)
             if token:
                 pairs.append((ats, token))

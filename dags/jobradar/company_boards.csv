@@ -137,8 +137,8 @@ workable,dsquares-loyalty-dmcc,Dsquares,Egypt
 workable,mylo-btech,mylo,Egypt
 workable,ssc-egypt,SSC Egypt,Egypt
 workable,buildinglink,BuildingLink,Egypt
-lever,bosta,Bosta,Egypt
-lever,yassir,Yassir,
+lever,Bosta,Bosta,Egypt
+lever,Yassir,Yassir,
 breezy,almentor,almentor,Egypt
 breezy,maxab,MaxAB,Egypt
 # Saudi Arabia
@@ -182,3 +182,6 @@ greenhouse,artefact,Artefact,
 greenhouse,commvault,Commvault,
 greenhouse,purestorage,Pure Storage,
 teamtailor,corporater,Corporater,
+# moved hiring platforms (old entries were dead)
+greenhouse,anthropic,Anthropic,
+greenhouse,dbtlabsinc,dbt Labs,

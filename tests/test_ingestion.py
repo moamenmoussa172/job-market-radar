@@ -209,7 +209,8 @@ def test_jooble_posts_and_filters(monkeypatch):
 def test_board_file_parses():
     for ats in ("greenhouse", "lever", "ashby"):
         tokens = sources.load_board_tokens(ats)
-        assert tokens and all(t == t.strip().lower() and " " not in t for t in tokens), ats
+        lower = ats not in sources.CASE_SENSITIVE_ATS     # Lever names keep their capitals (Bosta)
+        assert tokens and all(t == t.strip() and (t == t.lower() or not lower) and " " not in t for t in tokens), ats
 
 
 def test_lever_falls_back_to_eu_and_filters(monkeypatch):
@@ -573,14 +574,14 @@ def test_successfactors_rss(monkeypatch):
 
     def feed(host, params):
         calls.append(params)
-        return SF_RSS
-    monkeypatch.setattr(sources, "_successfactors_feed", feed)
+        return [SF_RSS[i:i + 50].encode() for i in range(0, len(SF_RSS), 50)]   # arrives in pieces
+    monkeypatch.setattr(sources, "_successfactors_chunks", feed)
     res = sources.extract_successfactors(tokens=["careers.sap.com"], pause_seconds=0)
     assert [sources.successfactors_id(r) for r in res.records] == ["careers.sap.com:https://jobs.sap.com/job/1/"]
     assert calls == [{"rows": sources.SUCCESSFACTORS_ROWS}]          # all jobs, not the default 20
     # an error answer: retried without parameters, then the board is reported - but one broken
     # board must not stop the daily run
-    monkeypatch.setattr(sources, "_successfactors_feed", lambda host, params: "<xml>Error: bad query</xml>")
+    monkeypatch.setattr(sources, "_successfactors_chunks", lambda host, params: [b"<xml>Error: bad query</xml>"])
     res = sources.extract_successfactors(tokens=["careers.x.com"], pause_seconds=0)
     assert res.records == [] and "feed error" in res.warnings[0]
 
@@ -726,3 +727,52 @@ def test_listed_dead_boards_are_checked_again():
     assert "status = 'dead'" in revive and "3 days" in revive
     names = next(rows for sql, rows in executed if "company_name" in sql)
     assert names == [("Tamara", "Saudi Arabia", "greenhouse", "tamara")]
+
+
+def test_lever_keeps_capitals_and_falls_back_to_lower_case(monkeypatch):
+    import requests
+    calls = []
+
+    def fake_get(url, params=None, headers=None):
+        calls.append(url)
+        if url.endswith("/Bosta"):
+            return [{"id": "1", "text": "Senior Backend Engineer"}, {"id": "2", "text": "Courier"}]
+        r = requests.Response(); r.status_code = 404
+        raise requests.HTTPError("404", response=r)
+    monkeypatch.setattr(sources, "_get_json", fake_get)
+    assert sources.normalize_board_token("lever", " Bosta ") == "Bosta"
+    assert [j["id"] for j in sources._fetch_lever("Bosta")] == ["1"]
+    calls.clear()
+    with __import__("pytest").raises(requests.HTTPError):
+        sources._fetch_lever("Nope")
+    assert calls[:4] == ["https://api.lever.co/v0/postings/Nope", "https://api.eu.lever.co/v0/postings/Nope",
+                         "https://api.lever.co/v0/postings/nope", "https://api.eu.lever.co/v0/postings/nope"]
+    assert [j["id"] for j in sources._fetch_lever("bosta")] == ["1"]       # probes guess lower case
+
+
+def test_successfactors_keeps_jobs_when_the_download_breaks(monkeypatch):
+    import requests
+
+    def broken(host, params):
+        yield SF_RSS.split("<item><title>Account Executive")[0].encode()   # first job arrives complete
+        raise requests.exceptions.ChunkedEncodingError("Response ended prematurely")
+    monkeypatch.setattr(sources, "_successfactors_chunks", broken)
+    res = sources.extract_successfactors(tokens=["careers.sap.com"], pause_seconds=0)
+    assert [r["title"] for r in res.records] == ["Senior Data Engineer"] and not res.warnings
+
+    def dead(host, params):
+        raise requests.exceptions.ChunkedEncodingError("Response ended prematurely")
+        yield b""
+    monkeypatch.setattr(sources, "_successfactors_chunks", dead)
+    res = sources.extract_successfactors(tokens=["careers.sap.com"], pause_seconds=0)
+    assert res.records == [] and "could not be read" in res.warnings[0]           # warning, not a crash
+
+
+def test_any_network_error_on_a_board_is_a_warning(monkeypatch):
+    import requests
+
+    def boom(token):
+        raise requests.exceptions.ChunkedEncodingError("Response ended prematurely")
+    monkeypatch.setitem(sources.ATS_FETCHERS, "workday", boom)
+    res = sources.extract_company_boards("workday", ["a.wd1/X"], 0)
+    assert res.records == [] and "Response ended prematurely" in res.warnings[0]
