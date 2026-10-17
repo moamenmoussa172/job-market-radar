@@ -123,13 +123,14 @@ def test_himalayas_paginates_filters_and_dedupes(monkeypatch):
 def test_all_sources_registered():
     assert set(sources.SOURCES) == {"remotive", "jobicy", "himalayas", "arbeitnow", "greenhouse", "lever",
                                     "ashby", "jsearch", "jooble", "smartrecruiters", "workable",
-                                    "recruitee", "personio", "adzuna", "bundesagentur", "workday", "successfactors"}
+                                    "recruitee", "personio", "adzuna", "bundesagentur", "workday", "successfactors",
+                                    "breezy", "teamtailor"}
 
 
 def test_optional_sources():
     assert {s for s, spec in sources.SOURCES.items() if not spec.required} == {
         "remotive", "jsearch", "jooble", "smartrecruiters", "workable", "recruitee", "personio", "adzuna",
-        "bundesagentur", "workday", "successfactors"}
+        "bundesagentur", "workday", "successfactors", "breezy", "teamtailor"}
 
 
 def test_daily_slice_rotates_through_every_pair():
@@ -636,3 +637,92 @@ def test_workday_validation_is_one_request(monkeypatch):
     monkeypatch.setattr(sources, "_workday_post", lambda url, body: calls.append(url) or {"total": 37, "jobPostings": []})
     assert boards.validate_board("workday", "ag.wd3/Airbus") == ("active", 37)
     assert len(calls) == 1
+
+
+# --------------------------------------------------------------------------- Breezy / Teamtailor / Greenhouse EU
+def test_greenhouse_falls_back_to_the_eu_data_centre(monkeypatch):
+    import requests
+    calls = []
+
+    def fake_get(url, params=None, headers=None):
+        calls.append(url)
+        if "boards-api.greenhouse.io" in url:
+            r = requests.Response(); r.status_code = 404
+            raise requests.HTTPError("404", response=r)
+        return {"jobs": [{"id": 1, "title": "Senior Data Engineer"}, {"id": 2, "title": "Chef"}]}
+    monkeypatch.setattr(sources, "_get_json", fake_get)
+    res = sources.extract_greenhouse(tokens=["tamara"], pause_seconds=0)
+    assert [r["id"] for r in res.records] == [1]
+    assert calls == ["https://boards-api.greenhouse.io/v1/boards/tamara/jobs",
+                     "https://boards-api.eu.greenhouse.io/v1/boards/tamara/jobs"]
+
+
+def test_breezy_positions(monkeypatch):
+    feed = [{"id": "p1", "name": "Senior Android Engineer", "url": "https://anghami.breezy.hr/p/p1",
+             "published_date": "2026-10-15T09:00:00.000Z", "type": {"name": "Full-Time"},
+             "location": {"name": "Dubai, AE", "country": {"name": "United Arab Emirates"}, "is_remote": False}},
+            {"id": "p2", "name": "Content Moderator"}]
+    monkeypatch.setattr(sources, "_get_json", lambda url, params=None, headers=None: feed)
+    res = sources.extract_breezy(tokens=["anghami"], pause_seconds=0)
+    assert [sources.breezy_id(r) for r in res.records] == ["anghami:p1"]
+    monkeypatch.setattr(sources, "_get_json", lambda url, params=None, headers=None: {"error": "not found"})
+    assert sources.extract_breezy(tokens=["x"], pause_seconds=0).warnings      # not a feed -> reported
+
+
+TT_RSS = """<?xml version="1.0"?><rss version="2.0" xmlns:tt="https://teamtailor.com/locations"><channel>
+<item><title>Backend Engineer</title><link>https://spidersilk.teamtailor.com/jobs/1-backend</link><guid>g1</guid>
+<description>&lt;p&gt;Go and Kafka&lt;/p&gt;</description><pubDate>Fri, 16 Oct 2026 09:30:00 +0000</pubDate>
+<remoteStatus>hybrid</remoteStatus><department>Engineering</department>
+<tt:locations><tt:location><tt:city>Amman</tt:city><tt:country>Jordan</tt:country></tt:location>
+<tt:location><tt:city>Riyadh</tt:city><tt:country>Saudi Arabia</tt:country></tt:location></tt:locations></item>
+<item><title>Office Manager</title><link>https://spidersilk.teamtailor.com/jobs/2</link></item>
+</channel></rss>"""
+
+
+def test_teamtailor_rss(monkeypatch):
+    calls = []
+    monkeypatch.setattr(sources, "_get_text", lambda url, params=None: calls.append((url, params)) or TT_RSS)
+    res = sources.extract_teamtailor(tokens=["spidersilk"], pause_seconds=0)
+    [job] = res.records
+    assert job["locations"] == ["Amman, Jordan", "Riyadh, Saudi Arabia"] and job["remoteStatus"] == "hybrid"
+    assert sources.teamtailor_id(job) == "spidersilk:g1"
+    assert calls == [("https://spidersilk.teamtailor.com/jobs.rss", {"per_page": 200})]
+
+
+def test_new_platforms_are_harvested_and_probed():
+    from jobradar import boards
+    found = boards.tokens_in_text("https://anghami.breezy.hr/p/1 https://spidersilk.teamtailor.com/jobs "
+                                  "https://career.teamtailor.com/ https://app.breezy.hr/signup")
+    assert found == {("breezy", "anghami"), ("teamtailor", "spidersilk")}
+    assert {"breezy", "teamtailor"} <= {a for a, _ in boards.probe_tokens("MaxAB")}
+    details = sources.load_board_details()
+    assert details[("greenhouse", "tamara")] == {"company": "Tamara", "country": "Saudi Arabia"}
+
+
+def test_listed_dead_boards_are_checked_again():
+    from jobradar import boards
+    executed = []
+
+    class Cur:
+        rowcount = 1
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def executemany(self, sql, rows):
+            executed.append((" ".join(sql.split()), list(rows)))
+
+    class Conn:
+        def cursor(self):
+            return Cur()
+
+        def commit(self):
+            pass
+    boards.seed(Conn(), [("greenhouse", "tamara")], {("greenhouse", "tamara"): {"company": "Tamara", "country": "Saudi Arabia"}})
+    revive = next(sql for sql, _ in executed if "status = 'candidate'" in sql)
+    assert "status = 'dead'" in revive and "3 days" in revive
+    names = next(rows for sql, rows in executed if "company_name" in sql)
+    assert names == [("Tamara", "Saudi Arabia", "greenhouse", "tamara")]

@@ -1,5 +1,5 @@
 """Self-expanding registry of company career boards (Greenhouse, Lever, Ashby,
-SmartRecruiters, Workable, Recruitee, Personio, Workday, SuccessFactors).
+SmartRecruiters, Workable, Recruitee, Personio, Breezy, Teamtailor, Workday, SuccessFactors).
 
 Lifecycle of a board in raw.company_boards:
 
@@ -78,9 +78,11 @@ TOKEN_PATTERNS = {
     "personio": r"([A-Za-z0-9-]+)\.jobs\.personio\.(?:de|com)",
     # whole "<tenant>.<wdN>.myworkdayjobs.com/[en-US/]<site>"; normalised to "<tenant>.<wdN>/<site>"
     "workday": r"([a-z0-9-]+\.wd[0-9]+\.myworkdayjobs\.com/(?:[a-z]{2}-[A-Z]{2}/)?[A-Za-z0-9_-]+)",
+    "breezy": r"([A-Za-z0-9-]+)\.breezy\.hr",
+    "teamtailor": r"([A-Za-z0-9-]+)\.teamtailor\.com",
 }
 _NOT_TOKENS = {"embed", "api", "v1", "jobs", "job", "j", "boards", "careers", "search", "apply", "oneclick-ui",
-               "www", "app", "help", "support", "docs", "blog", ""}
+               "www", "app", "help", "support", "docs", "blog", "career", "marketplace", "status", ""}
 
 
 def normalize_token(raw: str, ats: str = "greenhouse") -> str | None:
@@ -107,9 +109,9 @@ def ensure_schema(conn) -> None:
     conn.commit()
 
 
-def seed(conn, rows: list[tuple[str, str]], companies: dict[tuple[str, str], str] | None = None) -> int:
+def seed(conn, rows: list[tuple[str, str]], companies: dict[tuple[str, str], str | dict] | None = None) -> int:
     """Add CSV rows that aren't in the registry yet, as candidates (validated before use).
-    companies: display names from the CSV, attached to boards that don't have one yet."""
+    companies: display names (or {"company", "country"}) from the CSV, attached where still empty."""
     with conn.cursor() as cur:
         cur.executemany(
             "INSERT INTO raw.company_boards (ats, token, origin) VALUES (%s, %s, 'seed') "
@@ -117,11 +119,20 @@ def seed(conn, rows: list[tuple[str, str]], companies: dict[tuple[str, str], str
             rows,
         )
         added = cur.rowcount
+        # A listed board that failed before is checked again every few days: the company may have
+        # opened jobs again, or the reader learned a new way to reach it (e.g. Greenhouse's EU servers).
+        cur.executemany(
+            "UPDATE raw.company_boards SET status = 'candidate', consecutive_failures = 0, origin = 'seed' "
+            "WHERE ats = %s AND token = %s AND status = 'dead' "
+            "AND coalesce(last_checked_at, 'epoch'::timestamptz) < now() - interval '3 days'",
+            rows,
+        )
         if companies:
+            details = {k: (v if isinstance(v, dict) else {"company": v}) for k, v in companies.items()}
             cur.executemany(
-                "UPDATE raw.company_boards SET company_name = %s "
-                "WHERE ats = %s AND token = %s AND company_name IS NULL",
-                [(name, ats, token) for (ats, token), name in companies.items()],
+                "UPDATE raw.company_boards SET company_name = coalesce(company_name, nullif(%s, '')), "
+                "country = coalesce(country, nullif(%s, '')) WHERE ats = %s AND token = %s",
+                [(d.get("company") or "", d.get("country") or "", ats, token) for (ats, token), d in details.items()],
             )
     conn.commit()
     return max(added, 0)

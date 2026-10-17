@@ -114,7 +114,10 @@ def arbeitnow_id(record: dict) -> str:
 # warnings in raw.ingestion_log so the list can be pruned.
 # --------------------------------------------------------------------------- #
 BOARDS_FILE = Path(__file__).with_name("company_boards.csv")
-GREENHOUSE_URL = "https://boards-api.greenhouse.io/v1/boards/{token}/jobs"
+GREENHOUSE_URLS = ["https://boards-api.greenhouse.io/v1/boards/{token}/jobs",       # US data centre
+                   "https://boards-api.eu.greenhouse.io/v1/boards/{token}/jobs"]    # EU (e.g. Tamara, Ziina)
+BREEZY_URL = "https://{token}.breezy.hr/json"                                      # public positions feed
+TEAMTAILOR_URL = "https://{token}.teamtailor.com/jobs.rss"                          # public RSS (per_page <= 200)
 LEVER_URLS = ["https://api.lever.co/v0/postings/{token}", "https://api.eu.lever.co/v0/postings/{token}"]
 ASHBY_URL = "https://api.ashbyhq.com/posting-api/job-board/{token}"
 SMARTRECRUITERS_URL = "https://api.smartrecruiters.com/v1/companies/{token}/postings"
@@ -124,7 +127,8 @@ PERSONIO_URLS = ["https://{token}.jobs.personio.de/xml",                # public
                  "https://{token}.jobs.personio.com/xml"]
 
 # Platforms whose board names can be guessed from a company name (used by probing)
-PROBE_ATS = ("greenhouse", "lever", "ashby", "smartrecruiters", "workable", "recruitee", "personio")
+PROBE_ATS = ("greenhouse", "lever", "ashby", "smartrecruiters", "workable", "recruitee", "personio",
+             "breezy", "teamtailor")
 # + enterprise platforms (big corporates, banks, telcos, oil & gas): their board ids can't be guessed,
 # they come from company_boards.csv or from job links that point to them (harvest).
 BOARD_ATS = PROBE_ATS + ("workday", "successfactors")
@@ -164,14 +168,20 @@ def load_board_rows(path: Path = BOARDS_FILE) -> list[tuple[str, str]]:
 
 def load_board_companies(path: Path = BOARDS_FILE) -> dict[tuple[str, str], str]:
     """(ats, token) -> company display name, for rows that give one."""
+    return {k: v["company"] for k, v in load_board_details(path).items() if v.get("company")}
+
+
+def load_board_details(path: Path = BOARDS_FILE) -> dict[tuple[str, str], dict]:
+    """(ats, token) -> {"company", "country"} from the optional CSV columns (used for display names, and
+    as the location of jobs whose feed only gives a city)."""
     out = {}
     with path.open(encoding="utf-8") as fh:
         for row in csv.DictReader(line for line in fh if not line.lstrip().startswith("#")):
             ats = (row.get("ats") or "").strip().lower()
             token = normalize_board_token(ats, row.get("token") or "")
-            company = (row.get("company") or "").strip()
-            if ats in BOARD_ATS and token and company:
-                out[(ats, token)] = company
+            details = {k: (row.get(k) or "").strip() for k in ("company", "country")}
+            if ats in BOARD_ATS and token and any(details.values()):
+                out[(ats, token)] = details
     return out
 
 
@@ -180,8 +190,61 @@ def load_board_tokens(ats: str, path: Path = BOARDS_FILE) -> list[str]:
 
 
 def _fetch_greenhouse(token: str) -> list[dict]:
-    payload = _get_json(GREENHOUSE_URL.format(token=token), params={"content": "true"})
-    return [j for j in payload.get("jobs", []) if is_tech_role(j.get("title"))]
+    # A Greenhouse board lives in the US or the EU data centre; try both (like Lever).
+    last_exc: Exception | None = None
+    for url in GREENHOUSE_URLS:
+        try:
+            payload = _get_json(url.format(token=token), params={"content": "true"})
+        except requests.HTTPError as exc:
+            last_exc = exc
+            continue
+        return [j for j in payload.get("jobs", []) if is_tech_role(j.get("title"))]
+    raise last_exc or requests.HTTPError(f"greenhouse board '{token}' not found")
+
+
+def _fetch_breezy(token: str) -> list[dict]:
+    """Breezy HR careers site feed: a JSON list of open positions (no descriptions)."""
+    positions = _get_json(BREEZY_URL.format(token=token))
+    if not isinstance(positions, list):
+        raise ValueError(f"breezy '{token}' did not return a positions list")
+    return [p for p in positions if isinstance(p, dict) and is_tech_role(p.get("name"))]
+
+
+def _local(tag: str) -> str:
+    return tag.rsplit("}", 1)[-1]
+
+
+def parse_teamtailor_rss(xml_text: str) -> list[dict]:
+    """Teamtailor RSS -> dicts. Besides title/link/description/pubDate/guid, items carry namespaced
+    fields (locations, department, remote status) whose exact tags vary: they are kept by local name."""
+    root = ET.fromstring(xml_text)
+    channel = root.find("channel")
+    if _local(root.tag) != "rss" or channel is None:
+        raise ValueError(f"not an RSS feed (root <{root.tag}>)")
+    jobs = []
+    for item in channel.findall("item"):
+        job: dict = {"locations": []}
+        for child in item:
+            name, text = _local(child.tag), (child.text or "").strip()
+            if name in ("locations", "location"):
+                # <tt:locations><tt:location><tt:city>Riyadh</tt:city><tt:country>Saudi Arabia</tt:country>...
+                for loc in (list(child) if name == "locations" and len(child) else [child]):
+                    place = [(el.text or "").strip() for el in loc.iter() if _local(el.tag) in ("city", "country")]
+                    job["locations"].append(", ".join(dict.fromkeys(p for p in place if p)) or (loc.text or "").strip())
+            elif text and name not in job:
+                job[name] = text
+        job["locations"] = [loc for loc in job["locations"] if loc]
+        jobs.append(job)
+    return jobs
+
+
+def _fetch_teamtailor(token: str) -> list[dict]:
+    text = _get_text(TEAMTAILOR_URL.format(token=token), params={"per_page": 200})
+    try:
+        jobs = parse_teamtailor_rss(text)
+    except ET.ParseError as exc:
+        raise ValueError(f"teamtailor '{token}' did not return an RSS feed") from exc
+    return [j for j in jobs if is_tech_role(j.get("title"))]
 
 
 def _fetch_lever(token: str) -> list[dict]:
@@ -543,6 +606,8 @@ ATS_FETCHERS: dict[str, Callable[[str], list[dict]]] = {
     "personio": _fetch_personio,
     "workday": _fetch_workday,
     "successfactors": _fetch_successfactors,
+    "breezy": _fetch_breezy,
+    "teamtailor": _fetch_teamtailor,
 }
 
 
@@ -611,6 +676,24 @@ def extract_recruitee(tokens: list[str] | None = None, pause_seconds: float = 0.
 def extract_personio(tokens: list[str] | None = None, pause_seconds: float = 0.5,
                      meta: dict | None = None) -> ExtractResult:
     return extract_company_boards("personio", tokens, pause_seconds, meta)
+
+
+def extract_breezy(tokens: list[str] | None = None, pause_seconds: float = 0.5,
+                   meta: dict[str, dict] | None = None) -> ExtractResult:
+    return extract_company_boards("breezy", tokens, pause_seconds, meta)
+
+
+def extract_teamtailor(tokens: list[str] | None = None, pause_seconds: float = 0.5,
+                       meta: dict[str, dict] | None = None) -> ExtractResult:
+    return extract_company_boards("teamtailor", tokens, pause_seconds, meta)
+
+
+def breezy_id(record: dict) -> str:
+    return f"{record.get('board_token', '')}:{record.get('id') or record.get('friendly_id') or record['url']}"
+
+
+def teamtailor_id(record: dict) -> str:
+    return f"{record.get('board_token', '')}:{record.get('guid') or record['link']}"
 
 
 def extract_workday(tokens: list[str] | None = None, pause_seconds: float = 1.0,
@@ -984,6 +1067,8 @@ SOURCES: dict[str, SourceSpec] = {
     "recruitee": SourceSpec(extract_recruitee, recruitee_id, required=False, board_ats="recruitee"),
     "personio": SourceSpec(extract_personio, personio_id, required=False, board_ats="personio"),
     "workday": SourceSpec(extract_workday, workday_id, required=False, board_ats="workday"),
+    "breezy": SourceSpec(extract_breezy, breezy_id, required=False, board_ats="breezy"),
+    "teamtailor": SourceSpec(extract_teamtailor, teamtailor_id, required=False, board_ats="teamtailor"),
     "successfactors": SourceSpec(extract_successfactors, successfactors_id, required=False,
                                  board_ats="successfactors"),
     # key-based aggregators: optional (missing key / quota reached only warns)

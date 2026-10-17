@@ -32,6 +32,10 @@ models:
     columns: *stg_cols
   - name: stg_personio
     columns: *stg_cols
+  - name: stg_breezy
+    columns: *stg_cols
+  - name: stg_teamtailor
+    columns: *stg_cols
   - name: stg_workday
     columns: *stg_cols
   - name: stg_successfactors

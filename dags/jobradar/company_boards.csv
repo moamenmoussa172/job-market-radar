@@ -1,16 +1,18 @@
 # Company career boards to collect from. ats = greenhouse | lever | ashby | smartrecruiters | workable
-#   | recruitee | personio | workday | successfactors.
+#   | recruitee | personio | breezy | teamtailor | workday | successfactors.
 # token = the company's name in its job-board URL:
 #   boards.greenhouse.io/<token> | jobs.lever.co/<token> | jobs.ashbyhq.com/<token>
 #   jobs.smartrecruiters.com/<Token> (case-sensitive) | apply.workable.com/<token>
 #   workday: <tenant>.<wdN>/<Site> from https://<tenant>.<wdN>.myworkdayjobs.com/en-US/<Site> (Site is case-sensitive);
 #            only jobs in MENA + Europe are read (WORKDAY_REGIONS). A full careers URL works too.
+#   breezy: <token>.breezy.hr | teamtailor: <token>.teamtailor.com
 #   successfactors: the career site host, e.g. careers.sap.com (read through its RSS job feed)
 # company = optional display name (needed for Workday/SuccessFactors, whose ids are not company names).
+# country = optional: where the company is, used when a feed only gives a city (Breezy, Recruitee, Personio).
 # New rows are validated automatically (one request) before use; wrong tokens are
 # marked dead in raw.company_boards. The pipeline also discovers boards on its own
 # from apply links, so this list only needs to be a starting point.
-ats,token,company
+ats,token,company,country
 greenhouse,airbnb
 greenhouse,cloudflare
 greenhouse,contentful
@@ -126,3 +128,57 @@ successfactors,jobs.babcockinternational.com,Babcock International
 successfactors,jobs.bombardier.com,Bombardier
 successfactors,jobs.hensoldt.net,Hensoldt
 successfactors,jobs.deere.com,John Deere
+# ---- Middle East tech employers found on their hiring platforms (Oct 2026) ----
+# Egypt
+workable,robusta,Robusta,Egypt
+workable,egyptian-banks-company-4,Egyptian Banks Company,Egypt
+workable,arpu-telecommunication-services,ARPU Telecommunication Services,Egypt
+workable,dsquares-loyalty-dmcc,Dsquares,Egypt
+workable,mylo-btech,mylo,Egypt
+workable,ssc-egypt,SSC Egypt,Egypt
+workable,buildinglink,BuildingLink,Egypt
+lever,bosta,Bosta,Egypt
+lever,yassir,Yassir,
+breezy,almentor,almentor,Egypt
+breezy,maxab,MaxAB,Egypt
+# Saudi Arabia
+workable,mrsool-3,Mrsool,Saudi Arabia
+workable,lucidya,Lucidya,Saudi Arabia
+workable,mozn-ai,Mozn,Saudi Arabia
+workable,salla,Salla,Saudi Arabia
+workable,is,Innovative Solutions,Saudi Arabia
+workable,masterworksco,Master-Works,Saudi Arabia
+workable,the-chefz-co,The Chefz,Saudi Arabia
+workable,playmirai,Mirai,Saudi Arabia
+workable,nakhla,Nakhla,Saudi Arabia
+workable,madarplatform,Madar,
+lever,strategicgears,Strategic Gears,Saudi Arabia
+greenhouse,tamara,Tamara,Saudi Arabia
+smartrecruiters,AlMosafer,Almosafer,Saudi Arabia
+teamtailor,fourprinciples,Four Principles,Saudi Arabia
+# United Arab Emirates
+workable,weorbit,orbit,United Arab Emirates
+workable,bayutdubizzle,Bayut | dubizzle,United Arab Emirates
+greenhouse,ziina,Ziina,United Arab Emirates
+greenhouse,delphiconsulting,Delphi Consulting,United Arab Emirates
+greenhouse,ruyaai,Ruya AI,United Arab Emirates
+ashby,qlub,qlub,United Arab Emirates
+ashby,mexdigital,Multibank Group,United Arab Emirates
+lever,ifm-us,Institute of Foundation Models (MBZUAI),United Arab Emirates
+breezy,anghami,Anghami,United Arab Emirates
+# Kuwait / Jordan
+workable,zaintech,ZainTECH,Kuwait
+workable,tamatem,Tamatem Games,Jordan
+workable,progressoft,ProgressSoft,Jordan
+workable,zaincash-jordan,Zain Cash,Jordan
+workable,parcelat,National Parcel Stations Network,Jordan
+workable,stsmiddleeast,Specialized Technical Services,Jordan
+workable,bank-al-etihad,Bank al Etihad,Jordan
+workable,bank-of-jordan,Bank of Jordan,Jordan
+teamtailor,spidersilk,spiderSilk,Jordan
+breezy,manara,Manara,
+# Multinationals hiring tech roles in the Gulf
+greenhouse,artefact,Artefact,
+greenhouse,commvault,Commvault,
+greenhouse,purestorage,Pure Storage,
+teamtailor,corporater,Corporater,

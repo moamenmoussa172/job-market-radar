@@ -29,8 +29,8 @@ from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.providers.standard.operators.bash import BashOperator
 from airflow.sdk import dag, get_current_context, task
 
-from jobradar import boards, fx, site_export, storage, warehouse
-from jobradar.sources import SOURCES, load_board_companies, load_board_rows
+from jobradar import boards, fx, site_export, storage, telegram, warehouse
+from jobradar.sources import SOURCES, load_board_details, load_board_rows
 
 log = logging.getLogger(__name__)
 WAREHOUSE_CONN_ID = "jobradar_wh"
@@ -63,7 +63,7 @@ def job_radar_ingest():
         """Add new CSV seeds, then validate a capped number of candidate boards."""
         conn = PostgresHook(postgres_conn_id=WAREHOUSE_CONN_ID).get_conn()
         try:
-            seeded = boards.seed(conn, load_board_rows(), load_board_companies())
+            seeded = boards.seed(conn, load_board_rows(), load_board_details())
             counts = boards.validate_candidates(conn)
         except Exception as exc:  # noqa: BLE001 - extraction falls back to the CSV list
             log.warning("board sync failed (%s) - extract will use the CSV list", exc)
@@ -82,6 +82,18 @@ def job_radar_ingest():
         except Exception as exc:  # noqa: BLE001 - the website never fails the data run
             log.warning("website not published: %s", exc)
             return None
+        finally:
+            conn.close()
+
+    @task(retries=0)
+    def post_telegram() -> dict:
+        """Post today's new jobs to the Telegram channels in TELEGRAM_CHANNELS (optional)."""
+        conn = PostgresHook(postgres_conn_id=WAREHOUSE_CONN_ID).get_conn()
+        try:
+            return telegram.post_from_env(conn)
+        except Exception as exc:  # noqa: BLE001 - Telegram never fails the data run
+            log.warning("telegram not posted: %s", exc)
+            return {}
         finally:
             conn.close()
 
@@ -203,6 +215,7 @@ def job_radar_ingest():
     loaded = load.expand(meta=extracted)
     [check(loaded), rates] >> dbt_build
     dbt_build >> publish_site()
+    dbt_build >> post_telegram()
     discover_boards(loaded)
 
 

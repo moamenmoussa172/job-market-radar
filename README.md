@@ -3,7 +3,7 @@
 **Which tech jobs can I actually get from where I live, what should I learn next, and what do they pay?**
 
 **Radarak** (Arabic for "your radar") is an end-to-end data engineering project that collects thousands of tech job postings every day (data & AI,
-software, mobile (iOS, Android, Flutter), QA & testing, UI/UX design, DevOps & cloud, security, ERP, networks, product, IT) from 17 public and licensed sources, models them with dbt, and answers those questions in a
+software, mobile (iOS, Android, Flutter), QA & testing, UI/UX design, DevOps & cloud, security, ERP, networks, product, IT) from 19 public and licensed sources, models them with dbt, and answers those questions in a
 self-service dashboard, from the point of view of *one specific person* (their country, role and skills).
 
 **Live site: https://moamenmoussa172.github.io/job-market-radar/** (Arabic + English, updated daily)
@@ -41,6 +41,8 @@ A **Trends** tab shows how hiring changes week by week for the visitor's country
 track, which tracks are hiring faster, skills on the rise and cooling down, how long jobs stay open), and
 the **weekly report** page (`report.html`) turns last week into a shareable 1080×1350 image plus a ready
 LinkedIn post, in Arabic or English, drawn in the browser.
+Every morning the new jobs are also posted to **Telegram channels** (e.g. Egypt, the Gulf, Remote),
+grouped by track with direct links (`dags/jobradar/telegram.py`, each job posted once).
 All filtering happens in the browser on JSON files (`data/jobs.json`, `data/meta.json`, `data/trends.json`) exported
 from the marts; links are shareable (filters live in the URL). Listings from sources that ask not to be
 re-posted (Remotive, Himalayas) count in the statistics but are not listed; Adzuna/Jooble/JSearch/Jobicy
@@ -200,7 +202,7 @@ More detail: [docs/design-decisions.md](docs/design-decisions.md).
 
 | Source | What it adds | Usage notes |
 |---|---|---|
-| Greenhouse, Lever, Ashby, SmartRecruiters, Workable, Recruitee, Personio public job boards | Company career pages: full descriptions; Lever/Ashby/SmartRecruiters/Recruitee state work mode and often salary | **Self-expanding registry**: seeds in `dags/jobradar/company_boards.csv`; ~230 companies in Egypt, the Gulf and Europe in `dbt/seeds/companies.csv` whose hiring platform is detected automatically; plus boards discovered from other sources' apply links |
+| Greenhouse (US and EU), Lever, Ashby, SmartRecruiters, Workable, Recruitee, Personio, Breezy, Teamtailor public job boards | Company career pages: full descriptions; Lever/Ashby/SmartRecruiters/Recruitee state work mode and often salary | **Self-expanding registry**: seeds in `dags/jobradar/company_boards.csv`; ~230 companies in Egypt, the Gulf and Europe in `dbt/seeds/companies.csv` whose hiring platform is detected automatically; plus boards discovered from other sources' apply links |
 | Workday and SAP SuccessFactors career sites | Large corporates and multinationals (banks, telcos, energy, pharma, tech) with offices in Egypt and the Gulf, which don't use the startup job boards above; Workday through its careers-site JSON API (only jobs in MENA and Europe are requested), SuccessFactors through its RSS job feed | Seeds with display names in `company_boards.csv`; more Workday boards are discovered automatically from apply links in other sources (`*.myworkdayjobs.com`) |
 | Adzuna | UK and EU job search (10 countries, 12 roles), short snippets; only real (not Adzuna-predicted) salaries are kept | API id + key; 80 rotating searches/day. Jobs by Adzuna |
 | Bundesagentur für Arbeit | Germany's federal job agency (official public API): IT jobs across Germany; no descriptions, so no skills | Public key; 18 searches × up to 2 pages a day |
@@ -263,7 +265,7 @@ dags/
   job_radar_ingest.py        # the DAG: setup → extract[source] → load → check → dbt_build (+ fx_rates)
   jobradar/                  # sources, title filter, S3 raw layer, warehouse loader, ECB FX
 dbt/
-  models/staging/            # stg_<source>: one shape for all 17 sources
+  models/staging/            # stg_<source>: one shape for all 19 sources
   models/intermediate/       # classify, geo, job key, dedup, salary
   models/marts/              # fct_job_postings, bridges, dim_skills
   models/reporting/          # dashboard-ready aggregates

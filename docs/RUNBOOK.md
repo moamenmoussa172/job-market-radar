@@ -57,6 +57,26 @@ go in code or git; if a key is exposed, regenerate it. Daily budgets: `JSEARCH_R
 (default 6, fits the free 200/month), `JOOBLE_REQUESTS_PER_DAY` (default 3) and
 `ADZUNA_REQUESTS_PER_DAY` (default 40). A 401/403/429 answer stops that source for the day.
 
+## Adding companies by hand (head-hunting)
+
+To add a company you know is hiring, open one of its job links and add a line to
+`dags/jobradar/company_boards.csv` as `ats,token,company,country`:
+
+| Job link looks like | Line to add |
+|---|---|
+| `apply.workable.com/mrsool-3/j/...` | `workable,mrsool-3,Mrsool,Saudi Arabia` |
+| `jobs.lever.co/Bosta/...` | `lever,bosta,Bosta,Egypt` |
+| `job-boards.greenhouse.io/tamara/...` or `job-boards.eu.greenhouse.io/tamara/...` | `greenhouse,tamara,Tamara,Saudi Arabia` |
+| `jobs.ashbyhq.com/qlub/...` | `ashby,qlub,qlub,United Arab Emirates` |
+| `jobs.smartrecruiters.com/AlMosafer/...` | `smartrecruiters,AlMosafer,Almosafer,Saudi Arabia` |
+| `anghami.breezy.hr/p/...` | `breezy,anghami,Anghami,United Arab Emirates` |
+| `spidersilk.teamtailor.com/jobs/...` | `teamtailor,spidersilk,spiderSilk,Jordan` |
+| `xyz.recruitee.com/o/...` / `xyz.jobs.personio.de/...` | `recruitee,xyz,...` / `personio,xyz,...` |
+
+The next run checks each new line with one request and starts collecting from it. Listed boards that fail
+are checked again every 3 days. A quick way to find more: search the web for e.g.
+`site:apply.workable.com Riyadh developer` or `site:jobs.lever.co Cairo engineer`.
+
 ## Enterprise career sites (Workday, SuccessFactors)
 
 Big employers in the Gulf and multinationals with offices in Egypt mostly use Workday or SAP SuccessFactors.
@@ -117,6 +137,26 @@ The **Trends** tab and `report.html` read `data/trends.json` (from `mart_weekly_
 until then they say so. Each Monday (or any day), open
 `https://<user>.github.io/job-market-radar/report.html`, pick a place (All, Egypt, Saudi Arabia, ...)
 and a language, **Download image** and **Copy text**, and post both. The image covers the last complete week.
+
+### Telegram channels (optional)
+
+After each run, `post_telegram` posts the day's new jobs to Telegram channels, grouped by track, each linking
+to the original posting, plus a link back to the website. A job is posted to a channel once
+(`raw.telegram_posts`); a Telegram error never fails the run.
+
+1. In Telegram, open **@BotFather**, send `/newbot`, pick a name (e.g. *Radarak Jobs*) and a username ending in
+   `bot`. Copy the token it gives you.
+2. Create a public channel per audience (e.g. `@radarak_egypt`, `@radarak_gulf`, `@radarak_remote`).
+   In each channel: *Administrators > Add admin >* your bot, with *Post messages* allowed.
+3. In `.env`:
+   ```
+   TELEGRAM_BOT_TOKEN=123456:ABC...
+   TELEGRAM_CHANNELS=@radarak_egypt=Egypt;@radarak_gulf=Saudi Arabia|United Arab Emirates|Qatar|Kuwait|Bahrain|Oman;@radarak_remote=Remote
+   ```
+   A country channel gets office/hybrid jobs there plus remote jobs open to that country or region;
+   `Remote` gets remote jobs open worldwide. Nationals-only jobs and Remotive/Himalayas listings are never posted.
+4. `docker compose up -d` (reloads `.env`), then trigger the DAG. Check what was posted:
+   `select chat, count(*), max(posted_at) from raw.telegram_posts group by 1;`
 
 ### Visitor analytics (optional)
 
