@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Radarak: your radar for tech jobs you can actually get</title>
+  <meta name="description" content="Free, daily-updated tech jobs for Egypt, the Gulf and Europe. Pick the country you live in and see which jobs you can apply to, what skills they ask for and what they pay. Arabic and English.">
+  <meta name="theme-color" content="#5B3FE0">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Radarak: your radar for tech jobs you can actually get">
+  <meta property="og:description" content="Daily tech jobs filtered by where you live: Egypt, the Gulf, Europe and remote. Skills, salaries, visa sponsorship. Free, Arabic and English.">
+  <!-- Link previews need an absolute URL: change it if you publish the site somewhere else. -->
+  <meta property="og:image" content="https://moamenmoussa172.github.io/job-market-radar/og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%235B3FE0'/%3E%3Ccircle cx='16' cy='16' r='8' fill='none' stroke='%23fff' stroke-opacity='.55' stroke-width='2'/%3E%3Ccircle cx='22' cy='10' r='3' fill='%23FFB020'/%3E%3Ccircle cx='10' cy='19' r='2.4' fill='%23FF5E3A'/%3E%3Ccircle cx='19' cy='22' r='2' fill='%2310B981'/%3E%3C/svg%3E">
+  <link rel="preload" href="fonts/bricolage-grotesque-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip" href="#results" data-i18n="skip">Skip to jobs</a>
+
+  <header class="topbar">
+    <div class="topbar-in">
+      <a class="brand" href="./" aria-label="Radarak">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><circle class="disc" cx="16" cy="16" r="15"/><circle class="ring" cx="16" cy="16" r="8.5"/>
+          <circle cx="22.5" cy="9.5" r="3" fill="#FFB020"/><circle cx="9.5" cy="19.5" r="2.5" fill="#FF5C39"/><circle cx="19.5" cy="22.5" r="2.1" fill="#12B886"/></svg>
+        <span data-i18n="brand">Radarak</span>
+      </a>
+      <nav class="topnav" aria-label="Site">
+        <a class="navlink hide-s" href="report.html" data-i18n="weeklyReport">Weekly report</a>
+        <a class="navlink hide-s" href="https://github.com/moamenmoussa172/job-market-radar" target="_blank" rel="noopener" data-i18n="code">Source code</a>
+        <button id="lang" class="langbtn" type="button" lang="ar">العربية</button>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero" aria-labelledby="heroTitle">
+    <svg class="radar" viewBox="0 0 400 400" aria-hidden="true">
+      <defs>
+        <radialGradient id="sweepFill" cx="200" cy="200" r="190" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="#8F78FF" stop-opacity="0"/><stop offset="1" stop-color="#8F78FF" stop-opacity=".45"/></radialGradient>
+      </defs>
+      <circle cx="200" cy="200" r="190"/><circle cx="200" cy="200" r="135"/><circle cx="200" cy="200" r="80"/><circle cx="200" cy="200" r="25"/>
+      <path class="axis" d="M200 10V390M10 200H390"/>
+      <path class="sweep" d="M200 200 L200 10 A190 190 0 0 1 334 66 Z"/>
+      <g id="blips"></g>
+    </svg>
+    <div class="hero-in">
+      <h1 id="heroTitle" class="hero-title" data-i18n="heroTitle">Tech jobs you can actually get.</h1>
+      <p class="hero-sub" data-i18n="heroSub">Fresh every morning from company career pages and job boards across Egypt, the Gulf, Europe and remote, filtered by where you live.</p>
+
+      <form class="console" id="console" role="search" onsubmit="return false">
+        <label class="seg">
+          <span class="seg-label" data-i18n="ask1">I live in</span>
+          <select id="country"></select>
+        </label>
+        <label class="seg">
+          <span class="seg-label" data-i18n="segRole">I'm looking for</span>
+          <select id="role"></select>
+        </label>
+        <label class="seg seg-q">
+          <span class="seg-label" data-i18n="segKeywords">Keywords</span>
+          <input id="q" type="search" autocomplete="off" data-i18n-placeholder="searchPh" placeholder="Title, company or skill">
+        </label>
+        <button class="go" type="submit" id="go"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span data-i18n="searchBtn">Search</span></button>
+      </form>
+
+      <div class="hero-foot">
+        <p class="answer" aria-live="polite"><strong id="count">…</strong> <span id="countLabel" data-i18n="countLabel">jobs you can apply to</span></p>
+        <p class="fresh" id="fresh"></p>
+        <button id="share" class="sharebtn" type="button" data-i18n="share">Share this search</button>
+      </div>
+      <div class="trackpills" id="trackPills" role="group" data-i18n-aria="browseTracks" aria-label="Browse by track"></div>
+    </div>
+  </section>
+
+  <div class="tabs-wrap">
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tab-jobs" aria-controls="jobs" aria-selected="true"><span data-i18n="tabJobs">Jobs</span></button>
+      <button role="tab" id="tab-insights" aria-controls="insights" aria-selected="false"><span data-i18n="tabInsights">Skills &amp; pay</span></button>
+      <button role="tab" id="tab-trends" aria-controls="trends" aria-selected="false"><span data-i18n="tabTrends">Trends</span></button>
+      <button role="tab" id="tab-saved" aria-controls="saved" aria-selected="false"><span data-i18n="tabSaved">Saved</span> <span id="savedCount" class="pill" hidden></span></button>
+      <button role="tab" id="tab-about" aria-controls="about" aria-selected="false"><span data-i18n="tabAbout">How it works</span></button>
+      <label class="minisearch" id="miniSearch">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+        <span class="sr" data-i18n="search">Search</span>
+        <input id="qMini" type="search" autocomplete="off" data-i18n-placeholder="miniPh" placeholder="Search jobs  ( / )">
+      </label>
+    </div>
+  </div>
+
+  <div class="layout">
+    <aside class="sidebar" id="sidebar" aria-labelledby="filtersTitle">
+      <div class="sheet-head">
+        <h2 id="filtersTitle" data-i18n="filters">Filters</h2>
+        <button id="reset" class="linkbtn" type="button" data-i18n="reset">Clear all</button>
+        <button id="sheetClose" class="iconbtn sheet-only" type="button" data-i18n-aria="close" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </div>
+      <fieldset class="fgroup">
+        <legend data-i18n="quickTitle">Show only</legend>
+        <button type="button" class="toggle" data-flag="remote" aria-pressed="false"><i aria-hidden="true"></i><span data-i18n="qRemote">Remote</span></button>
+        <button type="button" class="toggle" data-flag="visa" aria-pressed="false"><i aria-hidden="true"></i><span data-i18n="qVisa">Visa or relocation</span></button>
+        <button type="button" class="toggle" data-flag="junior" aria-pressed="false"><i aria-hidden="true"></i><span data-i18n="qJunior">Junior &amp; intern</span></button>
+        <button type="button" class="toggle" data-flag="pay" aria-pressed="false"><i aria-hidden="true"></i><span data-i18n="qPay">Shows salary</span></button>
+        <button type="button" class="toggle" data-flag="week" aria-pressed="false"><i aria-hidden="true"></i><span data-i18n="qWeek">Posted this week</span></button>
+        <button type="button" class="toggle" data-flag="hideNat" aria-pressed="true"><i aria-hidden="true"></i><span data-i18n="qHideNat">Hide nationals-only</span></button>
+      </fieldset>
+      <div class="fgroup">
+        <label class="field"><span data-i18n="seniority">Seniority</span><select id="seniority"></select></label>
+        <label class="field"><span data-i18n="workMode">Work mode</span><select id="workMode"></select></label>
+        <label class="field"><span data-i18n="industry">Industry</span><select id="industry"></select></label>
+        <label class="field"><span data-i18n="skill">Must-have skill</span><select id="skill"></select></label>
+        <label class="field"><span data-i18n="arabic">Arabic</span><select id="arabic"></select></label>
+      </div>
+      <button id="sheetDone" class="primary sheet-only" type="button"></button>
+    </aside>
+    <div class="scrim" id="scrim" hidden></div>
+
+    <main class="content">
+      <section class="skillsbox" aria-labelledby="skillsTitle">
+        <div class="skills-intro">
+          <div class="cvicon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></div>
+          <div>
+            <h2 id="skillsTitle" data-i18n="yourSkills">Match jobs to your skills</h2>
+            <p class="hint" data-i18n="yourSkillsHint">Upload your CV or add skills. Jobs get a match score and the best ones come first.</p>
+          </div>
+          <div class="cvactions">
+            <button id="cvBtn" class="primary" type="button" data-i18n="cvUpload">Upload your CV</button>
+            <button id="cvPasteBtn" class="linkbtn" type="button" aria-expanded="false" data-i18n="cvPaste">or paste its text</button>
+          </div>
+        </div>
+        <input id="cvFile" type="file" accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" hidden>
+        <p class="privacy"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span data-i18n="cvPrivacy">Read on your device. Your CV is never uploaded or stored.</span></p>
+        <div id="cvPasteBox" class="cvpaste" hidden>
+          <label for="cvText" class="sr" data-i18n="cvPasteLabel">Your CV text</label>
+          <textarea id="cvText" rows="6" data-i18n-placeholder="cvPastePh" placeholder="Paste the text of your CV here"></textarea>
+          <button id="cvRead" class="primary" type="button" data-i18n="cvRead">Find my skills</button>
+        </div>
+        <div id="cvStatus" class="cvstatus" role="status" aria-live="polite"></div>
+        <div id="cvResult" class="cvresult" hidden></div>
+        <div class="skillsrow">
+          <label class="sr" for="mySkillInput" data-i18n="addSkill">Add a skill you have</label>
+          <input id="mySkillInput" list="skillList" autocomplete="off" data-i18n-placeholder="addSkill" placeholder="Add a skill you have">
+          <datalist id="skillList"></datalist>
+          <div id="mySkills" class="chips"></div>
+        </div>
+        <div class="suggest" id="suggestRow" hidden>
+          <span data-i18n="suggest">Often asked for these jobs:</span>
+          <div id="suggest" class="chips"></div>
+        </div>
+      </section>
+
+      <section id="jobs" role="tabpanel" aria-labelledby="tab-jobs">
+        <div class="activefilters" id="activeFilters" aria-label="Active filters"></div>
+        <div class="resultsbar" id="results">
+          <p id="resultSummary" class="summary"></p>
+          <div class="resultsctl">
+            <button id="filterOpen" class="filterbtn" type="button" aria-controls="sidebar" aria-expanded="false">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg><span id="filterSummary" data-i18n="filters">Filters</span>
+            </button>
+            <label class="sort"><span data-i18n="sortBy">Sort by</span>
+              <select id="sort">
+                <option value="new" data-i18n="sortNew">Newest</option>
+                <option value="match" data-i18n="sortMatch">Best match for my skills</option>
+                <option value="pay" data-i18n="sortPay">Highest pay</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <ol id="jobList" class="joblist" aria-busy="true">
+          <li class="skeleton"></li><li class="skeleton"></li><li class="skeleton"></li>
+        </ol>
+        <div id="empty" class="empty" hidden></div>
+        <button id="more" class="more" type="button" hidden></button>
+      </section>
+    <section id="insights" role="tabpanel" aria-labelledby="tab-insights" hidden>
+      <div class="stats" id="stats"></div>
+      <div class="grid">
+        <article class="panel">
+          <h2 data-i18n="topSkills">Skills these jobs ask for</h2>
+          <p class="hint" data-i18n="topSkillsHint">Share of jobs that mention each skill. Tap one to see only jobs that need it.</p>
+          <div id="skillBars" class="bars"></div>
+        </article>
+        <article class="panel">
+          <h2 data-i18n="nextSkill">The next skill to learn</h2>
+          <p class="hint" id="nextHint"></p>
+          <p id="matchLine" class="matchline"></p>
+          <div id="nextBars" class="bars"></div>
+        </article>
+        <article class="panel">
+          <h2 data-i18n="salaryByRole">Pay by role</h2>
+          <p class="hint" data-i18n="salaryHint">Median yearly salary in US dollars, from jobs that publish pay.</p>
+          <div id="salaryBars" class="bars"></div>
+        </article>
+        <article class="panel">
+          <h2 data-i18n="whereJobs">Where the jobs are</h2>
+          <p class="hint" data-i18n="whereHint">Office and hybrid jobs by country, plus remote jobs.</p>
+          <div id="placeBars" class="bars"></div>
+        </article>
+        <article class="panel">
+          <h2 data-i18n="companies">Companies hiring the most</h2>
+          <ol id="companyList" class="companies"></ol>
+        </article>
+        <article class="panel">
+          <h2 data-i18n="roles">Most wanted roles</h2>
+          <div id="roleBars" class="bars"></div>
+        </article>
+      </div>
+      </section>
+
+      <section id="trends" role="tabpanel" aria-labelledby="tab-trends" hidden>
+      <p id="trendScope" class="trendscope"></p>
+      <div class="stats" id="trendStats"></div>
+      <div class="grid">
+        <article class="panel wide">
+          <h2 data-i18n="weeklyTitle">New jobs per week</h2>
+          <p class="hint" id="weeklyHint"></p>
+          <div id="weeklyChart" class="weekchart"></div>
+          <div id="weeklyLegend" class="legend"></div>
+        </article>
+        <article class="panel">
+          <h2 data-i18n="risingTitle">Skills on the rise</h2>
+          <p class="hint" id="risingHint"></p>
+          <ol id="risingList" class="moves"></ol>
+        </article>
+        <article class="panel">
+          <h2 data-i18n="fallingTitle">Skills cooling down</h2>
+          <p class="hint" id="fallingHint"></p>
+          <ol id="fallingList" class="moves"></ol>
+        </article>
+        <article class="panel">
+          <h2 data-i18n="trackMovesTitle">Which tracks are hiring faster</h2>
+          <p class="hint" data-i18n="trackMovesHint">New jobs in the last 4 weeks compared with the 4 weeks before.</p>
+          <ol id="trackMoves" class="moves"></ol>
+        </article>
+        <article class="panel">
+          <h2 data-i18n="daysOpenTitle">How long jobs stay open</h2>
+          <p class="hint" data-i18n="daysOpenHint">Typical days from posting until the job is taken down. Short = apply early.</p>
+          <div id="daysOpen" class="bars"></div>
+        </article>
+      </div>
+      <a class="reportcta" href="report.html" id="reportLink"><span data-i18n="reportCta">Get this week's report card</span> →</a>
+      </section>
+
+      <section id="saved" role="tabpanel" aria-labelledby="tab-saved" hidden>
+      <p class="hint" data-i18n="savedHint">Jobs you save are kept on this device. A job disappears from the list below when it's no longer open.</p>
+      <ol id="savedList" class="joblist"></ol>
+      <div id="savedEmpty" class="empty" hidden></div>
+      </section>
+
+      <section id="about" role="tabpanel" aria-labelledby="tab-about" hidden>
+      <div class="prose" id="aboutText"></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="drawer-scrim" id="drawerScrim" hidden></div>
+  <aside class="drawer" id="jobDrawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle" hidden>
+    <div class="drawer-bar">
+      <button class="iconbtn" id="drawerClose" type="button" data-i18n-aria="close" aria-label="Close">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="drawer-body" id="drawerBody"></div>
+  </aside>
+
+  <footer class="foot">
+    <div class="foot-in">
+      <p id="footText"></p>
+    </div>
+  </footer>
+
+  <script src="app.js" defer></script>
+  <script data-goatcounter="https://radarak.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>
