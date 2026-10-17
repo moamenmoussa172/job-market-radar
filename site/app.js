@@ -23,7 +23,13 @@
       heroSub: "Fresh every morning from company career pages and job boards across Egypt, the Gulf, Europe and remote, filtered by where you live.",
       segRole: "I'm looking for", segKeywords: "Keywords", searchBtn: "Search", browseTracks: "Browse by track",
       filters: "Filters", filtersN: (n) => `Filters (${n})`, quickTitle: "Show only", close: "Close",
-      showN: (n) => `Show ${n} jobs`, matchOf: (a, b) => `You have ${a} of ${b} skills this job asks for`, skillsMatch: "match",
+      showN: (n) => `Show ${n} jobs`, miniPh: "Search jobs  ( / )", clearAll: "Clear all", removeFilter: (x) => `Remove filter ${x}`,
+      applyOn: "Apply on the company site", copyLink: "Copy link", linkCopied: "Link copied", posted: "Posted",
+      haveTitle: "Skills you have", missTitle: "Skills to add", missHint: "Tap one you already know to add it to your skills.",
+      matchCta: "Add your skills or upload your CV to see how well you match this job.", matchCtaBtn: "Add my skills",
+      noSkills: "This posting doesn't list specific skills.", alsoIn: "Also posted in", similarTitle: "Similar jobs",
+      fWorkMode: "Work mode", fSalary: "Salary", fLevel: "Level", fRole: "Role", fIndustry: "Industry", fSource: "Source",
+      yourMatch: (a, b) => `You have ${a} of the ${b} skills this job asks for`, longOpenFull: "Open for a while (posted long ago)", matchOf: (a, b) => `You have ${a} of ${b} skills this job asks for`, skillsMatch: "match",
       suggest: "Often asked for these jobs:", removeSkill: (s) => `Remove ${s}`,
       qRemote: "Remote", qVisa: "Visa or relocation", qJunior: "Junior & intern", qPay: "Shows salary",
       qWeek: "Posted this week", qHideNat: "Hide nationals-only",
@@ -77,7 +83,7 @@
       cvMatches: "jobs you match (60%+ of their skills)", cvAdded: "Your skills below were updated from your CV. Remove any that are wrong.",
       cvGapTitle: "Worth adding to your CV, if you have them:",
       cvGapHint: "These skills appear in many jobs close to your profile but not in your CV.",
-      cvShowRole: (r) => `Show ${r} jobs`, cvShowBest: "Show my best matches", cvClear: "Forget my CV skills",
+      cvShowRole: (r) => `Show ${r} jobs`, showNat: "Showing nationals-only", cvShowBest: "Show my best matches", cvClear: "Forget my CV skills",
     },
     ar: {
       brand: "رادارك", code: "الكود المصدري", skip: "انتقل للوظايف",
@@ -92,7 +98,13 @@
       heroSub: "بتتحدّث كل يوم الصبح من صفحات توظيف الشركات ومواقع الوظايف في مصر والخليج وأوروبا والريموت، ومفلترة حسب البلد اللي إنت فيها.",
       segRole: "بدوّر على", segKeywords: "كلمات بحث", searchBtn: "دوّر", browseTracks: "تصفّح حسب المجال",
       filters: "الفلاتر", filtersN: (n) => `الفلاتر (${n})`, quickTitle: "اعرض بس", close: "اقفل",
-      showN: (n) => `اعرض ${n} وظيفة`, matchOf: (a, b) => `عندك ${a} من ${b} مهارات الوظيفة دي طالباها`, skillsMatch: "تطابق",
+      showN: (n) => `اعرض ${n} وظيفة`, miniPh: "دوّر على وظيفة  ( / )", clearAll: "امسح الكل", removeFilter: (x) => `شيل فلتر ${x}`,
+      applyOn: "قدّم على موقع الشركة", copyLink: "انسخ اللينك", linkCopied: "اتنسخ اللينك", posted: "اتنشرت",
+      haveTitle: "مهارات عندك", missTitle: "مهارات تضيفها", missHint: "دوس على أي مهارة بتعرفها عشان تضيفها لمهاراتك.",
+      matchCta: "ضيف مهاراتك أو ارفع الـ CV عشان تشوف قد إيه الوظيفة دي مناسبة ليك.", matchCtaBtn: "ضيف مهاراتي",
+      noSkills: "الإعلان ده مش مكتوب فيه مهارات محددة.", alsoIn: "منشورة كمان في", similarTitle: "وظايف شبهها",
+      fWorkMode: "نوع الشغل", fSalary: "المرتب", fLevel: "المستوى", fRole: "الوظيفة", fIndustry: "المجال", fSource: "المصدر",
+      yourMatch: (a, b) => `عندك ${a} من ${b} مهارات الوظيفة دي طالباها`, longOpenFull: "مفتوحة من زمان (اتنشرت من فترة طويلة)", matchOf: (a, b) => `عندك ${a} من ${b} مهارات الوظيفة دي طالباها`, skillsMatch: "تطابق",
       suggest: "مطلوبة كتير في الوظايف دي:", removeSkill: (s) => `شيل ${s}`,
       qRemote: "ريموت", qVisa: "فيزا أو انتقال", qJunior: "جونيور وتدريب", qPay: "فيها مرتب",
       qWeek: "اتنشرت الأسبوع ده", qHideNat: "اخفي اللي للمواطنين بس",
@@ -146,7 +158,7 @@
       cvMatches: "وظيفة مناسبة لك (60%+ من مهاراتها)", cvAdded: "مهاراتك تحت اتحدّثت من الـ CV. شيل أي مهارة غلط.",
       cvGapTitle: "تستاهل تضيفها للـ CV لو بتعرفها:",
       cvGapHint: "المهارات دي مطلوبة في وظايف كتير قريبة من بروفايلك ومش مكتوبة في الـ CV.",
-      cvShowRole: (r) => `اعرض وظايف ${r}`, cvShowBest: "اعرض أنسب وظايف ليا", cvClear: "امسح مهارات الـ CV",
+      cvShowRole: (r) => `اعرض وظايف ${r}`, showNat: "بيعرض وظايف المواطنين فقط", cvShowBest: "اعرض أنسب وظايف ليا", cvClear: "امسح مهارات الـ CV",
     },
   };
   const ABOUT = {
@@ -282,6 +294,9 @@
     Object.keys(quick).forEach((k) => { if (h.has(k)) quick[k] = h.get(k) === "1"; });
     syncToggles();
     if (h.has("tab")) selectTab(h.get("tab"), false);
+    const jid = h.get("job");
+    if (jid && jid !== currentJob && meta) openJob(jid, null, false);
+    else if (!jid && currentJob) closeJob(false);
   }
   function writeHash() {
     const h = new URLSearchParams();
@@ -289,6 +304,7 @@
     Object.entries(quick).forEach(([k, v]) => { if (v !== (k === "hideNat")) h.set(k, v ? "1" : "0"); });
     const tab = document.querySelector('[role="tab"][aria-selected="true"]').getAttribute("aria-controls");
     if (tab !== "jobs") h.set("tab", tab);
+    if (currentJob) h.set("job", currentJob);
     history.replaceState(null, "", h.toString() ? "#" + h.toString() : location.pathname);
   }
   function syncToggles() {
@@ -391,7 +407,7 @@
     const isSaved = !!savedJobs[j.id];
     const locsOpen = openLocs.has(g.key);
     const initial = (j.c || j.t || "?").trim().charAt(0).toUpperCase();
-    return `<li class="job" style="${tc(j.tr)}">
+    return `<li class="job" style="${tc(j.tr)}" data-jid="${esc(j.id)}">
       <span class="avatar" aria-hidden="true">${esc(initial)}</span>
       <div class="jmain">
         <h3><a href="${esc(j.u)}" target="_blank" rel="noopener nofollow">${esc(j.t)}</a></h3>
@@ -750,6 +766,107 @@
     $("reportLink").href = "report.html" + (link.toString() ? "?" + link : "");
   }
 
+  // ------------------------------------------------------------------ job details panel
+  let currentJob = null, drawerReturn = null;
+  function groupFor(id) {
+    const g = groups.find((x) => x.all.some((y) => y.id === id));
+    if (g) return g;
+    const j = jobs.find((x) => x.id === id);
+    return j ? { key: "one:" + id, job: j, all: [j], pay: j.$ || null, flags: j.f || 0 } : null;
+  }
+  function similarJobs(j) {
+    const mine = mySkillIdx(), country = $("country").value, seen = new Set([(j.t + "|" + j.c).toLowerCase()]);
+    return jobs.filter((x) => x.r === j.r && x.id !== j.id && canApplyFrom(x, country) && !(quick.hideNat && (x.f || 0) & FLAG.nationals))
+      .map((x) => ({ x, m: mine.size && x.k.length ? x.k.filter((k) => mine.has(k)).length / Math.max(x.k.length, 4) : 0 }))
+      .sort((a, b) => b.m - a.m || (a.x.p < b.x.p ? 1 : -1))
+      .filter(({ x }) => { const k = (x.t + "|" + x.c).toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; })
+      .slice(0, 4).map(({ x }) => x);
+  }
+  function renderDrawer(g, j) {
+    const mine = mySkillIdx(), f = g.flags;
+    const have = j.k.filter((k) => mine.has(k)), miss = j.k.filter((k) => !mine.has(k));
+    const fact = (label, value) => (value ? `<div><dt>${esc(label)}</dt><dd>${value}</dd></div>` : "");
+    const tags = [f & FLAG.visa ? `<span class="fact visa">${t("visaTag")}</span>` : "",
+      f & FLAG.arabic ? `<span class="fact ar">${t("arTag")}</span>` : "",
+      f & FLAG.nationals ? `<span class="fact nat">${t("natTag")}</span>` : ""].join("");
+    const posted = f & FLAG.longOpen ? t("longOpenFull")
+      : new Date(j.p + "T12:00:00Z").toLocaleDateString(lang === "ar" ? "ar-EG" : "en-GB", { day: "numeric", month: "long", year: "numeric" }) + ` · ${ago(j.p)}`;
+    const match = !j.k.length ? `<p class="hint">${t("noSkills")}</p>`
+      : !mine.size ? `<div class="dcta"><p>${t("matchCta")}</p><button type="button" class="linkbtn" id="drawerAddSkills">${t("matchCtaBtn")}</button></div>
+          <div class="dskills"><h3>${t("missTitle")}</h3><div class="chips">${j.k.map((k) => `<span class="chip ghost">${esc(meta.skills[k])}</span>`).join("")}</div></div>`
+      : `<div class="dmatch">${matchRing(have.length, j.k.length)}<p>${esc(t("yourMatch")(have.length, j.k.length))}</p></div>
+         ${have.length ? `<div class="dskills"><h3>${t("haveTitle")}</h3><div class="chips">${have.map((k) => `<span class="chip have">✓ ${esc(meta.skills[k])}</span>`).join("")}</div></div>` : ""}
+         ${miss.length ? `<div class="dskills"><h3>${t("missTitle")}</h3><p class="hint">${t("missHint")}</p><div class="chips">${miss.map((k) =>
+           `<button type="button" class="chip add" data-add="${esc(meta.skills[k])}">+ ${esc(meta.skills[k])}</button>`).join("")}</div></div>` : ""}`;
+    const similar = similarJobs(j);
+    $("drawerBody").innerHTML = `
+      <header class="dhead" style="${tc(j.tr)}">
+        <span class="avatar big" aria-hidden="true">${esc((j.c || j.t || "?").trim().charAt(0).toUpperCase())}</span>
+        <div><h2 id="drawerTitle">${esc(j.t)}</h2><p class="where"><b>${esc(j.c || "")}</b><span>${esc(j.l || "")}</span></p>
+          <div class="facts">${g.pay ? `<span class="fact pay">${payText(g.pay)}</span>` : ""}<span class="fact role">${esc(j.r)}</span>${tags}</div></div>
+      </header>
+      <div class="dactions">
+        <a class="apply" href="${esc(j.u)}" target="_blank" rel="noopener nofollow">${t("applyOn")}
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></a>
+        <button type="button" class="save" data-id="${esc(j.id)}" aria-pressed="${!!savedJobs[j.id]}">${BOOKMARK}<span>${savedJobs[j.id] ? t("saved") : t("save")}</span></button>
+        <button type="button" class="ghostbtn" id="copyJob">${t("copyLink")}</button>
+      </div>
+      <section class="dsection">${match}</section>
+      <dl class="dfacts">
+        ${fact(t("fWorkMode"), esc(j.w === "Remote" ? (j.ww ? t("remoteWorld") : t("remote")) : j.w))}
+        ${fact(t("fSalary"), g.pay ? payText(g.pay) + " / yr" : "")}
+        ${fact(t("fLevel"), j.s && j.s !== "Not stated" ? esc(j.s) : "")}
+        ${fact(t("fRole"), esc(j.r) + ` <span class="muted">· ${esc(j.tr)}</span>`)}
+        ${fact(t("fIndustry"), j.i && j.i !== "Not identified" ? esc(j.i) : "")}
+        ${fact(t("posted"), esc(posted))}
+        ${fact(t("fSource"), j.by ? esc(j.by) : "")}
+      </dl>
+      ${g.all.length > 1 ? `<section class="dsection"><h3>${t("alsoIn")}</h3><ul class="dlocs">${g.all.filter((x) => x.id !== j.id).map((x) =>
+        `<li><a href="${esc(x.u)}" target="_blank" rel="noopener nofollow">${esc(x.l || x.t)}</a></li>`).join("")}</ul></section>` : ""}
+      ${similar.length ? `<section class="dsection"><h3>${t("similarTitle")}</h3><ul class="similar">${similar.map((x) =>
+        `<li style="${tc(x.tr)}"><button type="button" data-open="${esc(x.id)}"><span class="avatar sm" aria-hidden="true">${esc((x.c || "?").charAt(0).toUpperCase())}</span>
+          <span><b>${esc(x.t)}</b><small>${esc(x.c || "")} · ${esc(x.l || "")}</small></span></button></li>`).join("")}</ul></section>` : ""}`;
+  }
+  function openJob(id, opener, write = true) {
+    const g = groupFor(id), j = jobs.find((x) => x.id === id);
+    if (!g || !j) return;
+    if (!currentJob) drawerReturn = opener || document.activeElement;
+    currentJob = id;
+    renderDrawer(g, j);
+    $("jobDrawer").hidden = false; $("drawerScrim").hidden = false;
+    document.body.classList.add("drawer-open");
+    $("drawerBody").scrollTop = 0;
+    $("drawerClose").focus();
+    track("job-view/" + j.tr);
+    if (write) writeHash();
+  }
+  function closeJob(write = true) {
+    if (!currentJob) return;
+    currentJob = null;
+    $("jobDrawer").hidden = true; $("drawerScrim").hidden = true;
+    document.body.classList.remove("drawer-open");
+    if (drawerReturn && document.contains(drawerReturn)) drawerReturn.focus();
+    if (write) writeHash();
+  }
+
+  // ------------------------------------------------------------------ active filter chips
+  function renderChips() {
+    const chips = [];
+    const add = (label, attr) => chips.push(`<button type="button" class="fchip" ${attr} aria-label="${esc(t("removeFilter")(label))}">${esc(label)}<span aria-hidden="true">×</span></button>`);
+    if ($("country").value) add($("country").value, 'data-clear="country"');
+    const role = $("role").value;
+    if (role) add(role.replace(/^(track|role):/, ""), 'data-clear="role"');
+    if ($("q").value.trim()) add(`“${$("q").value.trim()}”`, 'data-clear="q"');
+    ["seniority", "workMode", "industry", "skill", "arabic"].forEach((f) => {
+      if ($(f).value) add(f === "arabic" ? `${t("arabic")}: ${$(f).selectedOptions[0].text}` : $(f).selectedOptions[0].text, `data-clear="${f}"`);
+    });
+    const flagLabel = { remote: "qRemote", visa: "qVisa", junior: "qJunior", pay: "qPay", week: "qWeek" };
+    Object.entries(flagLabel).forEach(([k, label]) => { if (quick[k]) add(t(label), `data-flag-off="${k}"`); });
+    if (!quick.hideNat) add(t("showNat"), 'data-flag-on="hideNat"');
+    $("activeFilters").innerHTML = chips.length > 1 || (chips.length && !$("country").value)
+      ? chips.join("") + `<button type="button" class="linkbtn" id="chipsClear">${t("clearAll")}</button>` : chips.join("");
+  }
+
   // ------------------------------------------------------------------ track pills + radar
   function renderTracks() {
     // count jobs the way the list shows them: the same title at the same company counts once
@@ -800,8 +917,11 @@
     $("filterOpen").classList.toggle("on", extra > 0);
     $("sheetDone").textContent = t("showN")(num(groups.length));
     renderTracks();
+    renderChips();
+    if (document.activeElement !== $("qMini")) $("qMini").value = $("q").value;
     renderSkills();
     renderJobs();
+    if (currentJob) { const g = groupFor(currentJob), j = jobs.find((x) => x.id === currentJob); if (g && j) renderDrawer(g, j); }
     renderSaved();
     if (!$("insights").hidden) renderInsights();
     if (!$("trends").hidden) renderTrends();
@@ -911,6 +1031,7 @@
         store.set("saved", savedJobs);
         el.setAttribute("aria-pressed", String(!!savedJobs[id]));
         el.querySelector("span").textContent = savedJobs[id] ? t("saved") : t("save");
+        if (el.closest(".drawer")) renderJobs();
         renderSaved();
       } else if (el.classList.contains("locbtn")) {
         const k = el.dataset.key;
@@ -918,14 +1039,49 @@
         renderJobs();
       }
     });
-    // which kinds of jobs people open (the track only, nothing about the visitor)
+    // a job opens its details panel; Ctrl/Cmd/middle click still opens the original posting
     document.addEventListener("click", (e) => {
-      const a = e.target.closest(".job h3 a, .locs a");
-      if (!a) return;
-      const li = a.closest(".job"), id = li && li.querySelector("[data-id]") && li.querySelector("[data-id]").dataset.id;
-      const j = id && jobs.find((x) => x.id === id);
-      track("job-open/" + (j ? j.tr : "unknown"));
+      const a = e.target.closest(".job h3 a");
+      if (a && !e.metaKey && !e.ctrlKey && !e.shiftKey && e.button === 0) {
+        e.preventDefault(); openJob(a.closest(".job").dataset.jid, a); return;
+      }
+      const o = e.target.closest("[data-open]");
+      if (o) { e.preventDefault(); openJob(o.dataset.open, o); return; }
+      // which kinds of jobs people apply to (the track only, nothing about the visitor)
+      const go = e.target.closest(".drawer .apply, .dlocs a, .locs a");
+      if (go) { const j = jobs.find((x) => x.id === currentJob); track("job-open/" + (j ? j.tr : "unknown")); }
     });
+    $("drawerClose").addEventListener("click", () => closeJob());
+    $("drawerScrim").addEventListener("click", () => closeJob());
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && currentJob) { closeJob(); return; }
+      if (e.key === "/" && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) {
+        e.preventDefault();
+        const mini = $("qMini");
+        (mini.offsetParent ? mini : $("q")).focus();
+      }
+    });
+    $("jobDrawer").addEventListener("click", (e) => {
+      if (e.target.closest("#drawerAddSkills")) { closeJob(); selectTab("jobs"); document.querySelector(".skillsbox").scrollIntoView({ behavior: "smooth" }); $("mySkillInput").focus(); }
+      if (e.target.closest("#copyJob")) {
+        const b = e.target.closest("#copyJob");
+        navigator.clipboard.writeText(location.href).then(() => { b.textContent = t("linkCopied"); setTimeout(() => { b.textContent = t("copyLink"); }, 2000); }).catch(() => {});
+        track("job-share");
+      }
+    });
+    // active filter chips
+    $("activeFilters").addEventListener("click", (e) => {
+      const b = e.target.closest("button");
+      if (!b) return;
+      if (b.id === "chipsClear") { $("country").value = ""; store.set("country", ""); resetFilters(); return; }
+      if (b.dataset.clear) { $(b.dataset.clear).value = ""; if (b.dataset.clear === "country") store.set("country", ""); }
+      if (b.dataset.flagOff) quick[b.dataset.flagOff] = false;
+      if (b.dataset.flagOn) quick[b.dataset.flagOn] = true;
+      syncToggles(); update();
+    });
+    // the compact search in the sticky bar mirrors the main keywords box
+    $("qMini").addEventListener("input", () => { $("q").value = $("qMini").value; update(); });
+    $("qMini").addEventListener("keydown", (e) => { if (e.key === "Enter") { selectTab("jobs"); $("results").scrollIntoView({ behavior: "smooth" }); } });
     window.addEventListener("hashchange", () => { readHash(); update(); });
     window.addEventListener("resize", sizeHero);
   }

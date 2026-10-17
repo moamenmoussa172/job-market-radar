@@ -81,6 +81,11 @@
       <button role="tab" id="tab-trends" aria-controls="trends" aria-selected="false"><span data-i18n="tabTrends">Trends</span></button>
       <button role="tab" id="tab-saved" aria-controls="saved" aria-selected="false"><span data-i18n="tabSaved">Saved</span> <span id="savedCount" class="pill" hidden></span></button>
       <button role="tab" id="tab-about" aria-controls="about" aria-selected="false"><span data-i18n="tabAbout">How it works</span></button>
+      <label class="minisearch" id="miniSearch">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+        <span class="sr" data-i18n="search">Search</span>
+        <input id="qMini" type="search" autocomplete="off" data-i18n-placeholder="miniPh" placeholder="Search jobs  ( / )">
+      </label>
     </div>
   </div>
 
@@ -146,6 +151,7 @@
       </section>
 
       <section id="jobs" role="tabpanel" aria-labelledby="tab-jobs">
+        <div class="activefilters" id="activeFilters" aria-label="Active filters"></div>
         <div class="resultsbar" id="results">
           <p id="resultSummary" class="summary"></p>
           <div class="resultsctl">
@@ -247,6 +253,15 @@
       </section>
     </main>
   </div>
+
+  <div class="drawer-scrim" id="drawerScrim" hidden></div>
+  <aside class="drawer" id="jobDrawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle" hidden>
+    <div class="drawer-bar">
+      <button class="iconbtn" id="drawerClose" type="button" data-i18n-aria="close" aria-label="Close">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="drawer-body" id="drawerBody"></div>
+  </aside>
 
   <footer class="foot">
     <div class="foot-in">
