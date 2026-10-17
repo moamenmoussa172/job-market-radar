@@ -26,7 +26,19 @@
       search: "Search", searchPh: "A title, company or skill", seniority: "Seniority", workMode: "Work mode",
       industry: "Industry", skill: "Must-have skill", arabic: "Arabic", any: "Any", arabicReq: "Required",
       arabicNot: "Not required", reset: "Clear all filters",
-      tabJobs: "Jobs", tabInsights: "Skills & pay", tabSaved: "Saved", tabAbout: "How it works",
+      tabJobs: "Jobs", tabInsights: "Skills & pay", tabSaved: "Saved", tabAbout: "How it works", tabTrends: "Trends",
+      weeklyReport: "Weekly report", reportCta: "Get this week's report card",
+      weeklyTitle: "New jobs per week", risingTitle: "Skills on the rise", fallingTitle: "Skills cooling down",
+      trackMovesTitle: "Which tracks are hiring faster", trackMovesHint: "New jobs in the last 4 weeks compared with the 4 weeks before.",
+      daysOpenTitle: "How long jobs stay open", daysOpenHint: "Typical days from posting until the job is taken down. Short = apply early.",
+      trendScopeAll: "Trends for all places", trendScopeOf: (c) => `Trends for ${c}`,
+      trendScopeFallback: (c) => `There isn't enough data for ${c} yet, so these trends cover all places.`,
+      weeklyHint: "Jobs we saw for the first time each week. The last bar is this week so far.",
+      skillsHint: (d) => `Share of open jobs that ask for each skill: now compared with ${d} days ago. Tap a skill to see its jobs.`,
+      statNewWeek: "new jobs last week", statVsPrev: (p) => `${p} vs the week before`, statTopTrack: "fastest-growing track",
+      statTopSkill: "skill rising fastest", statDaysOpen: "days a job typically stays open",
+      trendsSoon: "Trends need a few weeks of data. New numbers arrive every morning, so check back soon.",
+      pts: (v) => `${v > 0 ? "+" : ""}${v} pts`, soFar: "so far", newTrack: "new",
       sortBy: "Sort by", sortNew: "Newest", sortMatch: "Best match for my skills", sortPay: "Highest pay",
       summary: (jobs, companies) => `<b>${jobs}</b> jobs at <b>${companies}</b> companies`,
       remote: "Remote", remoteWorld: "Remote, worldwide", visaTag: "Visa / relocation", natTag: "Nationals only",
@@ -78,7 +90,19 @@
       search: "بحث", searchPh: "وظيفة أو شركة أو مهارة", seniority: "المستوى", workMode: "نوع العمل",
       industry: "المجال", skill: "مهارة لازم تكون مطلوبة", arabic: "العربي", any: "الكل", arabicReq: "مطلوب",
       arabicNot: "مش مطلوب", reset: "امسح كل الفلاتر",
-      tabJobs: "الوظايف", tabInsights: "المهارات والمرتبات", tabSaved: "المحفوظة", tabAbout: "إزاي بيشتغل",
+      tabJobs: "الوظايف", tabInsights: "المهارات والمرتبات", tabSaved: "المحفوظة", tabAbout: "إزاي بيشتغل", tabTrends: "الترندات",
+      weeklyReport: "التقرير الأسبوعي", reportCta: "خد كارت تقرير الأسبوع ده",
+      weeklyTitle: "الوظايف الجديدة كل أسبوع", risingTitle: "مهارات طالعة", fallingTitle: "مهارات بتهدى",
+      trackMovesTitle: "أنهي مجالات بتوظّف أسرع", trackMovesHint: "الوظايف الجديدة في آخر 4 أسابيع مقارنة بالـ 4 اللي قبلهم.",
+      daysOpenTitle: "الوظيفة بتفضل مفتوحة قد إيه", daysOpenHint: "متوسط الأيام من نشر الوظيفة لحد ما تتقفل. لو قليل يبقى قدّم بدري.",
+      trendScopeAll: "ترندات كل الأماكن", trendScopeOf: (c) => `ترندات ${c}`,
+      trendScopeFallback: (c) => `لسه مفيش بيانات كفاية عن ${c}، فالترندات دي لكل الأماكن.`,
+      weeklyHint: "الوظايف اللي شفناها لأول مرة كل أسبوع. آخر عمود هو الأسبوع ده لحد دلوقتي.",
+      skillsHint: (d) => `نسبة الوظايف المفتوحة اللي طالبة كل مهارة: دلوقتي مقارنة بـ ${d} يوم فاتوا. دوس على مهارة تشوف وظايفها.`,
+      statNewWeek: "وظيفة جديدة الأسبوع اللي فات", statVsPrev: (p) => `${p} عن الأسبوع اللي قبله`, statTopTrack: "أسرع مجال بيكبر",
+      statTopSkill: "أسرع مهارة طالعة", statDaysOpen: "يوم بتفضل الوظيفة مفتوحة عادةً",
+      trendsSoon: "الترندات محتاجة كام أسبوع بيانات. أرقام جديدة بتيجي كل يوم الصبح، فارجع تاني قريب.",
+      pts: (v) => `${v > 0 ? "+" : ""}${v} نقطة`, soFar: "لحد دلوقتي", newTrack: "جديد",
       sortBy: "رتّب حسب", sortNew: "الأحدث", sortMatch: "الأنسب لمهاراتي", sortPay: "الأعلى مرتب",
       summary: (jobs, companies) => `<b>${jobs}</b> وظيفة في <b>${companies}</b> شركة`,
       remote: "ريموت", remoteWorld: "ريموت من أي مكان", visaTag: "فيزا / انتقال", natTag: "للمواطنين بس",
@@ -133,7 +157,7 @@
       <h2>Salaries</h2>
       <p>Only jobs that publish pay are counted. Salaries in any currency and period are turned into a yearly amount in US dollars.</p>
       <h2>Sources</h2>
-      <p>Company career boards (Greenhouse, Lever, Ashby, SmartRecruiters, Workable, Recruitee, Personio) and job APIs. Every job links to its original posting, where you apply. Some jobs carry their source's credit (for example, Jobs by Adzuna).</p>
+      <p>Company career boards (Greenhouse, Lever, Ashby, SmartRecruiters, Workable, Recruitee, Personio, and the Workday and SuccessFactors career sites of large employers) and job APIs. Every job links to its original posting, where you apply. Some jobs carry their source's credit (for example, Jobs by Adzuna).</p>
       <p>The data is collected automatically and can miss jobs or contain mistakes. Saved jobs and your skills stay in your browser. The site counts visits and clicks anonymously (GoatCounter, no cookies, nothing that identifies you) to know how many people it helps. The project is open source.</p>`,
     ar: `
       <h2>ده إيه</h2>
@@ -152,7 +176,7 @@
       <h2>المرتبات</h2>
       <p>بنحسب بس الوظايف اللي بتعلن المرتب، وبنحوّل أي مرتب بأي عملة لمبلغ سنوي بالدولار.</p>
       <h2>المصادر</h2>
-      <p>صفحات التوظيف بتاعة الشركات (Greenhouse و Lever و Ashby و SmartRecruiters و Workable و Recruitee و Personio) ومواقع وظايف. كل وظيفة فيها لينك للإعلان الأصلي، والتقديم بيكون هناك.</p>
+      <p>صفحات التوظيف بتاعة الشركات (Greenhouse و Lever و Ashby و SmartRecruiters و Workable و Recruitee و Personio، وصفحات Workday و SuccessFactors بتاعة الشركات الكبيرة) ومواقع وظايف. كل وظيفة فيها لينك للإعلان الأصلي، والتقديم بيكون هناك.</p>
       <p>البيانات بتتجمع أوتوماتيك وممكن يفوتها وظايف أو يكون فيها أخطاء. الوظايف المحفوظة ومهاراتك بتفضل في المتصفح بتاعك. الموقع بيعدّ الزيارات والضغطات من غير ما يعرف إنت مين (GoatCounter، من غير كوكيز) عشان نعرف بنساعد كام واحد. المشروع مفتوح المصدر.</p>`,
   };
 
@@ -163,6 +187,7 @@
     set(k, v) { try { localStorage.setItem("jr_" + k, JSON.stringify(v)); } catch { /* storage unavailable */ } },
   };
   let lang = store.get("lang", (navigator.language || "").startsWith("ar") ? "ar" : "en");
+  let trends = null;
   let meta = null, jobs = [], regionOf = {}, shown = PAGE, groups = [], current = [];
   let mySkills = new Set(store.get("mySkills", []));
   let savedJobs = store.get("saved", {});               // id -> {t, c, l, u, p}
@@ -636,6 +661,81 @@
     }
   }
 
+  // ------------------------------------------------------------------ trends (data/trends.json, from the trend marts)
+  const sumRange = (arr, from, to) => arr.slice(Math.max(0, from), Math.max(0, to)).reduce((a, b) => a + b, 0);
+  const pct = (now, before) => (before > 0 ? Math.round((100 * (now - before)) / before) : null);
+  const signed = (v) => (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v) + "%";
+  const fmtWeek = (iso) => new Date(iso + "T12:00:00Z").toLocaleDateString(lang === "ar" ? "ar-EG" : "en-GB", { day: "numeric", month: "short" });
+  function selectedTrack() {
+    const role = $("role").value;
+    return role.startsWith("track:") ? role.slice(6) : role.startsWith("role:") ? trackOfRole[role.slice(5)] || "" : "";
+  }
+  function trendScope(country) {
+    return country && trends.weekly[country] ? country : "All";
+  }
+
+  function renderTrends() {
+    if (!trends) { $("trendScope").textContent = t("trendsSoon"); return; }
+    const country = $("country").value, scope = trendScope(country), track = selectedTrack();
+    $("trendScope").textContent = (country && scope === "All" ? t("trendScopeFallback")(country)
+      : scope === "All" ? t("trendScopeAll") : t("trendScopeOf")(scope)) + (track ? " · " + track : "");
+    const weekly = trends.weekly[scope] || {}, weeks = trends.weeks, n = weeks.length;
+    const shownTracks = meta.tracks.map((x) => x.name).filter((name) => weekly[name] && (!track || name === track));
+    const totals = weeks.map((_, i) => shownTracks.reduce((a, name) => a + weekly[name][i], 0));
+    const enough = trends.history_days >= 14 && (totals[n - 2] || 0) > 0;   // a complete week with data
+
+    // headline numbers (last complete week = n-2)
+    const last = totals[n - 2] || 0, prev = totals[n - 3] || 0, change = prev >= 5 ? pct(last, prev) : null;
+    const moves = shownTracks.map((name) => {
+      const w = weekly[name], now4 = sumRange(w, n - 5, n - 1), before4 = sumRange(w, n - 9, n - 5);
+      return { name, now4, before4, change: pct(now4, before4) };
+    }).filter((m) => m.now4 + m.before4 >= 5);
+    const growing = moves.filter((m) => m.change !== null && m.before4 >= 5).sort((a, b) => b.change - a.change)[0];
+    const sk = trends.skills[scope] || trends.skills.All || { rising: [], falling: [] };
+    const open = trends.days_open.filter((r) => !track || r[1] === track);
+    const openN = open.reduce((a, r) => a + r[5], 0);
+    const typical = openN >= 20 ? Math.round(open.reduce((a, r) => a + r[2] * r[5], 0) / openN) : null;
+    $("trendStats").innerHTML = !enough ? "" : [
+      [num(last), t("statNewWeek") + (change !== null ? ` (${t("statVsPrev")(signed(change))})` : "")],
+      [growing ? signed(growing.change) : "–", t("statTopTrack") + (growing ? `: ${growing.name}` : "")],
+      [sk.rising[0] ? t("pts")(sk.rising[0][3]) : "–", t("statTopSkill") + (sk.rising[0] ? `: ${sk.rising[0][0]}` : "")],
+      [typical ? num(typical) : "–", t("statDaysOpen")],
+    ].map(([v, l]) => `<div class="stat"><b>${esc(v)}</b><span>${esc(l)}</span></div>`).join("");
+
+    // weekly chart: stacked by track (or one track's colour)
+    $("weeklyHint").textContent = enough ? t("weeklyHint") : t("trendsSoon");
+    const max = Math.max(1, ...totals);
+    const firstWeek = Math.max(0, totals.findIndex((v) => v > 0));   // no empty bars before the data starts
+    $("weeklyChart").innerHTML = !enough ? "" : weeks.map((w, i) => (i < firstWeek ? "" : (() => {
+      const segs = shownTracks.map((name) => weekly[name][i] ? `<span class="seg" style="${tc(name)};height:${(100 * weekly[name][i]) / max}%"
+        title="${esc(name)}: ${num(weekly[name][i])}"></span>` : "").join("");
+      return `<div class="wk${i === n - 1 ? " partial" : ""}"><span class="wv">${totals[i] ? num(totals[i]) : ""}</span>
+        <div class="col">${segs}</div><span class="wl">${i === n - 1 ? t("soFar") : fmtWeek(w)}</span></div>`;
+    })())).join("");
+    $("weeklyLegend").innerHTML = !enough || track ? "" : shownTracks.map((name) =>
+      `<span style="${tc(name)}"><i></i>${esc(name)}</span>`).join("");
+
+    // skills: rising / falling (click = jobs that need it)
+    const hint = trends.window_days ? t("skillsHint")(trends.window_days) : t("trendsSoon");
+    $("risingHint").textContent = hint; $("fallingHint").textContent = "";
+    const moveRow = (r) => `<li><button type="button" class="move" data-skill-filter="${esc(r[0])}"><span class="mname">${esc(r[0])}</span>
+      <span class="mfrom">${r[1]}% → ${r[2]}%</span><span class="chg ${r[3] > 0 ? "up" : "down"}">${r[3] > 0 ? "▲" : "▼"} ${esc(t("pts")(r[3]))}</span></button></li>`;
+    $("risingList").innerHTML = sk.rising.slice(0, 8).map(moveRow).join("") || `<li class="none">${esc(t("trendsSoon"))}</li>`;
+    $("fallingList").innerHTML = sk.falling.slice(0, 8).map(moveRow).join("") || `<li class="none">${esc(t("trendsSoon"))}</li>`;
+
+    // track momentum
+    $("trackMoves").innerHTML = !enough ? `<li class="none">${esc(t("trendsSoon"))}</li>` : moves
+      .sort((a, b) => (b.change ?? 999) - (a.change ?? 999)).map((m) => `<li style="${tc(m.name)}"><span class="dot"></span>
+        <span class="mname">${esc(m.name)}</span><span class="mfrom">${num(m.before4)} → ${num(m.now4)}</span>
+        <span class="chg ${m.change === null || m.change >= 0 ? "up" : "down"}">${m.change === null ? t("newTrack") : signed(m.change)}</span></li>`).join("");
+
+    // days open, by role
+    bars($("daysOpen"), open.slice(0, 10).map((r) => ({ name: r[0], v: r[2], tr: r[1] })),
+      { fmt: (v) => `${v} ${lang === "ar" ? "يوم" : "d"}` });
+    const link = new URLSearchParams(); if (scope !== "All") link.set("place", scope); if (lang === "ar") link.set("lang", "ar");
+    $("reportLink").href = "report.html" + (link.toString() ? "?" + link : "");
+  }
+
   // ------------------------------------------------------------------ track pills + radar
   function renderTracks() {
     // count jobs the way the list shows them: the same title at the same company counts once
@@ -687,6 +787,7 @@
     renderJobs();
     renderSaved();
     if (!$("insights").hidden) renderInsights();
+    if (!$("trends").hidden) renderTrends();
     writeHash();
   }
 
@@ -698,6 +799,7 @@
     });
     if (!meta) return;
     if (id === "insights") renderInsights();
+    if (id === "trends") renderTrends();
     if (id === "saved") renderSaved();
     if (write) writeHash();
   }
@@ -734,6 +836,12 @@
       quick[b.dataset.flag] = !quick[b.dataset.flag]; syncToggles(); update();
     }));
     $("more").addEventListener("click", () => { shown += PAGE; renderJobs(); });
+    $("trends").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-skill-filter]");
+      if (!b) return;
+      $("skill").value = b.dataset.skillFilter; selectTab("jobs"); update(); track("trend-skill");
+      $("results").scrollIntoView({ behavior: "smooth" });
+    });
     $("trackPills").addEventListener("click", (e) => {
       const b = e.target.closest("[data-track]");
       if (b) { $("role").value = b.dataset.track; update(); track("track/" + (b.dataset.track.slice(6) || "all")); }
@@ -797,6 +905,8 @@
         fetch("data/jobs.json").then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }),
       ]);
       meta = m; jobs = j;
+      // trends are optional: the site works without them (e.g. before the first pipeline run with trend marts)
+      trends = await fetch("data/trends.json").then((r) => (r.ok ? r.json() : null)).catch(() => null);
     } catch {
       $("count").textContent = "–";
       $("jobList").innerHTML = "";

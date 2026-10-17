@@ -114,3 +114,55 @@ def test_analytics_tag_only_with_a_valid_code(tmp_path):
     # anything that isn't a plain site code is ignored (no HTML injection through the env var)
     bad = site_export.site_files(tmp_path, analytics_code='x"><script>alert(1)</script>')["index.html"].decode()
     assert "goatcounter" not in bad and "alert" not in bad
+
+
+class _FakeConn:
+    """Answers the trend queries by table name."""
+    def __init__(self, answers):
+        self.answers = answers
+
+    def cursor(self):
+        conn = self
+
+        class Cur:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                return False
+
+            def execute(self, sql, params=None):
+                self.rows = next(v for k, v in conn.answers.items() if k in sql)
+
+            def fetchall(self):
+                return self.rows
+        return Cur()
+
+
+def test_trends_export_aligns_weeks_and_drops_thin_places():
+    import datetime as dt
+    now = dt.datetime(2026, 10, 17, 6, 0, tzinfo=dt.timezone.utc)   # a Saturday
+    this_monday, last_monday = dt.date(2026, 10, 12), dt.date(2026, 10, 5)
+    conn = _FakeConn({
+        "mart_weekly_new_jobs": [(last_monday, "All", "Data & Analytics", 30), (this_monday, "All", "Data & Analytics", 9),
+                                 (last_monday, "Egypt", "Data & Analytics", 25), (last_monday, "Oman", "QA & Testing", 2),
+                                 (dt.date(2020, 1, 6), "All", "Data & Analytics", 99)],   # outside the 12 weeks
+        "mart_skill_trends": [("All", "Spark", 28, 40.0, 30.0, -10.0, 30), ("All", "LLMs / GenAI", 28, 10.0, 25.0, 15.0, 25),
+                              ("All", "SQL", 28, 60.0, 61.0, 1.0, 61)],
+        "mart_time_to_close": [("Data Engineer", "Data & Analytics", 21, 12, 30, 40)],
+        "max(first_seen_date) - min(first_seen_date)": [(60,)],
+    })
+    t = site_export.export_trends(conn, now)
+    assert len(t["weeks"]) == 12 and t["weeks"][-1] == "2026-10-12" and t["weeks"][-2] == "2026-10-05"
+    assert t["weekly"]["All"]["Data & Analytics"][-2:] == [30, 9]
+    assert "Egypt" in t["weekly"] and "Oman" not in t["weekly"]          # 2 jobs: too few for a trend
+    moves = t["skills"]["All"]
+    assert [r[0] for r in moves["rising"]] == ["LLMs / GenAI", "SQL"] and [r[0] for r in moves["falling"]] == ["Spark"]
+    assert moves["top"][0][0] == "SQL" and t["window_days"] == 28 and t["history_days"] == 60
+    assert t["days_open"] == [["Data Engineer", "Data & Analytics", 21, 12, 30, 40]]
+
+
+def test_report_page_is_published():
+    files = site_export.site_files(analytics_code="radarak")
+    assert "report.html" in files and "report.js" in files
+    assert b"goatcounter" in files["report.html"]      # analytics on every page

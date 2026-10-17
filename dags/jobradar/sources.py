@@ -11,6 +11,7 @@ import csv
 import datetime as dt
 import logging
 import os
+import re
 import time
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
@@ -122,13 +123,30 @@ RECRUITEE_URL = "https://{token}.recruitee.com/api/offers/"           # public C
 PERSONIO_URLS = ["https://{token}.jobs.personio.de/xml",                # public XML job feed
                  "https://{token}.jobs.personio.com/xml"]
 
-BOARD_ATS = ("greenhouse", "lever", "ashby", "smartrecruiters", "workable", "recruitee", "personio")
-# SmartRecruiters company identifiers are case-sensitive (e.g. "BoschGroup").
-CASE_SENSITIVE_ATS = ("smartrecruiters",)
+# Platforms whose board names can be guessed from a company name (used by probing)
+PROBE_ATS = ("greenhouse", "lever", "ashby", "smartrecruiters", "workable", "recruitee", "personio")
+# + enterprise platforms (big corporates, banks, telcos, oil & gas): their board ids can't be guessed,
+# they come from company_boards.csv or from job links that point to them (harvest).
+BOARD_ATS = PROBE_ATS + ("workday", "successfactors")
+# SmartRecruiters company identifiers are case-sensitive (e.g. "BoschGroup"); so are Workday site names.
+CASE_SENSITIVE_ATS = ("smartrecruiters", "workday")
+
+# Workday board id = "<tenant>.<wdN>/<site>", from https://<tenant>.<wdN>.myworkdayjobs.com/[en-US/]<site>
+_WORKDAY_RE = re.compile(
+    r"^(?:https?://)?([a-z0-9-]+)\.(wd[0-9]+)(?:\.myworkdayjobs\.com)?/(?:[a-z]{2}-[A-Z]{2}/)?([A-Za-z0-9_-]+)",
+    re.IGNORECASE)
+_WORKDAY_NOT_SITES = {"wday", "job", "jobs", "details", "login", "en-us"}
 
 
 def normalize_board_token(ats: str, token: str) -> str:
     token = token.strip()
+    if ats == "workday":
+        m = _WORKDAY_RE.match(token)
+        if not m or m.group(3).lower() in _WORKDAY_NOT_SITES:
+            return ""
+        return f"{m.group(1).lower()}.{m.group(2).lower()}/{m.group(3)}"
+    if ats == "successfactors":  # career site host, e.g. jobs.sap.com
+        return re.sub(r"^https?://", "", token.lower()).split("/")[0]
     return token if ats in CASE_SENSITIVE_ATS else token.lower()
 
 
@@ -142,6 +160,19 @@ def load_board_rows(path: Path = BOARDS_FILE) -> list[tuple[str, str]]:
             if ats in BOARD_ATS and token:
                 rows.add((ats, token))
     return sorted(rows)
+
+
+def load_board_companies(path: Path = BOARDS_FILE) -> dict[tuple[str, str], str]:
+    """(ats, token) -> company display name, for rows that give one."""
+    out = {}
+    with path.open(encoding="utf-8") as fh:
+        for row in csv.DictReader(line for line in fh if not line.lstrip().startswith("#")):
+            ats = (row.get("ats") or "").strip().lower()
+            token = normalize_board_token(ats, row.get("token") or "")
+            company = (row.get("company") or "").strip()
+            if ats in BOARD_ATS and token and company:
+                out[(ats, token)] = company
+    return out
 
 
 def load_board_tokens(ats: str, path: Path = BOARDS_FILE) -> list[str]:
@@ -256,6 +287,173 @@ def _fetch_personio(token: str) -> list[dict]:
     raise last_exc or requests.HTTPError(f"personio '{token}' not found")
 
 
+# --------------------------------------------------------------------------- #
+# Workday (myworkdayjobs.com) - used by most large corporates in the Gulf and by
+# multinationals with offices in Egypt and the Gulf. Undocumented but public JSON
+# API behind every careers site:
+#   POST /wday/cxs/<tenant>/<site>/jobs  {"appliedFacets", "limit" (max 20!), "offset", "searchText"}
+#   GET  /wday/cxs/<tenant>/<site><externalPath>  (Accept: application/json) -> jobPostingInfo
+# Big employers list thousands of jobs worldwide, so only jobs in the countries we cover are
+# requested (Workday's country filter), MENA first, and details are fetched for tech titles only.
+# --------------------------------------------------------------------------- #
+WORKDAY_PAGE = 20  # larger pages silently return nothing
+WORKDAY_MAX_PAGES = int(os.environ.get("WORKDAY_MAX_PAGES", "15"))       # per country group
+WORKDAY_MAX_DETAILS = int(os.environ.get("WORKDAY_MAX_DETAILS", "80"))   # per board
+WORKDAY_HEADERS = {"Accept": "application/json", "Accept-Language": "en-US", "Content-Type": "application/json"}
+MENA_COUNTRY_NAMES = ("Egypt", "United Arab Emirates", "Saudi Arabia", "Qatar", "Kuwait", "Bahrain", "Oman",
+                      "Jordan", "Morocco", "Lebanon", "Tunisia")
+EUROPE_COUNTRY_NAMES = ("Austria", "Belgium", "Bulgaria", "Croatia", "Cyprus", "Czechia", "Czech Republic",
+                        "Denmark", "Estonia", "Finland", "France", "Germany", "Greece", "Hungary", "Ireland",
+                        "Italy", "Latvia", "Lithuania", "Luxembourg", "Malta", "Netherlands", "Norway", "Poland",
+                        "Portugal", "Romania", "Serbia", "Spain", "Sweden", "Switzerland", "United Kingdom")
+# "mena" or "mena,europe" (default); "all" = no country filter (page cap still applies)
+WORKDAY_REGIONS = [r.strip().lower() for r in os.environ.get("WORKDAY_REGIONS", "mena,europe").split(",") if r.strip()]
+
+
+def workday_urls(token: str) -> tuple[str, str, str]:
+    """token 'tenant.wd3/Site' -> (careers base, list API url, detail API prefix)."""
+    host_part, site = token.split("/", 1)
+    tenant = host_part.split(".")[0]
+    base = f"https://{host_part}.myworkdayjobs.com"
+    api = f"{base}/wday/cxs/{tenant}/{site}"
+    return f"{base}/en-US/{site}", f"{api}/jobs", api
+
+
+def _workday_post(url: str, body: dict) -> dict:
+    resp = requests.post(url, json=body, timeout=TIMEOUT, headers={"User-Agent": USER_AGENT, **WORKDAY_HEADERS})
+    resp.raise_for_status()
+    data = resp.json()
+    if not isinstance(data, dict) or "jobPostings" not in data:
+        raise ValueError("not a Workday jobs API response")
+    return data
+
+
+def workday_country_facet(facets: list, names: tuple[str, ...]) -> tuple[str | None, list[str]]:
+    """Find the country filter in Workday's facet tree -> (facet parameter, ids of the wanted countries).
+    Facets nest (e.g. Locations > Country > values); the parameter name varies per site."""
+    wanted = {n.lower() for n in names}
+    best: tuple[str | None, list[str]] = (None, [])
+
+    def walk(nodes: list) -> None:
+        nonlocal best
+        for node in nodes or []:
+            if not isinstance(node, dict):
+                continue
+            values = node.get("values") or []
+            leaves = [v for v in values if isinstance(v, dict) and v.get("id") and "values" not in v]
+            ids = [v["id"] for v in leaves if (v.get("descriptor") or "").strip().lower() in wanted]
+            param = node.get("facetParameter")
+            if ids and param:
+                is_country = "country" in param.lower() or "country" in (node.get("descriptor") or "").lower()
+                if is_country or not best[0]:
+                    if is_country or len(ids) > len(best[1]):
+                        best = (param, ids)
+            walk([v for v in values if isinstance(v, dict) and "values" in v])
+
+    walk(facets)
+    return best
+
+
+def workday_posted_date(posted_on: str | None, today: dt.date | None = None) -> str | None:
+    """'Posted Today' / 'Posted Yesterday' / 'Posted 3 Days Ago' / 'Posted 30+ Days Ago' -> ISO date."""
+    today = today or dt.date.today()
+    text = (posted_on or "").lower()
+    if "today" in text:
+        return today.isoformat()
+    if "yesterday" in text:
+        return (today - dt.timedelta(days=1)).isoformat()
+    m = re.search(r"(\d+)\+?\s*days?", text)
+    return (today - dt.timedelta(days=int(m.group(1)))).isoformat() if m else None
+
+
+def _fetch_workday(token: str) -> list[dict]:
+    careers, list_url, api = workday_urls(token)
+    first = _workday_post(list_url, {"appliedFacets": {}, "limit": WORKDAY_PAGE, "offset": 0, "searchText": ""})
+    groups: list[tuple[str, ...] | None] = []
+    for region in WORKDAY_REGIONS:
+        groups.append(None if region == "all" else
+                      MENA_COUNTRY_NAMES if region == "mena" else EUROPE_COUNTRY_NAMES if region == "europe" else ())
+    summaries: dict[str, dict] = {}
+    for names in groups:
+        if names == ():
+            continue
+        facets: dict = {}
+        if names is not None:
+            param, ids = workday_country_facet(first.get("facets") or [], names)
+            if not param:
+                continue  # no jobs in these countries (or no country filter on this site)
+            facets = {param: ids}
+        for page in range(WORKDAY_MAX_PAGES):
+            data = first if (not facets and page == 0) else _workday_post(
+                list_url, {"appliedFacets": facets, "limit": WORKDAY_PAGE, "offset": page * WORKDAY_PAGE,
+                           "searchText": ""})
+            postings = data.get("jobPostings") or []
+            for jp in postings:
+                if jp.get("externalPath") and is_tech_role(jp.get("title")):
+                    summaries.setdefault(jp["externalPath"], jp)
+            if len(postings) < WORKDAY_PAGE or (page + 1) * WORKDAY_PAGE >= (data.get("total") or 0):
+                break
+    jobs = []
+    today = dt.date.today()
+    for i, (path, jp) in enumerate(summaries.items()):
+        job = {"title": jp.get("title"), "externalPath": path, "locationsText": jp.get("locationsText"),
+               "postedOn": jp.get("postedOn"), "posted_date": workday_posted_date(jp.get("postedOn"), today),
+               "bulletFields": jp.get("bulletFields"), "job_url": f"{careers}{path}"}
+        if i < WORKDAY_MAX_DETAILS:
+            try:
+                info = (_get_json(api + path, headers=WORKDAY_HEADERS) or {}).get("jobPostingInfo") or {}
+            except (requests.HTTPError, ValueError):
+                info = {}
+            if info:
+                job.update({k: info.get(k) for k in ("jobDescription", "location", "additionalLocations",
+                                                      "timeType", "startDate", "jobReqId", "remoteType")})
+                job["country"] = (info.get("country") or {}).get("descriptor")
+                job["company"] = (info.get("hiringOrganization") or {}).get("name") if isinstance(
+                    info.get("hiringOrganization"), dict) else None
+                if info.get("externalUrl"):
+                    job["job_url"] = info["externalUrl"]
+        jobs.append(job)
+    return jobs
+
+
+# --------------------------------------------------------------------------- #
+# SAP SuccessFactors career sites (jobs.<company>.com, "Recruiting Marketing").
+# They publish an RSS feed of open jobs: <host>/services/rss/job/?locale=en_US&keywords=
+# Board id = the career site host. Sites that switched the feed off are marked dead.
+# --------------------------------------------------------------------------- #
+SUCCESSFACTORS_RSS = "https://{host}/services/rss/job/"
+
+
+def parse_successfactors_rss(xml_text: str) -> list[dict]:
+    root = ET.fromstring(xml_text)
+    channel = root.find("channel")
+    if root.tag != "rss" or channel is None:
+        raise ValueError(f"not an RSS feed (root <{root.tag}>)")
+    jobs = []
+    for item in channel.findall("item"):
+        title = (item.findtext("title") or "").strip()
+        # titles look like "Data Engineer (Riyadh, SA, 12345)"
+        m = re.match(r"^(.*?)\s*\(([^()]*)\)\s*$", title)
+        jobs.append({
+            "title": m.group(1).strip() if m else title,
+            "location": m.group(2).strip() if m else None,
+            "link": (item.findtext("link") or "").strip(),
+            "guid": (item.findtext("guid") or item.findtext("link") or "").strip(),
+            "description": item.findtext("description") or "",
+            "pubDate": (item.findtext("pubDate") or "").strip(),
+        })
+    return jobs
+
+
+def _fetch_successfactors(token: str) -> list[dict]:
+    text = _get_text(SUCCESSFACTORS_RSS.format(host=token), params={"locale": "en_US", "keywords": ""})
+    try:
+        jobs = parse_successfactors_rss(text)
+    except ET.ParseError as exc:
+        raise ValueError(f"successfactors '{token}' did not return an RSS feed") from exc
+    return [j for j in jobs if is_tech_role(j.get("title"))]
+
+
 ATS_FETCHERS: dict[str, Callable[[str], list[dict]]] = {
     "greenhouse": _fetch_greenhouse,
     "lever": _fetch_lever,
@@ -264,6 +462,8 @@ ATS_FETCHERS: dict[str, Callable[[str], list[dict]]] = {
     "workable": _fetch_workable,
     "recruitee": _fetch_recruitee,
     "personio": _fetch_personio,
+    "workday": _fetch_workday,
+    "successfactors": _fetch_successfactors,
 }
 
 
@@ -330,6 +530,24 @@ def extract_recruitee(tokens: list[str] | None = None, pause_seconds: float = 0.
 def extract_personio(tokens: list[str] | None = None, pause_seconds: float = 0.5,
                      meta: dict | None = None) -> ExtractResult:
     return extract_company_boards("personio", tokens, pause_seconds, meta)
+
+
+def extract_workday(tokens: list[str] | None = None, pause_seconds: float = 1.0,
+                    meta: dict[str, dict] | None = None) -> ExtractResult:
+    return extract_company_boards("workday", tokens, pause_seconds, meta)
+
+
+def extract_successfactors(tokens: list[str] | None = None, pause_seconds: float = 1.0,
+                           meta: dict[str, dict] | None = None) -> ExtractResult:
+    return extract_company_boards("successfactors", tokens, pause_seconds, meta)
+
+
+def workday_id(record: dict) -> str:
+    return f"{record.get('board_token', '')}:{record.get('jobReqId') or record['externalPath']}"
+
+
+def successfactors_id(record: dict) -> str:
+    return f"{record.get('board_token', '')}:{record.get('guid') or record['link']}"
 
 
 def recruitee_id(record: dict) -> str:
@@ -684,6 +902,9 @@ SOURCES: dict[str, SourceSpec] = {
     "workable": SourceSpec(extract_workable, workable_id, required=False, board_ats="workable"),
     "recruitee": SourceSpec(extract_recruitee, recruitee_id, required=False, board_ats="recruitee"),
     "personio": SourceSpec(extract_personio, personio_id, required=False, board_ats="personio"),
+    "workday": SourceSpec(extract_workday, workday_id, required=False, board_ats="workday"),
+    "successfactors": SourceSpec(extract_successfactors, successfactors_id, required=False,
+                                 board_ats="successfactors"),
     # key-based aggregators: optional (missing key / quota reached only warns)
     "jsearch": SourceSpec(extract_jsearch, jsearch_id, required=False),
     "jooble": SourceSpec(extract_jooble, jooble_id, required=False),

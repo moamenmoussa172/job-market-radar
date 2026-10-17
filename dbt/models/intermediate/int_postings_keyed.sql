@@ -37,6 +37,8 @@ keyed as (
             when 'workable'   then 1
             when 'recruitee'  then 1
             when 'personio'   then 1
+            when 'workday'    then 1
+            when 'successfactors' then 1
             when 'himalayas'  then 2   -- structured eligibility + salary
             when 'jobicy'     then 3
             when 'arbeitnow'  then 4

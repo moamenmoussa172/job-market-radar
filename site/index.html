@@ -26,6 +26,7 @@
     </a>
     <nav class="topnav">
       <button id="lang" class="linkbtn" type="button" lang="ar">العربية</button>
+      <a class="linkbtn" href="report.html" data-i18n="weeklyReport">Weekly report</a>
       <a class="linkbtn hide-s" href="https://github.com/moamenmoussa172/job-market-radar" target="_blank" rel="noopener" data-i18n="code">Source code</a>
     </nav>
   </header>
@@ -115,6 +116,7 @@
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-jobs" aria-controls="jobs" aria-selected="true"><span data-i18n="tabJobs">Jobs</span></button>
       <button role="tab" id="tab-insights" aria-controls="insights" aria-selected="false"><span data-i18n="tabInsights">Skills &amp; pay</span></button>
+      <button role="tab" id="tab-trends" aria-controls="trends" aria-selected="false"><span data-i18n="tabTrends">Trends</span></button>
       <button role="tab" id="tab-saved" aria-controls="saved" aria-selected="false"><span data-i18n="tabSaved">Saved</span> <span id="savedCount" class="pill" hidden></span></button>
       <button role="tab" id="tab-about" aria-controls="about" aria-selected="false"><span data-i18n="tabAbout">How it works</span></button>
     </div>
@@ -170,6 +172,40 @@
           <div id="roleBars" class="bars"></div>
         </article>
       </div>
+    </section>
+
+    <section id="trends" role="tabpanel" aria-labelledby="tab-trends" hidden>
+      <p id="trendScope" class="trendscope"></p>
+      <div class="stats" id="trendStats"></div>
+      <div class="grid">
+        <article class="panel wide">
+          <h2 data-i18n="weeklyTitle">New jobs per week</h2>
+          <p class="hint" id="weeklyHint"></p>
+          <div id="weeklyChart" class="weekchart"></div>
+          <div id="weeklyLegend" class="legend"></div>
+        </article>
+        <article class="panel">
+          <h2 data-i18n="risingTitle">Skills on the rise</h2>
+          <p class="hint" id="risingHint"></p>
+          <ol id="risingList" class="moves"></ol>
+        </article>
+        <article class="panel">
+          <h2 data-i18n="fallingTitle">Skills cooling down</h2>
+          <p class="hint" id="fallingHint"></p>
+          <ol id="fallingList" class="moves"></ol>
+        </article>
+        <article class="panel">
+          <h2 data-i18n="trackMovesTitle">Which tracks are hiring faster</h2>
+          <p class="hint" data-i18n="trackMovesHint">New jobs in the last 4 weeks compared with the 4 weeks before.</p>
+          <ol id="trackMoves" class="moves"></ol>
+        </article>
+        <article class="panel">
+          <h2 data-i18n="daysOpenTitle">How long jobs stay open</h2>
+          <p class="hint" data-i18n="daysOpenHint">Typical days from posting until the job is taken down. Short = apply early.</p>
+          <div id="daysOpen" class="bars"></div>
+        </article>
+      </div>
+      <a class="reportcta" href="report.html" id="reportLink"><span data-i18n="reportCta">Get this week's report card</span> →</a>
     </section>
 
     <section id="saved" role="tabpanel" aria-labelledby="tab-saved" hidden>

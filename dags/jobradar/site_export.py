@@ -142,7 +142,52 @@ def export_site_data(conn, generated_at: dt.datetime | None = None) -> dict[str,
     }
     dump = lambda obj: json.dumps(obj, ensure_ascii=False, separators=(",", ":")).encode("utf-8")  # noqa: E731
     log.info("site export: %s of %s active jobs listed, %s skills", len(jobs), total_active, len(skills))
-    return {"data/jobs.json": dump(jobs), "data/meta.json": dump(meta)}
+    return {"data/jobs.json": dump(jobs), "data/meta.json": dump(meta),
+            "data/trends.json": dump(export_trends(conn, generated_at))}
+
+
+TREND_WEEKS = 12
+MIN_SCOPE_JOBS = 20      # a place needs this many new jobs over the period to get its own trend
+TOP_SKILL_MOVES = 12
+
+
+def export_trends(conn, generated_at: dt.datetime | None = None) -> dict:
+    """Hiring trend, skill momentum and time-to-close, from the trend marts.
+    weekly[scope][track] = new jobs per week aligned with "weeks" (the last one may be partial)."""
+    generated_at = generated_at or dt.datetime.now(dt.timezone.utc)
+    this_week = generated_at.date() - dt.timedelta(days=generated_at.weekday())
+    weeks = [this_week - dt.timedelta(weeks=i) for i in range(TREND_WEEKS - 1, -1, -1)]
+    pos = {w: i for i, w in enumerate(weeks)}
+    weekly: dict[str, dict[str, list[int]]] = {}
+    for week, scope, track, n in _rows(conn, """
+            select week_start, scope, track, new_jobs from marts.mart_weekly_new_jobs
+            where week_start >= %(first)s""", {"first": weeks[0]}):
+        if week in pos and track:
+            weekly.setdefault(scope, {}).setdefault(track, [0] * TREND_WEEKS)[pos[week]] += int(n)
+    weekly = {sc: tr for sc, tr in weekly.items()
+              if sc == "All" or sum(sum(v) for v in tr.values()) >= MIN_SCOPE_JOBS}
+
+    skills: dict[str, dict[str, list]] = {}
+    window_days = None
+    for scope, skill, window, before, now, change, jobs_now in _rows(conn, """
+            select scope, skill, window_days, share_before_pct, share_now_pct, change_pts, jobs_now
+            from marts.mart_skill_trends"""):
+        window_days = int(window)
+        skills.setdefault(scope, []).append([skill, float(before), float(now), float(change), int(jobs_now)])
+    skill_moves = {}
+    for scope, rows in skills.items():
+        rows.sort(key=lambda r: r[3], reverse=True)
+        skill_moves[scope] = {"rising": [r for r in rows if r[3] > 0][:TOP_SKILL_MOVES],
+                              "falling": [r for r in reversed(rows) if r[3] < 0][:TOP_SKILL_MOVES],
+                              "top": sorted(rows, key=lambda r: r[2], reverse=True)[:TOP_SKILL_MOVES]}
+    days_open = [[role, track, int(med), int(p25), int(p75), int(n)] for role, track, med, p25, p75, n in _rows(conn, """
+            select role_family, track, median_days_open, p25_days_open, p75_days_open, closed_jobs
+            from marts.mart_time_to_close order by closed_jobs desc limit 25""")]
+    history_days = _rows(conn, "select coalesce(max(first_seen_date) - min(first_seen_date), 0) "
+                               "from marts.fct_job_postings")[0][0]
+    return {"generated_at": generated_at.isoformat(timespec="seconds"), "history_days": int(history_days),
+            "weeks": [w.isoformat() for w in weeks], "weekly": weekly,
+            "window_days": window_days, "skills": skill_moves, "days_open": days_open}
 
 
 def analytics_snippet(code: str | None) -> str:
@@ -156,7 +201,7 @@ def analytics_snippet(code: str | None) -> str:
 
 def site_files(site_dir: Path = SITE_DIR, analytics_code: str | None = None) -> dict[str, bytes]:
     """The static website (HTML/CSS/JS) that goes next to the data files.
-    With a GoatCounter code (env GOATCOUNTER_CODE) the counting tag is added to index.html."""
+    With a GoatCounter code (env GOATCOUNTER_CODE) the counting tag is added to every page."""
     if analytics_code is None:
         analytics_code = os.environ.get("GOATCOUNTER_CODE", "")
     files = {}
@@ -164,9 +209,10 @@ def site_files(site_dir: Path = SITE_DIR, analytics_code: str | None = None) -> 
         if path.is_file() and not path.name.startswith(".") and "data" not in path.relative_to(site_dir).parts:
             files[path.relative_to(site_dir).as_posix()] = path.read_bytes()
     tag = analytics_snippet(analytics_code)
-    if tag and "index.html" in files:
-        html = files["index.html"].decode("utf-8")
-        files["index.html"] = html.replace("</body>", f"  {tag}\n</body>", 1).encode("utf-8")
+    if tag:
+        for name in [n for n in files if n.endswith(".html")]:
+            html = files[name].decode("utf-8")
+            files[name] = html.replace("</body>", f"  {tag}\n</body>", 1).encode("utf-8")
     files[".nojekyll"] = b""  # serve files as-is (no Jekyll processing)
     return files
 

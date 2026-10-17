@@ -30,7 +30,7 @@ from airflow.providers.standard.operators.bash import BashOperator
 from airflow.sdk import dag, get_current_context, task
 
 from jobradar import boards, fx, site_export, storage, warehouse
-from jobradar.sources import SOURCES, load_board_rows
+from jobradar.sources import SOURCES, load_board_companies, load_board_rows
 
 log = logging.getLogger(__name__)
 WAREHOUSE_CONN_ID = "jobradar_wh"
@@ -63,7 +63,7 @@ def job_radar_ingest():
         """Add new CSV seeds, then validate a capped number of candidate boards."""
         conn = PostgresHook(postgres_conn_id=WAREHOUSE_CONN_ID).get_conn()
         try:
-            seeded = boards.seed(conn, load_board_rows())
+            seeded = boards.seed(conn, load_board_rows(), load_board_companies())
             counts = boards.validate_candidates(conn)
         except Exception as exc:  # noqa: BLE001 - extraction falls back to the CSV list
             log.warning("board sync failed (%s) - extract will use the CSV list", exc)

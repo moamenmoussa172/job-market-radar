@@ -75,3 +75,35 @@ models:
                 field: job_id
       - name: region
         data_tests: [not_null]
+
+  - name: mart_weekly_new_jobs
+    description: >
+      Hiring trend: new tech jobs per week by scope ('All', 'Remote' or a country) and track.
+      Backlog (jobs already open the first day a source or company board was read) is excluded.
+    columns:
+      - name: week_start
+        data_tests: [not_null]
+      - name: scope
+        data_tests: [not_null]
+      - name: new_jobs
+        data_tests: [not_null]
+
+  - name: mart_skill_trends
+    description: >
+      Skill momentum per scope: share of open jobs asking for a skill today vs window_days ago
+      (change_pts = percentage-point change). Only scopes with 30+ open jobs in both periods.
+    columns:
+      - name: scope
+        data_tests: [not_null]
+      - name: skill
+        data_tests: [not_null]
+
+  - name: mart_time_to_close
+    description: >
+      Median / quartile days a job stays open, by role, from closed jobs on sources read daily.
+      Roles with fewer than 5 closed jobs are left out.
+    columns:
+      - name: role_family
+        data_tests: [not_null]
+      - name: median_days_open
+        data_tests: [not_null]

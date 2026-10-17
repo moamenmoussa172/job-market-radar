@@ -32,6 +32,10 @@ models:
     columns: *stg_cols
   - name: stg_personio
     columns: *stg_cols
+  - name: stg_workday
+    columns: *stg_cols
+  - name: stg_successfactors
+    columns: *stg_cols
   - name: stg_adzuna
     columns: *stg_cols
   - name: stg_bundesagentur

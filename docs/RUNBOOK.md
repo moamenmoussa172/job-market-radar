@@ -57,6 +57,28 @@ go in code or git; if a key is exposed, regenerate it. Daily budgets: `JSEARCH_R
 (default 6, fits the free 200/month), `JOOBLE_REQUESTS_PER_DAY` (default 3) and
 `ADZUNA_REQUESTS_PER_DAY` (default 40). A 401/403/429 answer stops that source for the day.
 
+## Enterprise career sites (Workday, SuccessFactors)
+
+Big employers in the Gulf and multinationals with offices in Egypt mostly use Workday or SAP SuccessFactors.
+Add one as a line in `dags/jobradar/company_boards.csv` (`ats,token,company`):
+
+* **Workday**: open any of their jobs, e.g. `https://aramco.wd3.myworkdayjobs.com/en-US/Aramco_Careers/job/...`,
+  and write `workday,aramco.wd3/Aramco_Careers,Aramco` (tenant.wdN/Site; the Site part is case-sensitive).
+  Only jobs in the countries of `WORKDAY_REGIONS` (default `mena,europe`) are requested, at most
+  `WORKDAY_MAX_PAGES` x 20 per region, with full details for `WORKDAY_MAX_DETAILS` per board.
+  Workday links in other sources' apply links are also picked up automatically (status *candidate*, then
+  validated with one request).
+* **SuccessFactors**: the career site host, e.g. `successfactors,jobs.sap.com,SAP` (read from its RSS feed
+  `https://<host>/services/rss/job/`). Sites with the feed switched off are marked dead.
+
+Check a board quickly from your PC:
+
+```powershell
+docker compose exec airflow-scheduler python -c "from jobradar import sources; print(len(sources.ATS_FETCHERS['workday']('ag.wd3/Airbus')))"
+```
+
+See which boards work: `select ats, token, status, company_name, data_jobs_last_run from raw.company_boards where ats in ('workday','successfactors') order by status;`
+
 ## Company list and industries
 
 `dbt/seeds/companies.csv` (company, country, industry, optional board names) does two jobs:
@@ -86,6 +108,14 @@ One-time setup:
 Every successful daily run then replaces the `gh-pages` branch with one fresh commit (no growing history).
 Edit the site in `site/` (index.html, style.css, app.js); changes go live with the next publish.
 If the token expires, the run still succeeds and logs "website not published".
+
+### Trends and the weekly report
+
+The **Trends** tab and `report.html` read `data/trends.json` (from `mart_weekly_new_jobs`,
+`mart_skill_trends`, `mart_time_to_close`). They need about two weeks of history before they show numbers;
+until then they say so. Each Monday (or any day), open
+`https://<user>.github.io/job-market-radar/report.html`, pick a place (All, Egypt, Saudi Arabia, ...)
+and a language, **Download image** and **Copy text**, and post both. The image covers the last complete week.
 
 ### Visitor analytics (optional)
 

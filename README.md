@@ -3,7 +3,7 @@
 **Which tech jobs can I actually get from where I live, what should I learn next, and what do they pay?**
 
 **Radarak** (Arabic for "your radar") is an end-to-end data engineering project that collects thousands of tech job postings every day (data & AI,
-software, mobile (iOS, Android, Flutter), QA & testing, UI/UX design, DevOps & cloud, security, ERP, networks, product, IT) from 15 public and licensed sources, models them with dbt, and answers those questions in a
+software, mobile (iOS, Android, Flutter), QA & testing, UI/UX design, DevOps & cloud, security, ERP, networks, product, IT) from 17 public and licensed sources, models them with dbt, and answers those questions in a
 self-service dashboard, from the point of view of *one specific person* (their country, role and skills).
 
 **Live site: https://moamenmoussa172.github.io/job-market-radar/** (Arabic + English, updated daily)
@@ -37,7 +37,11 @@ the next skill to learn for *their* skills, pay by role, where the jobs are and 
 Visitors can **upload their CV** (PDF or Word) or paste its text: it is read in the browser (pdf.js and mammoth,
 self-hosted) with the same skill rules the pipeline uses on job descriptions, and never leaves the device.
 They get their skills, years of experience, likely role, best-matching jobs and "skills worth adding to your CV".
-All filtering happens in the browser on two JSON files (`data/jobs.json`, `data/meta.json`) exported
+A **Trends** tab shows how hiring changes week by week for the visitor's country (new jobs per week by
+track, which tracks are hiring faster, skills on the rise and cooling down, how long jobs stay open), and
+the **weekly report** page (`report.html`) turns last week into a shareable 1080×1350 image plus a ready
+LinkedIn post, in Arabic or English, drawn in the browser.
+All filtering happens in the browser on JSON files (`data/jobs.json`, `data/meta.json`, `data/trends.json`) exported
 from the marts; links are shareable (filters live in the URL). Listings from sources that ask not to be
 re-posted (Remotive, Himalayas) count in the statistics but are not listed; Adzuna/Jooble/JSearch/Jobicy
 jobs carry their credit.
@@ -45,7 +49,7 @@ jobs carry their credit.
 ### The dashboard
 
 Nine dropdown filters (Industry, Track, Role, Seniority, Work mode, Your country, Must-have skill, Requirements,
-My skills) drive six tabs, and clicking a bar (a track, role, skill, country, industry, ...) sets that filter:
+My skills) drive seven tabs, and clicking a bar (a track, role, skill, country, industry, ...) sets that filter:
 
 | Tab | What it shows |
 |---|---|
@@ -55,6 +59,7 @@ My skills) drive six tabs, and clicking a bar (a track, role, skill, country, in
 | 4. Where to work | Remote vs hybrid vs onsite; remote jobs by who may apply; top countries; country comparison (jobs, hybrid share, junior jobs, median salary); original job boards |
 | 5. Salary | 25th / median / 75th percentile; salary by role, seniority and country; best-paid skills |
 | 6. Find jobs | Up to 500 jobs you can apply to, best skill match first, with salary and skills to add; click a title to open the posting |
+| 7. Trends | New tech jobs per week by track (for your country), skill momentum, and how long jobs stay open by role |
 
 ## Architecture
 
@@ -196,6 +201,7 @@ More detail: [docs/design-decisions.md](docs/design-decisions.md).
 | Source | What it adds | Usage notes |
 |---|---|---|
 | Greenhouse, Lever, Ashby, SmartRecruiters, Workable, Recruitee, Personio public job boards | Company career pages: full descriptions; Lever/Ashby/SmartRecruiters/Recruitee state work mode and often salary | **Self-expanding registry**: seeds in `dags/jobradar/company_boards.csv`; ~230 companies in Egypt, the Gulf and Europe in `dbt/seeds/companies.csv` whose hiring platform is detected automatically; plus boards discovered from other sources' apply links |
+| Workday and SAP SuccessFactors career sites | Large corporates and multinationals (banks, telcos, energy, pharma, tech) with offices in Egypt and the Gulf, which don't use the startup job boards above; Workday through its careers-site JSON API (only jobs in MENA and Europe are requested), SuccessFactors through its RSS job feed | Seeds with display names in `company_boards.csv`; more Workday boards are discovered automatically from apply links in other sources (`*.myworkdayjobs.com`) |
 | Adzuna | UK and EU job search (10 countries, 12 roles), short snippets; only real (not Adzuna-predicted) salaries are kept | API id + key; 80 rotating searches/day. Jobs by Adzuna |
 | Bundesagentur für Arbeit | Germany's federal job agency (official public API): IT jobs across Germany; no descriptions, so no skills | Public key; 18 searches × up to 2 pages a day |
 | Himalayas | Remote jobs with country and timezone restrictions | Links back to Himalayas kept; no re-posting |
@@ -211,6 +217,13 @@ No site is scraped: boards without a public API (LinkedIn, Indeed, Wuzzuf, Naukr
 only through licensed aggregator APIs (JSearch, Jooble), which index part of their listings. Those two have small quotas, so each day runs the
 next slice of a country x role search list; their jobs count as active for 10 days after last seen,
 and they are excluded from day-to-day trend charts so the rotation doesn't distort trends.
+
+**Trends** come from three marts. `mart_weekly_new_jobs` counts jobs first seen each week, by country and
+track, *excluding backlog*: jobs already open on the first day a source (or, for company boards, a company)
+was read, so adding a new source doesn't look like a hiring boom. `mart_skill_trends` compares the share of
+open jobs asking for each skill today with N days ago (N = half the history, 7–28 days), reconstructing
+"open on day d" from first/last-seen dates. `mart_time_to_close` measures how long closed jobs stayed listed,
+only from sources read every day and only when the start date is known.
 Job content stays the property of the original boards; this project publishes aggregates and links.
 
 ## Quality and testing
@@ -250,7 +263,7 @@ dags/
   job_radar_ingest.py        # the DAG: setup → extract[source] → load → check → dbt_build (+ fx_rates)
   jobradar/                  # sources, title filter, S3 raw layer, warehouse loader, ECB FX
 dbt/
-  models/staging/            # stg_<source>: one shape for all 14 sources
+  models/staging/            # stg_<source>: one shape for all 17 sources
   models/intermediate/       # classify, geo, job key, dedup, salary
   models/marts/              # fct_job_postings, bridges, dim_skills
   models/reporting/          # dashboard-ready aggregates

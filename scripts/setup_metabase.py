@@ -333,6 +333,7 @@ TABS = [
     ("where", "4. Where to work"),
     ("salary", "5. Salary"),
     ("jobs", "6. Find jobs"),
+    ("trends", "7. Trends"),
 ]
 MENA = "f.primary_region = 'MENA'"
 
@@ -347,6 +348,7 @@ CLICKS = {  # card key -> {result column: dashboard filter it sets when clicked}
     "salary_by_skill": {"skill": "skill"},
     "onsite_countries": {"country": "country"}, "me_by_country": {"country": "country"},
     "me_roles": {"role": "role"},
+    "trend_weekly": {"track": "track"}, "trend_skills": {"skill": "skill"}, "trend_close": {"role": "role"},
 }
 
 TEXTS = [
@@ -356,7 +358,7 @@ TEXTS = [
      "you can apply to (local office/hybrid jobs plus remote jobs open to your region). Every card follows the "
      "filters, and you can **click any bar** to filter by it. Pick a **Must-have skill** to see only jobs that "
      "ask for it. More detail in the tabs: **Middle East**, **Skills to learn**, **Where to work**, **Salary**, "
-     "**Find jobs**. Data: active tech job postings from 14 sources, refreshed daily."),
+     "**Find jobs**, **Trends**. Data: active tech job postings from 17 sources, refreshed daily."),
     ("mena", 0, 2,
      "**Middle East.** Tech jobs in Egypt, the Gulf, Jordan and North Africa. *Nationals only* = the posting is "
      "limited to Saudi / Emirati / Qatari / ... nationals; *Arabic required* = Arabic is a required language; "
@@ -373,6 +375,11 @@ TEXTS = [
      "**Pay.** Only jobs that publish a salary are counted, annualized and converted to USD at the ECB rate "
      "of the day the job was first seen. *Middle 50%* = from the 25th to the 75th percentile. "
      "Groups with fewer than 3 salaries are hidden."),
+    ("trends", 0, 2,
+     "**Trends.** How hiring changes over time, for **Your country** (office and hybrid jobs there) or for all "
+     "places when no country is picked. *New jobs* are jobs seen for the first time that week; jobs that were "
+     "already open the first day a source or company was read don't count as new. *Skill momentum* compares the "
+     "share of open jobs asking for a skill today with a few weeks ago. The current week is still in progress."),
     ("jobs", 0, 2,
      "**Jobs to apply to**, best skill match first (set **My skills** on any tab). "
      "Click a **job title** to open the posting. "
@@ -705,6 +712,33 @@ group by 1 having count(*) >= 3 order by median_usd desc"""),
 from {FACT} join marts.bridge_job_skills s on s.job_id = f.job_id
 where {where()} and f.has_comparable_salary
 group by 1 having count(*) >= 5 order by median_usd desc limit 15"""),
+
+    # =========================== 7. Trends (trend marts) ===========================
+    dict(key="trend_weekly", tab="trends", name="New tech jobs per week, by track", display="bar",
+         pos=(2, 0, 24, 9),
+         viz={"graph.dimensions": ["week_start", "track"], "graph.metrics": ["new_jobs"],
+              "stackable.stack_type": "stacked", "graph.x_axis.title_text": ""},
+         sql="""select week_start, track, new_jobs from marts.mart_weekly_new_jobs
+where scope = coalesce([[{{country}}, ]] 'All')
+  and week_start >= date_trunc('week', current_date)::date - 7 * 11
+  [[and track = {{track}}]]
+order by 1, 2"""),
+    dict(key="trend_skills", tab="trends",
+         name="Skill momentum: change in share of open jobs (percentage points)", display="row",
+         pos=(11, 0, 12, 10),
+         viz={"graph.dimensions": ["skill"], "graph.metrics": ["change_pts"], "graph.show_values": True},
+         sql="""select skill, change_pts, share_before_pct, share_now_pct, window_days
+from marts.mart_skill_trends
+where scope = coalesce([[{{country}}, ]] 'All')
+  [[and skill = {{skill}}]]
+order by abs(change_pts) desc limit 20"""),
+    dict(key="trend_close", tab="trends", name="How long jobs stay open (median days, closed jobs)",
+         display="row", pos=(11, 12, 12, 10),
+         viz={"graph.dimensions": ["role_family"], "graph.metrics": ["median_days_open"], "graph.show_values": True},
+         sql="""select role_family, median_days_open, p25_days_open, p75_days_open, closed_jobs
+from marts.mart_time_to_close
+where true [[and track = {{track}}]] [[and role_family = {{role}}]]
+order by closed_jobs desc limit 15"""),
 
     # =========================== 5. Find jobs ===========================
     dict(key="job_list", tab="jobs", name="Jobs you can apply to (best skill match first)", display="table",

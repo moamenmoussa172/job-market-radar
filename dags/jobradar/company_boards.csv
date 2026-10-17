@@ -1,11 +1,16 @@
-# Company career boards to collect from. ats = greenhouse | lever | ashby | smartrecruiters | workable.
+# Company career boards to collect from. ats = greenhouse | lever | ashby | smartrecruiters | workable
+#   | recruitee | personio | workday | successfactors.
 # token = the company's name in its job-board URL:
 #   boards.greenhouse.io/<token> | jobs.lever.co/<token> | jobs.ashbyhq.com/<token>
 #   jobs.smartrecruiters.com/<Token> (case-sensitive) | apply.workable.com/<token>
+#   workday: <tenant>.<wdN>/<Site> from https://<tenant>.<wdN>.myworkdayjobs.com/en-US/<Site> (Site is case-sensitive);
+#            only jobs in MENA + Europe are read (WORKDAY_REGIONS). A full careers URL works too.
+#   successfactors: the career site host, e.g. jobs.sap.com (read through its RSS job feed)
+# company = optional display name (needed for Workday/SuccessFactors, whose ids are not company names).
 # New rows are validated automatically (one request) before use; wrong tokens are
 # marked dead in raw.company_boards. The pipeline also discovers boards on its own
 # from apply links, so this list only needs to be a starting point.
-ats,token
+ats,token,company
 greenhouse,airbnb
 greenhouse,cloudflare
 greenhouse,contentful
@@ -85,3 +90,35 @@ smartrecruiters,DeliveryHero
 smartrecruiters,Talabat
 smartrecruiters,Ubisoft2
 smartrecruiters,IKEA
+# Workday: multinationals with offices in Egypt and the Gulf (+ Europe)
+workday,nvidia.wd5/NVIDIAExternalCareerSite,NVIDIA
+workday,salesforce.wd12/External_Career_Site,Salesforce
+workday,mastercard.wd1/CorporateCareers,Mastercard
+workday,intel.wd1/External,Intel
+workday,dell.wd1/External,Dell Technologies
+workday,hp.wd5/ExternalCareerSite,HP
+workday,thomsonreuters.wd5/External_Career_Site,Thomson Reuters
+workday,adobe.wd5/external_experienced,Adobe
+workday,paypal.wd1/jobs,PayPal
+workday,crowdstrike.wd5/crowdstrikecareers,CrowdStrike
+workday,redhat.wd5/jobs,Red Hat
+workday,proofpoint.wd5/proofpointcareers,Proofpoint
+workday,synechron.wd1/SynechronCareers,Synechron
+workday,hitachi.wd1/hitachi,Hitachi
+workday,workday.wd5/Workday,Workday
+workday,statestreet.wd1/Global,State Street
+workday,kbr.wd5/KBR_Careers,KBR
+workday,parsons.wd5/Search,Parsons
+workday,ag.wd3/Airbus,Airbus
+workday,kone.wd3/Careers,KONE
+workday,bakerhughes.wd5/BakerHughes,Baker Hughes
+workday,gsk.wd5/GSKCareers,GSK
+workday,sanofi.wd3/SanofiCareers,Sanofi
+workday,novartis.wd3/Novartis_Careers,Novartis
+workday,astrazeneca.wd3/Careers,AstraZeneca
+workday,pg.wd5/1000,Procter & Gamble
+workday,kantar.wd3/KANTAR,Kantar
+workday,motorolasolutions.wd5/Careers,Motorola Solutions
+workday,georgetown.wd1/Georgetown_Qatar_Careers,Georgetown University in Qatar
+# SuccessFactors career sites (RSS job feed)
+successfactors,jobs.sap.com,SAP

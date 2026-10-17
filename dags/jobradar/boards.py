@@ -1,5 +1,5 @@
 """Self-expanding registry of company career boards (Greenhouse, Lever, Ashby,
-SmartRecruiters, Workable, Recruitee, Personio).
+SmartRecruiters, Workable, Recruitee, Personio, Workday, SuccessFactors).
 
 Lifecycle of a board in raw.company_boards:
 
@@ -76,6 +76,8 @@ TOKEN_PATTERNS = {
     "workable": r"apply\.workable\.com/(?!j/)([A-Za-z0-9_-]+)",  # /j/<code> is a job, not an account
     "recruitee": r"([A-Za-z0-9-]+)\.recruitee\.com",
     "personio": r"([A-Za-z0-9-]+)\.jobs\.personio\.(?:de|com)",
+    # whole "<tenant>.<wdN>.myworkdayjobs.com/[en-US/]<site>"; normalised to "<tenant>.<wdN>/<site>"
+    "workday": r"([a-z0-9-]+\.wd[0-9]+\.myworkdayjobs\.com/(?:[a-z]{2}-[A-Z]{2}/)?[A-Za-z0-9_-]+)",
 }
 _NOT_TOKENS = {"embed", "api", "v1", "jobs", "job", "j", "boards", "careers", "search", "apply", "oneclick-ui",
                "www", "app", "help", "support", "docs", "blog", ""}
@@ -105,8 +107,9 @@ def ensure_schema(conn) -> None:
     conn.commit()
 
 
-def seed(conn, rows: list[tuple[str, str]]) -> int:
-    """Add CSV rows that aren't in the registry yet, as candidates (validated before use)."""
+def seed(conn, rows: list[tuple[str, str]], companies: dict[tuple[str, str], str] | None = None) -> int:
+    """Add CSV rows that aren't in the registry yet, as candidates (validated before use).
+    companies: display names from the CSV, attached to boards that don't have one yet."""
     with conn.cursor() as cur:
         cur.executemany(
             "INSERT INTO raw.company_boards (ats, token, origin) VALUES (%s, %s, 'seed') "
@@ -114,6 +117,12 @@ def seed(conn, rows: list[tuple[str, str]]) -> int:
             rows,
         )
         added = cur.rowcount
+        if companies:
+            cur.executemany(
+                "UPDATE raw.company_boards SET company_name = %s "
+                "WHERE ats = %s AND token = %s AND company_name IS NULL",
+                [(name, ats, token) for (ats, token), name in companies.items()],
+            )
     conn.commit()
     return max(added, 0)
 
@@ -152,6 +161,11 @@ def harvest(conn, days: int = HARVEST_DAYS) -> int:
 def validate_board(ats: str, token: str) -> tuple[str, int | None]:
     """-> ('active', data_jobs) | ('dead', None) on 404 | ('retry', None) on other errors."""
     try:
+        if ats == "workday":  # one list request is enough to know the board exists (a full fetch is ~100)
+            _, list_url, _ = sources.workday_urls(token)
+            data = sources._workday_post(list_url, {"appliedFacets": {}, "limit": sources.WORKDAY_PAGE,
+                                                    "offset": 0, "searchText": ""})
+            return "active", int(data.get("total") or 0)
         jobs = sources.ATS_FETCHERS[ats](token)
     except requests.HTTPError as exc:
         code = exc.response.status_code if exc.response is not None else None
@@ -257,7 +271,7 @@ def slug_candidates(company: str, slugs: str = "") -> list[str]:
 def probe_tokens(company: str, slugs: str = "") -> list[tuple[str, str]]:
     pairs = []
     for slug in slug_candidates(company, slugs):
-        for ats in sources.BOARD_ATS:
+        for ats in sources.PROBE_ATS:
             if ats in sources.CASE_SENSITIVE_ATS and slug.islower():
                 # SmartRecruiters ids are case-sensitive and usually CamelCase ("DeliveryHero")
                 words = re.sub(r"[^A-Za-z0-9]+", " ", company).split()

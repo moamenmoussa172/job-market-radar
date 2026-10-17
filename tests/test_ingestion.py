@@ -123,13 +123,13 @@ def test_himalayas_paginates_filters_and_dedupes(monkeypatch):
 def test_all_sources_registered():
     assert set(sources.SOURCES) == {"remotive", "jobicy", "himalayas", "arbeitnow", "greenhouse", "lever",
                                     "ashby", "jsearch", "jooble", "smartrecruiters", "workable",
-                                    "recruitee", "personio", "adzuna", "bundesagentur"}
+                                    "recruitee", "personio", "adzuna", "bundesagentur", "workday", "successfactors"}
 
 
 def test_optional_sources():
     assert {s for s, spec in sources.SOURCES.items() if not spec.required} == {
         "remotive", "jsearch", "jooble", "smartrecruiters", "workable", "recruitee", "personio", "adzuna",
-        "bundesagentur"}
+        "bundesagentur", "workday", "successfactors"}
 
 
 def test_daily_slice_rotates_through_every_pair():
@@ -431,9 +431,9 @@ def test_probe_tokens_cover_every_platform():
     pairs = boards.probe_tokens("Delivery Hero")
     assert ("greenhouse", "deliveryhero") in pairs and ("lever", "delivery-hero") in pairs
     assert ("smartrecruiters", "DeliveryHero") in pairs
-    assert {a for a, _ in pairs} == set(sources.BOARD_ATS)
+    assert {a for a, _ in pairs} == set(sources.PROBE_ATS)
     assert boards.probe_tokens("Bosch", "BoschGroup") == [(a, "BoschGroup" if a == "smartrecruiters" else "boschgroup")
-                                                          for a in sources.BOARD_ATS]
+                                                          for a in sources.PROBE_ATS]
 
 
 def test_probe_checks_the_country(monkeypatch):
@@ -475,3 +475,121 @@ def test_bundesagentur_pages_filters_and_sends_public_key(monkeypatch):
     assert calls[0][2] == {"X-API-Key": "jobboerse-jobsuche"}
     ids = {sources.bundesagentur_id(r) for r in res.records}
     assert "X1" not in ids and "R200" in ids and len(ids) == 100
+
+
+# --------------------------------------------------------------------------- Workday / SuccessFactors
+WORKDAY_FACETS = [
+    {"facetParameter": "jobFamilyGroup", "descriptor": "Job Category",
+     "values": [{"descriptor": "Engineering", "id": "fam1", "count": 50}]},
+    {"facetParameter": "locationMainGroup", "descriptor": "Locations", "values": [
+        {"facetParameter": "locationCountry", "descriptor": "Country", "values": [
+            {"descriptor": "Saudi Arabia", "id": "sa-id", "count": 12},
+            {"descriptor": "Egypt", "id": "eg-id", "count": 4},
+            {"descriptor": "Germany", "id": "de-id", "count": 30},
+            {"descriptor": "United States of America", "id": "us-id", "count": 400}]},
+        {"facetParameter": "locations", "descriptor": "Location", "values": [
+            {"descriptor": "Riyadh", "id": "riy", "count": 10}]}]},
+]
+
+
+def test_workday_tokens_from_urls():
+    norm = sources.normalize_board_token
+    assert norm("workday", "https://kbr.wd5.myworkdayjobs.com/en-US/KBR_Careers/job/Riyadh/X_R1") == "kbr.wd5/KBR_Careers"
+    assert norm("workday", "AG.wd3/Airbus") == "ag.wd3/Airbus"
+    assert norm("workday", "x.wd1.myworkdayjobs.com/wday/cxs/x/y/jobs") == ""   # API path, not a site
+    assert norm("successfactors", "https://jobs.sap.com/search/?q=data") == "jobs.sap.com"
+    assert sources.workday_urls("ag.wd3/Airbus") == (
+        "https://ag.wd3.myworkdayjobs.com/en-US/Airbus",
+        "https://ag.wd3.myworkdayjobs.com/wday/cxs/ag/Airbus/jobs",
+        "https://ag.wd3.myworkdayjobs.com/wday/cxs/ag/Airbus")
+
+
+def test_workday_country_facet_finds_nested_country_filter():
+    assert sources.workday_country_facet(WORKDAY_FACETS, sources.MENA_COUNTRY_NAMES) == (
+        "locationCountry", ["sa-id", "eg-id"])
+    assert sources.workday_country_facet(WORKDAY_FACETS, ("France",)) == (None, [])
+
+
+def test_workday_posted_dates():
+    import datetime as dt
+    d = dt.date(2026, 10, 17)
+    assert sources.workday_posted_date("Posted Today", d) == "2026-10-17"
+    assert sources.workday_posted_date("Posted Yesterday", d) == "2026-10-16"
+    assert sources.workday_posted_date("Posted 30+ Days Ago", d) == "2026-09-17"
+    assert sources.workday_posted_date(None, d) is None
+
+
+def test_workday_fetch_filters_by_country_and_title(monkeypatch):
+    monkeypatch.setattr(sources, "WORKDAY_REGIONS", ["mena", "europe"])
+    posts = []
+
+    def fake_post(url, body):
+        posts.append(body)
+        assert url == "https://ag.wd3.myworkdayjobs.com/wday/cxs/ag/Airbus/jobs" and body["limit"] == 20
+        if not body["appliedFacets"]:
+            return {"total": 500, "facets": WORKDAY_FACETS, "jobPostings": []}
+        if body["appliedFacets"] == {"locationCountry": ["sa-id", "eg-id"]}:
+            return {"total": 2, "jobPostings": [
+                {"title": "Data Engineer", "externalPath": "/job/Riyadh/Data-Engineer_R1",
+                 "locationsText": "Riyadh", "postedOn": "Posted 2 Days Ago"},
+                {"title": "Sales Manager", "externalPath": "/job/Riyadh/Sales_R2", "locationsText": "Riyadh"}]}
+        return {"total": 1, "jobPostings": [
+            {"title": "iOS Developer", "externalPath": "/job/Berlin/iOS_R3", "locationsText": "Berlin"}]}
+
+    def fake_get(url, params=None, headers=None):
+        assert headers["Accept"] == "application/json"
+        if url.endswith("Data-Engineer_R1"):
+            return {"jobPostingInfo": {"jobDescription": "<p>Spark and SQL</p>", "location": "Riyadh",
+                                       "country": {"descriptor": "Saudi Arabia"}, "startDate": "2026-10-15",
+                                       "jobReqId": "R1", "timeType": "Full time",
+                                       "externalUrl": "https://ag.wd3.myworkdayjobs.com/en-US/Airbus/job/R1"}}
+        return {"jobPostingInfo": {"jobReqId": "R3"}}
+
+    monkeypatch.setattr(sources, "_workday_post", fake_post)
+    monkeypatch.setattr(sources, "_get_json", fake_get)
+    res = sources.extract_workday(tokens=["ag.wd3/Airbus"], pause_seconds=0,
+                                  meta={"ag.wd3/Airbus": {"company": "Airbus"}})
+    assert [r["title"] for r in res.records] == ["Data Engineer", "iOS Developer"]   # sales filtered out
+    de = res.records[0]
+    assert de["country"] == "Saudi Arabia" and de["jobDescription"].startswith("<p>Spark")
+    assert de["job_url"].endswith("/job/R1") and de["board_company"] == "Airbus"
+    assert sources.workday_id(de) == "ag.wd3/Airbus:R1"
+    assert {"locationCountry": ["de-id"]} in [p["appliedFacets"] for p in posts]   # Europe pass
+
+
+SF_RSS = """<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>Jobs</title>
+<item><title>Senior Data Engineer (Riyadh, SA, 11564)</title><link>https://jobs.sap.com/job/Riyadh-Senior-Data-Engineer/1/</link>
+<guid>https://jobs.sap.com/job/1/</guid><description>&lt;p&gt;Spark, Python&lt;/p&gt;</description>
+<pubDate>Fri, 16 Oct 2026 09:30:00 GMT</pubDate></item>
+<item><title>Account Executive (Dubai, AE)</title><link>https://jobs.sap.com/job/2/</link></item>
+</channel></rss>"""
+
+
+def test_successfactors_rss(monkeypatch):
+    jobs = sources.parse_successfactors_rss(SF_RSS)
+    assert jobs[0]["title"] == "Senior Data Engineer" and jobs[0]["location"] == "Riyadh, SA, 11564"
+    monkeypatch.setattr(sources, "_get_text", lambda url, params=None: SF_RSS)
+    res = sources.extract_successfactors(tokens=["jobs.sap.com"], pause_seconds=0)
+    assert [sources.successfactors_id(r) for r in res.records] == ["jobs.sap.com:https://jobs.sap.com/job/1/"]
+    monkeypatch.setattr(sources, "_get_text", lambda url, params=None: "<html>no feed</html>")
+    import pytest
+    with pytest.raises(RuntimeError):  # every board failed -> the source reports it
+        sources.extract_successfactors(tokens=["jobs.x.com"], pause_seconds=0)
+
+
+def test_workday_links_are_harvested_and_csv_names_load():
+    from jobradar import boards
+    text = "Apply: https://aramco.wd3.myworkdayjobs.com/en-US/Aramco_Careers/job/Dhahran/Data_R1 or " \
+           "https://x.wd1.myworkdayjobs.com/wday/cxs/x/y/jobs"
+    assert boards.tokens_in_text(text) == {("workday", "aramco.wd3/Aramco_Careers")}
+    names = sources.load_board_companies()
+    assert names[("workday", "ag.wd3/Airbus")] == "Airbus" and names[("successfactors", "jobs.sap.com")] == "SAP"
+    assert not any(a in ("workday", "successfactors") for a, _ in boards.probe_tokens("Airbus"))
+
+
+def test_workday_validation_is_one_request(monkeypatch):
+    from jobradar import boards
+    calls = []
+    monkeypatch.setattr(sources, "_workday_post", lambda url, body: calls.append(url) or {"total": 37, "jobPostings": []})
+    assert boards.validate_board("workday", "ag.wd3/Airbus") == ("active", 37)
+    assert len(calls) == 1
