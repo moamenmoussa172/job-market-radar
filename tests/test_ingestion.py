@@ -82,7 +82,7 @@ def test_greenhouse_all_boards_failing_raises(monkeypatch):
 
     monkeypatch.setattr(sources, "_get_json", fake_get)
     with pytest.raises(RuntimeError):
-        sources.extract_greenhouse(tokens=["x"], pause_seconds=0)
+        sources.extract_greenhouse(tokens=["x", "y", "z"], pause_seconds=0)
 
 
 def test_jobicy_keeps_industry_feed_and_dedupes(monkeypatch):
@@ -568,13 +568,56 @@ SF_RSS = """<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><t
 def test_successfactors_rss(monkeypatch):
     jobs = sources.parse_successfactors_rss(SF_RSS)
     assert jobs[0]["title"] == "Senior Data Engineer" and jobs[0]["location"] == "Riyadh, SA, 11564"
-    monkeypatch.setattr(sources, "_get_text", lambda url, params=None: SF_RSS)
-    res = sources.extract_successfactors(tokens=["jobs.sap.com"], pause_seconds=0)
-    assert [sources.successfactors_id(r) for r in res.records] == ["jobs.sap.com:https://jobs.sap.com/job/1/"]
-    monkeypatch.setattr(sources, "_get_text", lambda url, params=None: "<html>no feed</html>")
+    calls = []
+
+    def feed(host, params):
+        calls.append(params)
+        return SF_RSS
+    monkeypatch.setattr(sources, "_successfactors_feed", feed)
+    res = sources.extract_successfactors(tokens=["careers.sap.com"], pause_seconds=0)
+    assert [sources.successfactors_id(r) for r in res.records] == ["careers.sap.com:https://jobs.sap.com/job/1/"]
+    assert calls == [{"rows": sources.SUCCESSFACTORS_ROWS}]          # all jobs, not the default 20
+    # an error answer: retried without parameters, then the board is reported - but one broken
+    # board must not stop the daily run
+    monkeypatch.setattr(sources, "_successfactors_feed", lambda host, params: "<xml>Error: bad query</xml>")
+    res = sources.extract_successfactors(tokens=["careers.x.com"], pause_seconds=0)
+    assert res.records == [] and "feed error" in res.warnings[0]
+
+
+def test_successfactors_titles_with_parentheses():
+    split = sources.split_title_location
+    assert split("Data Engineer (m/f/d) (Saône (Haute), FR)") == ("Data Engineer (m/f/d)", "Saône (Haute), FR")
+    assert split("Cloud Architect (Southbank (Melbourne))") == ("Cloud Architect", "Southbank (Melbourne)")
+    assert split("QA Engineer") == ("QA Engineer", None)
+
+
+def test_all_boards_failing_raises_only_with_several_boards(monkeypatch):
     import pytest
-    with pytest.raises(RuntimeError):  # every board failed -> the source reports it
-        sources.extract_successfactors(tokens=["jobs.x.com"], pause_seconds=0)
+    import requests
+
+    def boom(token):
+        raise requests.ConnectionError("down")
+    monkeypatch.setitem(sources.ATS_FETCHERS, "greenhouse", boom)
+    assert sources.extract_company_boards("greenhouse", ["a", "b"], 0).records == []
+    with pytest.raises(RuntimeError):
+        sources.extract_company_boards("greenhouse", ["a", "b", "c"], 0)
+
+
+def test_workday_without_country_filter_matches_location_text(monkeypatch):
+    monkeypatch.setattr(sources, "WORKDAY_REGIONS", ["mena", "europe"])
+    pages = {0: [{"title": "Data Engineer", "externalPath": "/job/1", "locationsText": "Gdansk, Poland"},
+                 {"title": "Data Engineer", "externalPath": "/job/2", "locationsText": "Austin, TX"},
+                 {"title": "SRE", "externalPath": "/job/3", "locationsText": "Dubai - UAE"},
+                 {"title": "Accountant", "externalPath": "/job/4", "locationsText": "Cairo, Egypt"}]}
+
+    def fake_post(url, body):
+        assert body["appliedFacets"] == {}
+        return {"total": 4, "facets": [{"facetParameter": "jobFamily", "values": [{"id": "x", "descriptor": "IT"}]}],
+                "jobPostings": pages.get(body["offset"] // 20, [])}
+    monkeypatch.setattr(sources, "_workday_post", fake_post)
+    monkeypatch.setattr(sources, "_get_json", lambda *a, **k: {"jobPostingInfo": {}})
+    jobs = sources._fetch_workday("intel.wd1/External")
+    assert sorted(j["externalPath"] for j in jobs) == ["/job/1", "/job/3"]
 
 
 def test_workday_links_are_harvested_and_csv_names_load():
@@ -583,7 +626,7 @@ def test_workday_links_are_harvested_and_csv_names_load():
            "https://x.wd1.myworkdayjobs.com/wday/cxs/x/y/jobs"
     assert boards.tokens_in_text(text) == {("workday", "aramco.wd3/Aramco_Careers")}
     names = sources.load_board_companies()
-    assert names[("workday", "ag.wd3/Airbus")] == "Airbus" and names[("successfactors", "jobs.sap.com")] == "SAP"
+    assert names[("workday", "ag.wd3/Airbus")] == "Airbus" and names[("successfactors", "careers.sap.com")] == "SAP"
     assert not any(a in ("workday", "successfactors") for a, _ in boards.probe_tokens("Airbus"))
 
 

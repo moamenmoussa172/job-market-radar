@@ -22,7 +22,7 @@
       title: "This week's tech hiring report", back: "← Find jobs", place: "Place", post: "Post text",
       hint: "A shareable summary of the past week. Pick a place and language, then download the image and copy the post.",
       download: "Download image", copy: "Copy text", copied: "Copied", all: "All places", remote: "Remote jobs",
-      kicker: "WEEKLY TECH HIRING REPORT", newJobs: "new tech jobs", vsPrev: "vs the week before",
+      kicker: "Weekly tech hiring report", newJobs: "new tech jobs", vsPrev: "vs the week before",
       byTrack: "Hiring by track", rising: "Skills on the rise", topSkills: "Most asked-for skills",
       companies: "Companies hiring this week", pts: (v) => `${v > 0 ? "+" : ""}${v} pts`,
       footer1: "Find the jobs you can actually apply to", footer2: "Free · Arabic & English · updated every morning",
@@ -104,9 +104,9 @@
   }
   function logo(x, y, s) {
     const cx = fx(x + s / 2), cy = y + s / 2, k = s / 32;
-    ctx.fillStyle = "#5B3FE0"; ctx.beginPath(); ctx.arc(cx, cy, 15 * k, 0, 7); ctx.fill();
+    ctx.fillStyle = "#6A4BFF"; ctx.beginPath(); ctx.arc(cx, cy, 15 * k, 0, 7); ctx.fill();
     ctx.strokeStyle = "rgba(255,255,255,.55)"; ctx.lineWidth = 1.8 * k; ctx.beginPath(); ctx.arc(cx, cy, 8.5 * k, 0, 7); ctx.stroke();
-    [[6.5, -6.5, 3, "#FFB020"], [-6.5, 3.5, 2.5, "#FF5E3A"], [3.5, 6.5, 2.1, "#10B981"]].forEach(([dx, dy, r, c]) => {
+    [[6.5, -6.5, 3, "#FFB020"], [-6.5, 3.5, 2.5, "#FF5C39"], [3.5, 6.5, 2.1, "#10B981"]].forEach(([dx, dy, r, c]) => {
       ctx.fillStyle = c; ctx.beginPath(); ctx.arc(cx + dx * k, cy + dy * k, r * k, 0, 7); ctx.fill();
     });
   }
@@ -127,7 +127,7 @@
     // header
     logo(PAD, 64, 60);
     text(rtl() ? "رادارك" : "Radarak", PAD + 76, 108, display(44), "#19163A");
-    text(t("kicker"), PAD, 190, body(22, 700), "#5B3FE0");
+    text(t("kicker"), PAD, 190, body(22, 700), "#6A4BFF");
     text(`${d.place} · ${d.range}`, PAD, 236, display(40, 700), "#19163A", "start", W - 2 * PAD);
 
     if (!d.enough) {
@@ -139,7 +139,7 @@
     ctx.font = `800 150px "Bricolage Grotesque", sans-serif`; ctx.direction = rtl() ? "rtl" : "ltr"; ctx.textAlign = "start";
     const numW = ctx.measureText(d.n.toLocaleString("en-US")).width;
     g = ctx.createLinearGradient(fx(PAD, numW), 0, fx(PAD, numW) + numW, 0);
-    g.addColorStop(0, rtl() ? "#FF5E3A" : "#5B3FE0"); g.addColorStop(0.5, "#B03FE0"); g.addColorStop(1, rtl() ? "#5B3FE0" : "#FF5E3A");
+    g.addColorStop(0, rtl() ? "#FF5C39" : "#6A4BFF"); g.addColorStop(0.5, "#B03FE0"); g.addColorStop(1, rtl() ? "#6A4BFF" : "#FF5C39");
     ctx.fillStyle = g; ctx.fillText(d.n.toLocaleString("en-US"), fx(PAD), 400);
     ctx.restore();
     text(t("newJobs"), PAD + numW + 22, 360, body(36, 600), "#19163A");
@@ -159,7 +159,7 @@
       text(name, PAD, y, body(25, 600), "#19163A", "start", 330);
       const bw = Math.max(8, (W - 2 * PAD - 360 - 80) * (n / maxT));
       rrect(PAD + 350, y - 24, W - 2 * PAD - 350 - 80, 28, 14, "#ECEAF6");
-      rrect(PAD + 350, y - 24, bw, 28, 14, TRACK_COLORS[name] || "#5B3FE0");
+      rrect(PAD + 350, y - 24, bw, 28, 14, TRACK_COLORS[name] || "#6A4BFF");
       text(n.toLocaleString("en-US"), W - PAD, y, body(25, 700), "#19163A", "end");
     });
 
@@ -175,7 +175,7 @@
       });
     };
     col(PAD, t("rising"), d.rising, (r) => t("pts")(r[3]), "#0B7A55");
-    col(PAD + colW + 40, t("topSkills"), d.top, (r) => `${Math.round(r[2])}%`, "#5B3FE0");
+    col(PAD + colW + 40, t("topSkills"), d.top, (r) => `${Math.round(r[2])}%`, "#6A4BFF");
 
     // companies
     y += 50 + Math.max(d.rising.length, d.top.length, 1) * 44 + 50;
@@ -201,7 +201,7 @@
   function footer() {
     const fy = H - 150;
     const g = ctx.createLinearGradient(0, 0, W, 0);
-    g.addColorStop(0, "#5B3FE0"); g.addColorStop(0.5, "#B03FE0"); g.addColorStop(1, "#FF5E3A");
+    g.addColorStop(0, "#6A4BFF"); g.addColorStop(0.5, "#B03FE0"); g.addColorStop(1, "#FF5C39");
     ctx.fillStyle = g; ctx.beginPath(); ctx.roundRect(PAD - 16, fy, W - 2 * PAD + 32, 108, 26); ctx.fill();
     text(t("footer1"), PAD + 14, fy + 44, body(27, 700), "#FFFFFF", "start", W - 2 * PAD - 30);
     text(SITE.replace(/^https?:\/\//, "").replace(/\/$/, ""), PAD + 14, fy + 84, body(22, 500), "rgba(255,255,255,.92)", "start", W - 2 * PAD - 30);

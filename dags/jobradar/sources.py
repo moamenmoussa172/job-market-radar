@@ -354,6 +354,41 @@ def workday_country_facet(facets: list, names: tuple[str, ...]) -> tuple[str | N
     return best
 
 
+_WORKDAY_CITIES = {
+    "mena": ("cairo", "alexandria", "giza", "new cairo", "dubai", "abu dhabi", "sharjah", "riyadh", "jeddah",
+             "dammam", "dhahran", "khobar", "doha", "kuwait", "manama", "muscat", "amman", "casablanca", "rabat",
+             "beirut", "tunis", "uae", "ksa"),
+    "europe": ("london", "manchester", "edinburgh", "berlin", "munich", "hamburg", "frankfurt", "stuttgart",
+               "paris", "amsterdam", "eindhoven", "dublin", "cork", "madrid", "barcelona", "warsaw", "krakow",
+               "gdansk", "wroclaw", "lisbon", "porto", "milan", "rome", "stockholm", "copenhagen", "prague", "brno",
+               "vienna", "zurich", "geneva", "brussels", "budapest", "bucharest", "sofia", "athens", "helsinki",
+               "oslo", "tallinn", "riga", "vilnius", "belgrade", "zagreb", "luxembourg", "valletta"),
+}
+
+
+def workday_has_country_facet(facets: list) -> bool:
+    def walk(nodes: list) -> bool:
+        for node in nodes or []:
+            if not isinstance(node, dict):
+                continue
+            label = f"{node.get('facetParameter', '')} {node.get('descriptor', '')}".lower()
+            if "country" in label and node.get("values"):
+                return True
+            if walk([v for v in node.get("values") or [] if isinstance(v, dict) and "values" in v]):
+                return True
+        return False
+    return walk(facets)
+
+
+def workday_location_matcher(regions: list[str]) -> re.Pattern:
+    words: list[str] = []
+    for region in regions:
+        names = MENA_COUNTRY_NAMES if region == "mena" else EUROPE_COUNTRY_NAMES if region == "europe" else ()
+        words += [n.lower() for n in names] + list(_WORKDAY_CITIES.get(region, ()))
+    return re.compile(r"(?<![a-z])(" + "|".join(re.escape(w) for w in sorted(set(words), key=len, reverse=True))
+                      + r")(?![a-z])", re.IGNORECASE)
+
+
 def workday_posted_date(posted_on: str | None, today: dt.date | None = None) -> str | None:
     """'Posted Today' / 'Posted Yesterday' / 'Posted 3 Days Ago' / 'Posted 30+ Days Ago' -> ISO date."""
     today = today or dt.date.today()
@@ -374,6 +409,22 @@ def _fetch_workday(token: str) -> list[dict]:
         groups.append(None if region == "all" else
                       MENA_COUNTRY_NAMES if region == "mena" else EUROPE_COUNTRY_NAMES if region == "europe" else ())
     summaries: dict[str, dict] = {}
+    has_country_filter = workday_has_country_facet(first.get("facets") or [])
+    if not has_country_filter and None not in groups:
+        # This site can't filter by country: read the newest jobs and keep those whose location
+        # text names one of our countries or a big city there ("Gdansk, Poland", "Dubai - UAE").
+        wanted = workday_location_matcher(WORKDAY_REGIONS)
+        for page in range(WORKDAY_MAX_PAGES * 2):
+            data = first if page == 0 else _workday_post(
+                list_url, {"appliedFacets": {}, "limit": WORKDAY_PAGE, "offset": page * WORKDAY_PAGE, "searchText": ""})
+            postings = data.get("jobPostings") or []
+            for jp in postings:
+                if (jp.get("externalPath") and is_tech_role(jp.get("title"))
+                        and wanted.search(jp.get("locationsText") or "")):
+                    summaries.setdefault(jp["externalPath"], jp)
+            if len(postings) < WORKDAY_PAGE or (page + 1) * WORKDAY_PAGE >= (data.get("total") or 0):
+                break
+        groups = []  # done
     for names in groups:
         if names == ():
             continue
@@ -381,7 +432,7 @@ def _fetch_workday(token: str) -> list[dict]:
         if names is not None:
             param, ids = workday_country_facet(first.get("facets") or [], names)
             if not param:
-                continue  # no jobs in these countries (or no country filter on this site)
+                continue  # the site filters by country, and has no jobs in these countries
             facets = {param: ids}
         for page in range(WORKDAY_MAX_PAGES):
             data = first if (not facets and page == 0) else _workday_post(
@@ -422,21 +473,36 @@ def _fetch_workday(token: str) -> list[dict]:
 # Board id = the career site host. Sites that switched the feed off are marked dead.
 # --------------------------------------------------------------------------- #
 SUCCESSFACTORS_RSS = "https://{host}/services/rss/job/"
+SUCCESSFACTORS_ROWS = int(os.environ.get("SUCCESSFACTORS_ROWS", "20000"))  # the feed has no paging; default 20
+
+
+def split_title_location(title: str) -> tuple[str, str | None]:
+    """'Data Engineer (Riyadh, SA, 12345)' -> ('Data Engineer', 'Riyadh, SA, 12345').
+    The location is the balanced (...) group that ends the title; either part may hold parentheses."""
+    title = title.strip()
+    if not title.endswith(")"):
+        return title, None
+    depth = 0
+    for i in range(len(title) - 1, -1, -1):
+        depth += {")": 1, "(": -1}.get(title[i], 0)
+        if depth == 0:
+            return (title[:i].strip() or title), title[i + 1:-1].strip()
+    return title, None
 
 
 def parse_successfactors_rss(xml_text: str) -> list[dict]:
+    if xml_text.lstrip().startswith("<xml>"):  # the feed answers malformed queries with <xml>Error: ...</xml>
+        raise ValueError(f"successfactors feed error: {xml_text.strip()[:120]}")
     root = ET.fromstring(xml_text)
     channel = root.find("channel")
     if root.tag != "rss" or channel is None:
         raise ValueError(f"not an RSS feed (root <{root.tag}>)")
     jobs = []
     for item in channel.findall("item"):
-        title = (item.findtext("title") or "").strip()
-        # titles look like "Data Engineer (Riyadh, SA, 12345)"
-        m = re.match(r"^(.*?)\s*\(([^()]*)\)\s*$", title)
+        title, location = split_title_location(item.findtext("title") or "")
         jobs.append({
-            "title": m.group(1).strip() if m else title,
-            "location": m.group(2).strip() if m else None,
+            "title": title,
+            "location": location,
             "link": (item.findtext("link") or "").strip(),
             "guid": (item.findtext("guid") or item.findtext("link") or "").strip(),
             "description": item.findtext("description") or "",
@@ -445,13 +511,26 @@ def parse_successfactors_rss(xml_text: str) -> list[dict]:
     return jobs
 
 
+def _successfactors_feed(host: str, params: dict) -> str:
+    # the feed only answers when RSS is asked for (406 for JSON or application/xml)
+    resp = requests.get(SUCCESSFACTORS_RSS.format(host=host), params=params, timeout=TIMEOUT,
+                        headers={"User-Agent": USER_AGENT, "Accept": "application/rss+xml"})
+    resp.raise_for_status()
+    return resp.text
+
+
 def _fetch_successfactors(token: str) -> list[dict]:
-    text = _get_text(SUCCESSFACTORS_RSS.format(host=token), params={"locale": "en_US", "keywords": ""})
-    try:
-        jobs = parse_successfactors_rss(text)
-    except ET.ParseError as exc:
-        raise ValueError(f"successfactors '{token}' did not return an RSS feed") from exc
-    return [j for j in jobs if is_tech_role(j.get("title"))]
+    last_exc: Exception | None = None
+    for params in ({"rows": SUCCESSFACTORS_ROWS}, {}):   # all jobs; else the default first 20
+        try:
+            jobs = parse_successfactors_rss(_successfactors_feed(token, params))
+            return [j for j in jobs if is_tech_role(j.get("title"))]
+        except ET.ParseError as exc:
+            last_exc = ValueError(f"successfactors '{token}' did not return an RSS feed")
+            last_exc.__cause__ = exc
+        except ValueError as exc:
+            last_exc = exc
+    raise last_exc or ValueError(f"successfactors '{token}' failed")
 
 
 ATS_FETCHERS: dict[str, Callable[[str], list[dict]]] = {
@@ -491,7 +570,9 @@ def extract_company_boards(ats: str, tokens: list[str] | None = None,
         keep.extend({**job, **extra} for job in jobs)
         time.sleep(pause_seconds)
     ok_boards = sum(1 for v in status.values() if v is not None)
-    if tokens and ok_boards == 0:
+    # Every board failing means the network (or the platform) is down - but only with several boards:
+    # one or two broken boards must not stop the daily run (they are reported as warnings).
+    if len(tokens) >= 3 and ok_boards == 0:
         raise RuntimeError(f"All {ats} boards failed - check network or board tokens")
     log.info("%s: %s/%s boards ok, %s data-related jobs", ats, ok_boards, len(tokens), len(keep))
     return ExtractResult(ats, keep, warnings, status)

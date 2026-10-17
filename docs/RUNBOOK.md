@@ -65,11 +65,12 @@ Add one as a line in `dags/jobradar/company_boards.csv` (`ats,token,company`):
 * **Workday**: open any of their jobs, e.g. `https://aramco.wd3.myworkdayjobs.com/en-US/Aramco_Careers/job/...`,
   and write `workday,aramco.wd3/Aramco_Careers,Aramco` (tenant.wdN/Site; the Site part is case-sensitive).
   Only jobs in the countries of `WORKDAY_REGIONS` (default `mena,europe`) are requested, at most
-  `WORKDAY_MAX_PAGES` x 20 per region, with full details for `WORKDAY_MAX_DETAILS` per board.
+  `WORKDAY_MAX_PAGES` x 20 per region, with full details for `WORKDAY_MAX_DETAILS` per board. Sites without a
+  country filter are read newest-first and kept by location text (country and big-city names).
   Workday links in other sources' apply links are also picked up automatically (status *candidate*, then
   validated with one request).
-* **SuccessFactors**: the career site host, e.g. `successfactors,jobs.sap.com,SAP` (read from its RSS feed
-  `https://<host>/services/rss/job/`). Sites with the feed switched off are marked dead.
+* **SuccessFactors**: the career site host, e.g. `successfactors,careers.sap.com,SAP` (read from its RSS feed
+  `https://<host>/services/rss/job/`, all jobs via `rows`). Sites with the feed switched off are marked dead.
 
 Check a board quickly from your PC:
 

@@ -17,15 +17,20 @@
       anyCountry: "any country", anyRole: "any tech", allOf: (x) => `${x} (all roles)`,
       countLabel: "jobs you can apply to", countAll: "open tech jobs", share: "Share this search", copied: "Link copied",
       updated: (d) => `Updated ${d}. New jobs are added every morning.`,
-      yourSkills: "Your skills", addSkill: "Add a skill you have",
-      yourSkillsHint: "Upload your CV or add what you know. Jobs are ranked by how many of their skills you have, and your skills are ticked on each job.",
+      yourSkills: "Match jobs to your skills", addSkill: "Add a skill you have",
+      yourSkillsHint: "Upload your CV or add skills. Every job gets a match score, and the best matches come first.",
+      heroTitle: "Tech jobs you can actually get.",
+      heroSub: "Fresh every morning from company career pages and job boards across Egypt, the Gulf, Europe and remote, filtered by where you live.",
+      segRole: "I'm looking for", segKeywords: "Keywords", searchBtn: "Search", browseTracks: "Browse by track",
+      filters: "Filters", filtersN: (n) => `Filters (${n})`, quickTitle: "Show only", close: "Close",
+      showN: (n) => `Show ${n} jobs`, matchOf: (a, b) => `You have ${a} of ${b} skills this job asks for`, skillsMatch: "match",
       suggest: "Often asked for these jobs:", removeSkill: (s) => `Remove ${s}`,
       qRemote: "Remote", qVisa: "Visa or relocation", qJunior: "Junior & intern", qPay: "Shows salary",
       qWeek: "Posted this week", qHideNat: "Hide nationals-only",
       moreFilters: "More filters", moreFiltersOn: (n) => `More filters (${n} on)`,
-      search: "Search", searchPh: "A title, company or skill", seniority: "Seniority", workMode: "Work mode",
+      search: "Search", searchPh: "Title, company or skill", seniority: "Seniority", workMode: "Work mode",
       industry: "Industry", skill: "Must-have skill", arabic: "Arabic", any: "Any", arabicReq: "Required",
-      arabicNot: "Not required", reset: "Clear all filters",
+      arabicNot: "Not required", reset: "Clear all",
       tabJobs: "Jobs", tabInsights: "Skills & pay", tabSaved: "Saved", tabAbout: "How it works", tabTrends: "Trends",
       weeklyReport: "Weekly report", reportCta: "Get this week's report card",
       weeklyTitle: "New jobs per week", risingTitle: "Skills on the rise", fallingTitle: "Skills cooling down",
@@ -81,15 +86,20 @@
       anyCountry: "أي دولة", anyRole: "أي مجال تقني", allOf: (x) => `${x} (كل الوظايف)`,
       countLabel: "وظيفة تقدر تقدّم عليها", countAll: "وظيفة تقنية متاحة", share: "شارك البحث ده", copied: "اتنسخ اللينك",
       updated: (d) => `آخر تحديث ${d}. وظايف جديدة بتتضاف كل يوم الصبح.`,
-      yourSkills: "مهاراتك", addSkill: "ضيف مهارة عندك",
-      yourSkillsHint: "ارفع الـ CV أو ضيف اللي بتعرفه. بنرتب الوظايف حسب عدد مهاراتها اللي عندك، ومهاراتك بتظهر عليها علامة ✓.",
+      yourSkills: "شوف الوظايف المناسبة لمهاراتك", addSkill: "ضيف مهارة عندك",
+      yourSkillsHint: "ارفع الـ CV أو ضيف مهاراتك. كل وظيفة هتاخد نسبة تطابق، والأنسب هتظهر الأول.",
+      heroTitle: "وظايف تك تقدر توصلها فعلًا.",
+      heroSub: "بتتحدّث كل يوم الصبح من صفحات توظيف الشركات ومواقع الوظايف في مصر والخليج وأوروبا والريموت، ومفلترة حسب البلد اللي إنت فيها.",
+      segRole: "بدوّر على", segKeywords: "كلمات بحث", searchBtn: "دوّر", browseTracks: "تصفّح حسب المجال",
+      filters: "الفلاتر", filtersN: (n) => `الفلاتر (${n})`, quickTitle: "اعرض بس", close: "اقفل",
+      showN: (n) => `اعرض ${n} وظيفة`, matchOf: (a, b) => `عندك ${a} من ${b} مهارات الوظيفة دي طالباها`, skillsMatch: "تطابق",
       suggest: "مطلوبة كتير في الوظايف دي:", removeSkill: (s) => `شيل ${s}`,
       qRemote: "ريموت", qVisa: "فيزا أو انتقال", qJunior: "جونيور وتدريب", qPay: "فيها مرتب",
       qWeek: "اتنشرت الأسبوع ده", qHideNat: "اخفي اللي للمواطنين بس",
       moreFilters: "فلاتر أكتر", moreFiltersOn: (n) => `فلاتر أكتر (${n} شغالين)`,
       search: "بحث", searchPh: "وظيفة أو شركة أو مهارة", seniority: "المستوى", workMode: "نوع العمل",
       industry: "المجال", skill: "مهارة لازم تكون مطلوبة", arabic: "العربي", any: "الكل", arabicReq: "مطلوب",
-      arabicNot: "مش مطلوب", reset: "امسح كل الفلاتر",
+      arabicNot: "مش مطلوب", reset: "امسح الكل",
       tabJobs: "الوظايف", tabInsights: "المهارات والمرتبات", tabSaved: "المحفوظة", tabAbout: "إزاي بيشتغل", tabTrends: "الترندات",
       weeklyReport: "التقرير الأسبوعي", reportCta: "خد كارت تقرير الأسبوع ده",
       weeklyTitle: "الوظايف الجديدة كل أسبوع", risingTitle: "مهارات طالعة", fallingTitle: "مهارات بتهدى",
@@ -244,22 +254,14 @@
     $("skillList").innerHTML = meta.skills.map((s) => `<option value="${esc(s)}">`).join("");
   }
 
-  // Hero dropdowns are as wide as the chosen text, so the sentence reads naturally.
-  const measurer = document.createElement("canvas").getContext("2d");
-  function autosize(sel) {
-    const cs = getComputedStyle(sel);
-    measurer.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
-    const text = sel.selectedOptions[0] ? sel.selectedOptions[0].text : "";
-    const room = sel.closest(".ask").clientWidth;
-    sel.style.width = Math.min(Math.ceil(measurer.measureText(text).width + 10), room) + "px";
-  }
-  function sizeHero() { autosize($("country")); autosize($("role")); $("ask3").hidden = !t("ask3"); }
+  function sizeHero() { /* the search console has fixed-width fields */ }
 
   function applyLanguage() {
     document.documentElement.lang = lang;
     document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
     document.querySelectorAll("[data-i18n]").forEach((el) => { el.textContent = t(el.dataset.i18n); });
     document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => { el.placeholder = t(el.dataset.i18nPlaceholder); });
+    document.querySelectorAll("[data-i18n-aria]").forEach((el) => el.setAttribute("aria-label", t(el.dataset.i18nAria)));
     const btn = $("lang");
     btn.textContent = lang === "ar" ? "English" : "العربية";
     btn.lang = lang === "ar" ? "en" : "ar";
@@ -362,37 +364,49 @@
   const payText = ($) => ($ ? ($[0] === $[1] ? `$${$[0]}k` : `$${$[0]}k – $${$[1]}k`) : "");
   const mySkillIdx = () => new Set([...mySkills].map((s) => meta.skills.indexOf(s)).filter((i) => i >= 0));
 
+  const BOOKMARK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4.5L6 21z"/></svg>';
+  function matchRing(have, total) {
+    const pct = Math.round((100 * have) / total), r = 17, c = 2 * Math.PI * r;
+    const tone = pct >= 60 ? "hi" : pct >= 30 ? "mid" : "lo";
+    return `<span class="ring ${tone}" role="img" aria-label="${esc(t("matchOf")(have, total))}" title="${esc(t("matchOf")(have, total))}">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="${r}"/>${pct ? `<circle class="val" cx="20" cy="20" r="${r}"
+        stroke-dasharray="${((c * pct) / 100).toFixed(1)} ${c.toFixed(1)}"/>` : ""}</svg><b>${pct}%</b></span>`;
+  }
+
   function jobRow(g) {
     const j = g.job, f = g.flags, mine = mySkillIdx();
     const others = g.all.length - 1;
-    const tags = [
-      j.w === "Remote" ? `<span class="tag">${j.ww ? t("remoteWorld") : t("remote")}</span>` : `<span class="tag plain">${esc(j.w)}</span>`,
-      f & FLAG.visa ? `<span class="tag visa">${t("visaTag")}</span>` : "",
-      f & FLAG.nationals ? `<span class="tag nat">${t("natTag")}</span>` : "",
-      f & FLAG.arabic ? `<span class="tag ar">${t("arTag")}</span>` : "",
-      `<span class="tag role">${esc(j.r)}</span>`,
-      j.s && j.s !== "Not stated" ? `<span class="tag plain">${esc(j.s)}</span>` : "",
-      j.by ? `<span class="tag plain">${esc(j.by)}</span>` : "",
+    const facts = [
+      g.pay ? `<span class="fact pay">${payText(g.pay)}</span>` : "",
+      j.w === "Remote" ? `<span class="fact remote">${j.ww ? t("remoteWorld") : t("remote")}</span>` : `<span class="fact">${esc(j.w)}</span>`,
+      f & FLAG.visa ? `<span class="fact visa">${t("visaTag")}</span>` : "",
+      f & FLAG.nationals ? `<span class="fact nat">${t("natTag")}</span>` : "",
+      f & FLAG.arabic ? `<span class="fact ar">${t("arTag")}</span>` : "",
+      j.s && j.s !== "Not stated" ? `<span class="fact">${esc(j.s)}</span>` : "",
+      `<span class="fact role">${esc(j.r)}</span>`,
     ].join("");
     const ks = [...j.k].sort((a, b) => (mine.has(b) ? 1 : 0) - (mine.has(a) ? 1 : 0));
     const skills = ks.slice(0, SKILLS_SHOWN).map((k) => `<span class="sk${mine.has(k) ? " have" : ""}">${esc(meta.skills[k])}</span>`).join("")
-      + (ks.length > SKILLS_SHOWN ? `<span class="sk">+${ks.length - SKILLS_SHOWN}</span>` : "");
+      + (ks.length > SKILLS_SHOWN ? `<span class="sk skmore">+${ks.length - SKILLS_SHOWN}</span>` : "");
     const isSaved = !!savedJobs[j.id];
     const locsOpen = openLocs.has(g.key);
+    const initial = (j.c || j.t || "?").trim().charAt(0).toUpperCase();
     return `<li class="job" style="${tc(j.tr)}">
-      <div>
+      <span class="avatar" aria-hidden="true">${esc(initial)}</span>
+      <div class="jmain">
         <h3><a href="${esc(j.u)}" target="_blank" rel="noopener nofollow">${esc(j.t)}</a></h3>
         <p class="where"><b>${esc(j.c || "")}</b><span>${esc(j.l || "")}</span>${others > 0
           ? `<button type="button" class="locbtn" data-key="${esc(g.key)}" aria-expanded="${locsOpen}">${locsOpen ? t("hideLocs") : t("moreLocs")(others)}</button>` : ""}</p>
+        <div class="facts">${facts}</div>
+        ${j.k.length ? `<div class="skills">${skills}</div>` : ""}
+        ${j.by ? `<p class="credit">${esc(j.by)}</p>` : ""}
+        ${locsOpen ? `<ul class="locs">${g.all.slice(1).map((x) => `<li><a href="${esc(x.u)}" target="_blank" rel="noopener nofollow">${esc(x.l || x.t)}</a></li>`).join("")}</ul>` : ""}
       </div>
-      <div class="side">
-        ${g.pay ? `<span class="pay">${payText(g.pay)}</span>` : ""}
-        <span>${f & FLAG.longOpen ? t("longOpen") : ago(j.p)}</span>
-        <button type="button" class="save" data-id="${esc(j.id)}" aria-pressed="${isSaved}">${isSaved ? t("saved") : t("save")}</button>
+      <div class="jside">
+        ${mine.size && j.k.length ? matchRing(g.have, j.k.length) : ""}
+        <span class="age">${f & FLAG.longOpen ? t("longOpen") : ago(j.p)}</span>
+        <button type="button" class="save" data-id="${esc(j.id)}" aria-pressed="${isSaved}">${BOOKMARK}<span>${isSaved ? t("saved") : t("save")}</span></button>
       </div>
-      ${locsOpen ? `<ul class="locs">${g.all.slice(1).map((x) => `<li><a href="${esc(x.u)}" target="_blank" rel="noopener nofollow">${esc(x.l || x.t)}</a></li>`).join("")}</ul>` : ""}
-      <div class="tags">${tags}</div>
-      ${j.k.length ? `<div class="skills">${skills}${mine.size ? `<span class="matchbadge">${t("youHave")(g.have, j.k.length)}</span>` : ""}</div>` : ""}
     </li>`;
   }
 
@@ -707,7 +721,7 @@
     const max = Math.max(1, ...totals);
     const firstWeek = Math.max(0, totals.findIndex((v) => v > 0));   // no empty bars before the data starts
     $("weeklyChart").innerHTML = !enough ? "" : weeks.map((w, i) => (i < firstWeek ? "" : (() => {
-      const segs = shownTracks.map((name) => weekly[name][i] ? `<span class="seg" style="${tc(name)};height:${(100 * weekly[name][i]) / max}%"
+      const segs = shownTracks.map((name) => weekly[name][i] ? `<span class="wseg" style="${tc(name)};height:${(100 * weekly[name][i]) / max}%"
         title="${esc(name)}: ${num(weekly[name][i])}"></span>` : "").join("");
       return `<div class="wk${i === n - 1 ? " partial" : ""}"><span class="wv">${totals[i] ? num(totals[i]) : ""}</span>
         <div class="col">${segs}</div><span class="wl">${i === n - 1 ? t("soFar") : fmtWeek(w)}</span></div>`;
@@ -780,8 +794,11 @@
     sizeHero();
     $("count").textContent = num(groups.length);
     $("countLabel").textContent = $("country").value ? t("countLabel") : t("countAll");
-    const extra = ["seniority", "workMode", "industry", "skill", "arabic", "q"].filter((f) => $(f).value).length;
-    $("filterSummary").textContent = extra ? t("moreFiltersOn")(extra) : t("moreFilters");
+    const extra = ["seniority", "workMode", "industry", "skill", "arabic"].filter((f) => $(f).value).length
+      + Object.entries(quick).filter(([k, v]) => v !== (k === "hideNat")).length;
+    $("filterSummary").textContent = extra ? t("filtersN")(extra) : t("filters");
+    $("filterOpen").classList.toggle("on", extra > 0);
+    $("sheetDone").textContent = t("showN")(num(groups.length));
     renderTracks();
     renderSkills();
     renderJobs();
@@ -792,6 +809,8 @@
   }
 
   function selectTab(id, write = true) {
+    // the skills box and filters belong to job views; reading views (Saved, How it works) get the full width
+    document.body.dataset.tab = id;
     document.querySelectorAll('[role="tab"]').forEach((b) => {
       const on = b.getAttribute("aria-controls") === id;
       b.setAttribute("aria-selected", String(on));
@@ -836,6 +855,20 @@
       quick[b.dataset.flag] = !quick[b.dataset.flag]; syncToggles(); update();
     }));
     $("more").addEventListener("click", () => { shown += PAGE; renderJobs(); });
+    // filters: a sidebar on wide screens, a bottom sheet on phones
+    const sheet = (open) => {
+      document.body.classList.toggle("sheet-open", open);
+      $("scrim").hidden = !open;
+      $("filterOpen").setAttribute("aria-expanded", String(open));
+      if (open) $("sheetClose").focus(); else $("filterOpen").focus();
+    };
+    $("filterOpen").addEventListener("click", () => sheet(true));
+    ["sheetClose", "sheetDone", "scrim"].forEach((id) => $(id).addEventListener("click", () => sheet(false)));
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && document.body.classList.contains("sheet-open")) sheet(false); });
+    $("console").addEventListener("submit", () => {
+      update(); selectTab("jobs");
+      $("results").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    });
     $("trends").addEventListener("click", (e) => {
       const b = e.target.closest("[data-skill-filter]");
       if (!b) return;
@@ -877,7 +910,7 @@
         if (savedJobs[id]) delete savedJobs[id]; else if (j) { savedJobs[id] = { t: j.t, c: j.c, u: j.u }; track("save-job"); }
         store.set("saved", savedJobs);
         el.setAttribute("aria-pressed", String(!!savedJobs[id]));
-        el.textContent = savedJobs[id] ? t("saved") : t("save");
+        el.querySelector("span").textContent = savedJobs[id] ? t("saved") : t("save");
         renderSaved();
       } else if (el.classList.contains("locbtn")) {
         const k = el.dataset.key;
