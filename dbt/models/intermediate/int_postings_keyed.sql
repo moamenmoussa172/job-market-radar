@@ -1,6 +1,15 @@
 -- Every listing gets a job_id: normalized company + title + work mode + primary
 -- country. Listings that share a job_id are the same job on different boards.
-with p as (select * from {{ ref('int_postings_classified') }}),
+-- Jobs located in Israel (or open only to people there) are excluded from the whole
+-- project: they never reach the site, the dashboard, trends or reports.
+with excluded as (
+    select distinct posting_key from {{ ref('int_posting_geo') }} where country = 'Israel'
+),
+
+p as (
+    select * from {{ ref('int_postings_classified') }}
+    where posting_key not in (select posting_key from excluded)
+),
 
 geo as (
     select

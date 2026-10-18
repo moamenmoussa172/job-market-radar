@@ -87,6 +87,22 @@ _TECH_INCLUDE = re.compile(
     | \brpa\b | uipath | blue\s*prism | automation\ anywhere | outsystems | mendix | \bappian\b | \bpega\b | low[\s-]?code
     | \bgis\b | arcgis | geospatial | robotics?\ (software\ )?(engineer|developer|programmer) | \bros2?\b | \bunity\ (developer|engineer) | \bunreal\b
     | \b(ar|vr|xr)\s*/?\s*(vr|ar)?\ (developer|engineer) | augmented\ reality | virtual\ reality | game\ (developer|programmer|engineer)
+    # embedded, automotive & chip design (big in Egypt: Valeo, Siemens EDA, Synopsys, Si-Vision)
+    | \basic\b | \bfpga\b | \brtl\b | \bvlsi\b | \buvm\b | systemverilog | design\ verification | verification\ engineer
+    | physical\ design | \bdft\b | design[\s-]for[\s-]test | analog\ (layout|design|ic|mixed) | mixed[\s-]signal
+    | (pre|post)[\s-]silicon | silicon\ (validation|design|engineer) | chip\ design | static\ timing
+    | autosar | automotive\ (software|embedded) | \badas\b | \becu\b | functional\ safety | iso\s*26262 | infotainment | simulink
+    # security specialisms, pre-sales, architects, integration, devrel, quant, IT leadership
+    | \bsoc\ (analyst|engineer|lead|manager) | security\ (analyst|engineer|architect|consultant|operations) | (information|it|cyber)\ security\ (officer|specialist|manager)
+    | incident\ response | threat\ (hunt|intel|detection) | \bdfir\b | ethical\ hack | red\ team | \bgrc\b
+    | it\ audit | \bciso\b | iso\s*27001 | identity\ (and|&)\ access | \biam\ (engineer|analyst|specialist|architect|consultant)
+    | pre-?sales | sales\ engineer | solutions?\ (consultant|architect|engineer) | enterprise\ architect | technical\ architect
+    | integration\ (engineer|developer|specialist|architect) | middleware | mulesoft | \btibco\b | \bboomi\b
+    | developer\ (advocate|relations|evangelist) | \bdevrel\b | quant(itative)?\ (developer|analyst|researcher|engineer)
+    | performance\ test | load\ test | \bjmeter\b | ux\ writ | content\ designer | conversation(al)?\ designer
+    | \bit\ (manager|director|lead|head) | head\ of\ (it|information\ technology|technology|infrastructure) | \bcio\b
+    | speech\ (recognition|engineer|scientist|technolog) | (technical|customer|product|application)\ support\ engineer
+    | computer\ vision | \bnlp\b | natural\ language | \bllm\b | genai | generative\ ai | prompt\ engineer
     # German / French / Spanish / Dutch
     | entwickler | softwareentwickl | informatiker | fachinformatiker | systemadministrat | testautomat
     | d[ée]veloppeu | ing[ée]nieur\ (logiciel|devops|cloud|qa|test) | testeur
@@ -110,7 +126,8 @@ _NON_TECH = re.compile(
     re.IGNORECASE | re.VERBOSE,
 )
 _SOFTWARE_HINT = re.compile(
-    r"software|embedded\s+software|firmware|\bdata\b|devops|cloud|\bit\b|digital|web|app\b|qa\b|test\s+automation",
+    r"software|embedded\s+software|firmware|\bdata\b|devops|cloud|\bit\b|digital|web|app\b|qa\b|test\s+automation"
+    r"|\basic\b|\bfpga\b|\brtl\b|\bvlsi\b|verification|autosar|silicon",
     re.IGNORECASE,
 )
 

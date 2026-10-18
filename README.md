@@ -105,18 +105,19 @@ Every job gets a **track** and a **role family** from rule-based title classific
 
 | Track | Role families |
 |---|---|
-| Data & Analytics | Data Engineer, Analytics Engineer, Data Analyst, BI, Data Scientist, Database Administrator, GIS Specialist, ... |
-| AI & Machine Learning | ML / AI Engineer, MLOps Engineer, AI Research Scientist / Engineer |
-| Software Engineering | Frontend, Backend, Full-Stack, Embedded, Game / XR, Robotics, Blockchain, Software Engineer, Engineering Leadership |
+| Data & Analytics | Data Engineer, Analytics Engineer, Data Analyst, BI, Data Scientist, Data Architect, Quantitative Analyst / Developer, Database Administrator, GIS Specialist, ... |
+| AI & Machine Learning | ML / AI Engineer, MLOps Engineer, AI Research Scientist / Engineer, LLM / GenAI Engineer, Computer Vision Engineer, NLP / Speech Engineer |
+| Software Engineering | Frontend, Backend, Full-Stack, Game / XR, Robotics, Blockchain, Software / Solutions Architect, Integration / API Engineer, Software Engineer, Engineering Leadership |
 | Mobile Development | iOS Engineer, Android Engineer, Native Mobile Engineer (iOS + Android), Cross-platform (Flutter / React Native), Mobile Engineer |
-| QA & Testing | QA Automation Engineer, QA / Test Engineer |
-| UI/UX Design | UX / Product Designer, UI / Visual Designer, UX Researcher |
+| QA & Testing | QA Automation Engineer, QA / Test Engineer, Performance Test Engineer |
+| UI/UX Design | UX / Product Designer, UI / Visual Designer, UX Researcher, UX Writer / Content Designer |
 | DevOps & Cloud | DevOps / Platform, SRE, Cloud / Infrastructure |
-| Security | Security Engineer / Analyst |
+| Security | Security Engineer, SOC / Security Analyst, Penetration Tester / Red Team, GRC / IT Audit, Identity & Access (IAM) |
 | ERP & CRM | ERP / CRM Consultant, ERP / CRM Developer (SAP, Salesforce, Dynamics 365, Oracle apps, ServiceNow, Odoo), RPA / Low-code Developer (UiPath, OutSystems, Power Automate) |
 | Networks & Telecom | Network Engineer, Telecom Engineer (RF, RAN, core network) |
-| Product & Delivery | Product Manager / Owner, Technical Project / Program Manager, Scrum Master / Agile Coach |
-| IT & Support | IT Support / Sysadmin, Systems / IT Analyst, Solutions / Support Engineer, Technical Writer |
+| Product & Delivery | Product Manager / Owner, Technical Project / Program Manager, Scrum Master / Agile Coach, Developer Relations |
+| IT & Support | IT Support / Sysadmin, Systems / IT Analyst, Solutions / Support Engineer, Technical Writer, Pre-sales / Sales Engineer, IT Leadership |
+| Embedded & Chip Design | Embedded / Firmware Engineer, Automotive Software Engineer (AUTOSAR, ADAS), ASIC / FPGA Design Engineer, Design Verification Engineer (UVM, SystemVerilog) |
 
 Each job also gets three signals read from its description (`int_job_signals`): **nationals only**
 ("Saudi nationals only", Emiratisation roles), **Arabic required**, and **visa sponsorship / relocation

@@ -88,11 +88,35 @@ def remotive_id(record: dict) -> str:
 ARBEITNOW_URL = "https://www.arbeitnow.com/api/job-board-api"
 
 
-def extract_arbeitnow(max_pages: int = 30, pause_seconds: float = 1.0) -> ExtractResult:
+def _arbeitnow_page(page: int, retries: int = 3) -> dict:
+    """One page; on HTTP 429 (rate limit) wait as the server asks, then try again."""
+    for attempt in range(retries + 1):
+        try:
+            return _get_json(ARBEITNOW_URL, params={"page": page})
+        except requests.HTTPError as exc:
+            resp = exc.response
+            if resp is None or resp.status_code != 429 or attempt == retries:
+                raise
+            try:
+                wait = float(resp.headers.get("Retry-After", ""))
+            except ValueError:
+                wait = 0
+            time.sleep(min(max(wait, 15 * (attempt + 1)), 120))
+    raise RuntimeError("unreachable")
+
+
+def extract_arbeitnow(max_pages: int = 30, pause_seconds: float = 2.0) -> ExtractResult:
     keep: list[dict] = []
+    warnings: list[str] = []
     seen = 0
     for page in range(1, max_pages + 1):
-        payload = _get_json(ARBEITNOW_URL, params={"page": page})
+        try:
+            payload = _arbeitnow_page(page)
+        except requests.RequestException as exc:
+            if page == 1:
+                raise                      # nothing at all: a real failure
+            warnings.append(f"arbeitnow stopped at page {page} ({exc}); kept pages 1-{page - 1}")
+            break
         data = payload.get("data", [])
         seen += len(data)
         keep.extend(j for j in data if is_tech_role(j.get("title")))
@@ -100,7 +124,7 @@ def extract_arbeitnow(max_pages: int = 30, pause_seconds: float = 1.0) -> Extrac
             break
         time.sleep(pause_seconds)
     log.info("arbeitnow: %s jobs scanned, %s data-related", seen, len(keep))
-    return ExtractResult("arbeitnow", keep)
+    return ExtractResult("arbeitnow", keep, warnings)
 
 
 def arbeitnow_id(record: dict) -> str:
@@ -838,6 +862,10 @@ HIMALAYAS_QUERIES = [
     "ios developer", "android developer", "flutter developer", "react native",
     "qa engineer", "test automation", "ux designer", "product designer", "ui designer",
     "devops", "site reliability", "cloud engineer", "security engineer",
+    # specialist roles (update 35)
+    "solutions architect", "sales engineer", "soc analyst", "penetration tester", "embedded software",
+    "firmware engineer", "fpga engineer", "verification engineer", "llm engineer", "computer vision",
+    "nlp engineer", "integration engineer", "developer advocate", "data architect",
 ]
 
 
@@ -895,10 +923,14 @@ SEARCH_COUNTRIES = [  # (ISO code, name used in free-text queries)
 # Countries first, so each day's slice spreads over several countries.
 SEARCH_ROLES = ["software engineer", "data engineer", "data analyst", "developer", "devops engineer",
                 "qa engineer", "cyber security", "network engineer", "sap consultant", "product manager",
-                "ux designer", "machine learning engineer", "mobile developer", "flutter developer"]
+                "ux designer", "machine learning engineer", "mobile developer", "flutter developer",
+                "solutions architect", "presales engineer", "soc analyst", "embedded software engineer",
+                "ai engineer", "it manager"]
 ADZUNA_ROLES = ["data engineer", "data analyst", "software engineer", "frontend developer",
                 "backend developer", "qa engineer", "ux designer", "devops engineer",
-                "mobile developer", "data scientist", "cyber security", "sap consultant"]
+                "mobile developer", "data scientist", "cyber security", "sap consultant",
+                "solutions architect", "embedded software engineer", "fpga engineer", "penetration tester",
+                "pre-sales engineer", "computer vision engineer", "llm engineer", "integration engineer"]
 
 
 def daily_slice(pairs: list, per_day: int, day: dt.date | None = None) -> list:
@@ -1044,7 +1076,8 @@ BA_KEY = "jobboerse-jobsuche"  # public key published with the API, not a secret
 BA_QUERIES = ["Softwareentwickler", "Software Engineer", "Data Engineer", "Data Scientist", "Data Analyst",
               "DevOps", "Cloud Engineer", "Frontend Developer", "Backend Developer", "Fullstack",
               "IT-Security", "SAP Berater", "Mobile Developer", "iOS Developer", "Android Developer", "Flutter",
-              "QA Engineer", "UX Designer",
+              "QA Engineer", "UX Designer", "Embedded Software", "FPGA", "Solution Architect",
+              "Presales", "SOC Analyst", "Penetration Tester",
               "Machine Learning", "Systemadministrator", "Netzwerkadministrator"]
 BA_PAGES = int(os.environ.get("BA_PAGES_PER_QUERY", "2"))
 

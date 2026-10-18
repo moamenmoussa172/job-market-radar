@@ -20,11 +20,23 @@ select
         when job_title ~* 'data\s+assistant|medical\s+data|\mai\s+trainers?\M'
             then 'Not a tech role'
 
+        -- ------------------------------- Embedded & chip design (before QA: "Design-for-Test Engineer")
+        when job_title ~* 'design\s+verification|\mdv\s+engineer|\muvm\M|systemverilog|(asic|soc|ip|fpga|hardware|silicon)\s+verification|verification\s+engineer'
+            then 'Design Verification Engineer'
+        when job_title ~* '\masic\M|\mfpga\M|\mrtl\M|\mvlsi\M|physical\s+design|\mdft\M|design[\s-]for[\s-]test|analog\s+(layout|design|ic|mixed)|mixed[\s-]signal|(pre|post)[\s-]silicon|silicon\s+(validation|design|engineer)|chip\s+design|static\s+timing|soc\s+design|digital\s+(ic\s+)?design\s+engineer'
+            then 'ASIC / FPGA Design Engineer'
+
         -- ---------------------------------------------------- QA & testing (before any "analyst" rule)
         when job_title ~* '\m(qa|qe|sdet|tester|testeur|testing)\M|quality\s+assurance|test\s*(automation|engineer|analyst|lead|manager|specialist|architect)|testautomat|softwaretest|\mautomation\s+tester'
          and job_title !~* 'data\s+quality|penetration|pen\s*test'
-            then case when job_title ~* 'automat|sdet|selenium|cypress|playwright|appium|\mqe\M|software\s+(development\s+)?engineer\s+in\s+test'
+            then case when job_title ~* 'performance|load\s+test|\mjmeter\M|gatling|stress\s+test'
+                      then 'Performance Test Engineer'
+                      when job_title ~* 'automat|sdet|selenium|cypress|playwright|appium|\mqe\M|software\s+(development\s+)?engineer\s+in\s+test'
                       then 'QA Automation Engineer' else 'QA / Test Engineer' end
+
+        -- automotive software (after QA, so automotive testers stay testers)
+        when job_title ~* 'autosar|automotive\s+(software|embedded|sw)|\madas\M|\mecu\M|functional\s+safety|iso\s*26262|infotainment|vehicle\s+software|model[\s-]based\s+(design|development)|simulink'
+            then 'Automotive Software Engineer'
 
         -- ------------------------------------------------- RPA / low-code platforms
         when job_title ~* '\mrpa\M|uipath|blue\s*prism|automation\s+anywhere|power\s+automate|low[\s-]?code|no[\s-]?code|outsystems|mendix|appian|\mpega(systems)?\M|intelligent\s+automation'
@@ -36,9 +48,17 @@ select
             then case when job_title ~* 'develop|engineer|\mabap\M|\mapex\M|technical|programmer|architect'
                       then 'ERP / CRM Developer' else 'ERP / CRM Consultant' end
 
+        -- security governance first ("IT Governance" / "Cyber Risk" are not data governance)
+        when job_title ~* '\mgrc\M|governance,?\s+risk|it\s+audit|information\s+security\s+(officer|manager|governance|risk)|\mciso\M|iso\s*27001|cyber\s*(security\s+)?(governance|compliance|risk)|security\s+(compliance|risk|governance|auditor)|it\s+(risk|compliance|governance)'
+            then 'GRC / IT Audit'
+
         -- --------------------------------------------------------------- Data & AI
         when job_title ~* 'governance|data\s+protection|privacy|datenschutz|data\s+steward|data\s+catalog|\mgdpr\M'
             then 'Data Governance / Privacy'
+        when job_title ~* '\mquant(itative)?\s+(developer|analyst|researcher|engineer|trader|strategist)|\mquant\M'
+            then 'Quantitative Analyst / Developer'
+        when job_title ~* 'data\s+(architect|modell?er)|(enterprise|cloud)\s+data\s+architect|data\s+warehouse\s+architect'
+            then 'Data Architect'
         when job_title ~* 'analytics\s+engineer'
             then 'Analytics Engineer'
         when job_title ~* '\m(data|etl|elt|big\s+data|data\s+platform|data\s+pipeline|data\s+warehouse|data\s+integration)\s+(engineer|developer|architect)'
@@ -54,6 +74,13 @@ select
             then 'AI Research Scientist / Engineer'
         when job_title ~* 'data\s+scien|\mscientist\M|scientifique\s+des\s+données|científico\s+de\s+datos'
             then 'Data Scientist'
+        when job_title ~* '\mllms?\M|genai|gen\s+ai|generative\s+ai|large\s+language|prompt\s+engineer|\mrag\M|ai\s+agents?|agentic'
+         and job_title !~* 'data\s+scien'
+            then 'LLM / GenAI Engineer'
+        when job_title ~* 'computer\s+vision|image\s+processing|\mcv\s+(engineer|developer|scientist)|video\s+analytics'
+            then 'Computer Vision Engineer'
+        when job_title ~* '\mnlp\M|natural\s+language|speech\s+(recognition|scientist|engineer)|\masr\M|conversational\s+ai'
+            then 'NLP / Speech Engineer'
         when job_title ~* 'machine\s+learning|\mml\M|\mmlops\M|deep\s+learning|\mnlp\M|computer\s+vision|\mai\s+(engineer|developer|researcher|architect)|\mllm\M|genai|\mai(\s*/\s*|\s+)(agent|safety|agentic|platform|applied|research)\s+(engineers?|developers?|scientists?)|agent(ic)?\s+(ai\s+)?engineer|ai\s+safety'
             then 'ML / AI Engineer'
         when job_title ~* 'business\s+intelligence|\mbi\M|power\s*bi|tableau|looker|\mreporting\s+(analyst|developer|engineer|specialist)'
@@ -63,10 +90,19 @@ select
             then 'Database Administrator'
 
         -- --------------------------------------------------------------- Security
-        when job_title ~* '\msecurity\M|\mcyber|\msoc\M|penetration|pen\s*test|\mappsec\M|\minfosec\M|\miam\s+(engineer|analyst)|threat|vulnerabilit|\mgrc\M'
-            then 'Security Engineer / Analyst'
+        when job_title ~* 'penetration|pen\s*test|ethical\s+hack|red\s+team|offensive\s+security|bug\s+bounty|exploit\s+dev|\moscp\M'
+            then 'Penetration Tester / Red Team'
+        when job_title ~* 'identity\s+(and|&)\s+access|\miam\M|\mpam\M|sailpoint|cyberark|\mokta\M|identity\s+(engineer|architect|management|governance)'
+            then 'Identity & Access (IAM)'
+        when job_title ~* '\msoc\M|security\s+(operations|analyst|monitoring|incident)|incident\s+response|threat\s+(hunt|intel|detection|analyst)|\mdfir\M|blue\s+team|\msiem\M|cyber\s*security\s+analyst|forensic'
+            then 'SOC / Security Analyst'
+        when job_title ~* '\msecurity\M|\mcyber|\mappsec\M|\minfosec\M|threat|vulnerabilit|devsecops'
+         and job_title !~* 'security\s+(guard|officer\s+-\s+site)|physical\s+security'
+            then 'Security Engineer'
 
         -- --------------------------------------------------------------- UI / UX design
+        when job_title ~* 'ux\s+writ|content\s+designer|conversation(al)?\s+designer|ux\s+copy|product\s+writer'
+            then 'UX Writer / Content Designer'
         when job_title ~* '(ux|ui|user\s+experience|user\s+interface|product|interaction|visual|web|service|motion)\s*(/\s*(ux|ui)\s*)?(designer|design\s+(lead|manager|director))|\mdesigner\M|design\s+systems?|\mux\s+(research|writer|lead|manager)|\mui\s*/\s*ux|\mux\s*/\s*ui'
             then case when job_title ~* 'research' then 'UX Researcher'
                       when job_title ~* '\mui\M|visual|web\s+designer|motion' and job_title !~* '\mux\M|product' then 'UI / Visual Designer'
@@ -90,6 +126,8 @@ select
             then 'Network Engineer'
 
         -- --------------------------------------------------------- IT, DevOps & cloud
+        when job_title ~* '\mit\s+(manager|director|lead|head|operations\s+manager)\M|head\s+of\s+(it|information\s+technology|technology|infrastructure)|\mcio\M|chief\s+information\s+officer|leiter\s+it\M'
+            then 'IT Leadership'
         when job_title ~* 'it\s+support|help\s*desk|service\s+desk|desktop\s+support|sys(tem)?\s*admin|system\s+administrator|systemadministrat|it\s+(administrator|technician|specialist|engineer)|fachinformatiker(?!.*anwendungsentwicklung)'
             then 'IT Support / Systems Admin'
         when job_title ~* '\msre\M|site\s+reliability'
@@ -135,6 +173,15 @@ select
             then 'Mobile Engineer'
         when job_title ~* 'robotics?\s+(software\s+)?(engineer|developer|programmer)|\mros2?\M|autonomous\s+(systems?|vehicles?|driving)\s+engineer|perception\s+engineer'
             then 'Robotics Engineer'
+        when job_title ~* 'developer\s+(advocate|relations|evangelist)|\mdevrel\M|developer\s+experience\s+advocate'
+            then 'Developer Relations'
+        when job_title ~* 'pre-?sales|sales\s+engineer|technical\s+sales|solutions?\s+consultant|bid\s+engineer'
+            then 'Pre-sales / Sales Engineer'
+        when job_title ~* 'integration\s+(engineer|developer|specialist|architect|consultant)|middleware|mulesoft|\mesb\M|\mtibco\M|\mboomi\M|api\s+integration|\mapigee\M'
+            then 'Integration / API Engineer'
+        when job_title ~* '(software|solutions?|enterprise|technical|application|systems?|platform|it)\s+architect|\marchitect\M'
+         and job_title !~* 'landscape|interior|building|\mbim\M|revit'
+            then 'Software / Solutions Architect'
         when job_title ~* 'full[\s-]?stack|fullstack'
             then 'Full-Stack Engineer'
         when job_title ~* 'front[\s-]?end|frontend|\mui\s+(engineer|developer)|web\s+(developer|engineer)|javascript|typescript|\mreact\M|angular|\mvue\M|svelte|wordpress|shopify\s+developer'

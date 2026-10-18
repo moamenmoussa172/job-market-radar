@@ -57,3 +57,27 @@ def test_tech_titles_are_kept(title):
 @pytest.mark.parametrize("title", DROP)
 def test_non_tech_titles_are_dropped(title):
     assert not is_tech_role(title), title
+
+
+@pytest.mark.parametrize("title", [
+    "ASIC Design Engineer", "FPGA Engineer", "Design Verification Engineer (UVM)", "Physical Design Engineer",
+    "AUTOSAR Software Engineer", "ADAS Engineer", "SOC Analyst L2", "Security Analyst", "Red Team Operator",
+    "GRC Specialist", "IT Auditor", "IAM Engineer", "Pre-Sales Engineer", "Solutions Consultant",
+    "Enterprise Architect", "Integration Developer (MuleSoft)", "Developer Advocate", "Quantitative Developer",
+    "Performance Test Engineer", "UX Writer", "IT Manager", "Head of IT", "Computer Vision Engineer",
+    "NLP Engineer", "LLM Engineer", "Speech Recognition Engineer", "Customer Support Engineer",
+])
+def test_specialist_tech_titles_are_kept(title):
+    assert is_tech_role(title)
+
+
+@pytest.mark.parametrize("title", ["Sales Manager", "Electrical Engineer", "Civil Engineer", "Security Guard",
+                                   "Landscape Architect"])
+def test_lookalike_non_tech_titles_stay_out(title):
+    assert not is_tech_role(title)
+
+
+def test_guard_style_security_jobs_are_not_tech():
+    assert not is_tech_role("Security Officer")
+    assert not is_tech_role("Security Supervisor - Mall")
+    assert is_tech_role("Information Security Officer") and is_tech_role("Cyber Security Specialist")

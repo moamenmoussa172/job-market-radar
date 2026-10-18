@@ -4,6 +4,8 @@ Analytics Engineer,Data & Analytics,1
 Data Analyst,Data & Analytics,1
 BI Analyst / Developer,Data & Analytics,1
 Data Scientist,Data & Analytics,1
+Data Architect,Data & Analytics,1
+Quantitative Analyst / Developer,Data & Analytics,1
 Business / Domain Analyst,Data & Analytics,1
 Data Governance / Privacy,Data & Analytics,1
 Database Administrator,Data & Analytics,1
@@ -15,11 +17,15 @@ GIS Specialist,Data & Analytics,1
 ML / AI Engineer,AI & Machine Learning,2
 MLOps Engineer,AI & Machine Learning,2
 AI Research Scientist / Engineer,AI & Machine Learning,2
+LLM / GenAI Engineer,AI & Machine Learning,2
+Computer Vision Engineer,AI & Machine Learning,2
+NLP / Speech Engineer,AI & Machine Learning,2
 Software Engineer,Software Engineering,3
 Backend Engineer,Software Engineering,3
 Frontend Engineer,Software Engineering,3
 Full-Stack Engineer,Software Engineering,3
-Embedded / Firmware Engineer,Software Engineering,3
+Software / Solutions Architect,Software Engineering,3
+Integration / API Engineer,Software Engineering,3
 Game / XR Developer,Software Engineering,3
 Robotics Engineer,Software Engineering,3
 Blockchain Engineer,Software Engineering,3
@@ -31,13 +37,19 @@ Cross-platform Mobile Engineer,Mobile Development,4
 Mobile Engineer,Mobile Development,4
 QA Automation Engineer,QA & Testing,5
 QA / Test Engineer,QA & Testing,5
+Performance Test Engineer,QA & Testing,5
 UX / Product Designer,UI/UX Design,6
 UI / Visual Designer,UI/UX Design,6
 UX Researcher,UI/UX Design,6
+UX Writer / Content Designer,UI/UX Design,6
 DevOps / Platform Engineer,DevOps & Cloud,7
 Site Reliability Engineer,DevOps & Cloud,7
 Cloud / Infrastructure Engineer,DevOps & Cloud,7
-Security Engineer / Analyst,Security,8
+Security Engineer,Security,8
+SOC / Security Analyst,Security,8
+Penetration Tester / Red Team,Security,8
+GRC / IT Audit,Security,8
+Identity & Access (IAM),Security,8
 ERP / CRM Consultant,ERP & CRM,9
 ERP / CRM Developer,ERP & CRM,9
 RPA / Low-code Developer,ERP & CRM,9
@@ -46,9 +58,16 @@ Telecom Engineer,Networks & Telecom,10
 Product Manager / Owner,Product & Delivery,11
 Technical Project / Program Manager,Product & Delivery,11
 Scrum Master / Agile Coach,Product & Delivery,11
+Developer Relations,Product & Delivery,11
 IT Support / Systems Admin,IT & Support,12
 Systems / IT Analyst,IT & Support,12
 Solutions / Support Engineer,IT & Support,12
 Technical Writer,IT & Support,12
+Pre-sales / Sales Engineer,IT & Support,12
+IT Leadership,IT & Support,12
 Other tech role,IT & Support,12
+Embedded / Firmware Engineer,Embedded & Chip Design,13
+Automotive Software Engineer,Embedded & Chip Design,13
+ASIC / FPGA Design Engineer,Embedded & Chip Design,13
+Design Verification Engineer,Embedded & Chip Design,13
 Not a tech role,Not tech,99

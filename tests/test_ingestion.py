@@ -5,6 +5,7 @@ Run from the project root:  pip install -r tests/requirements.txt && pytest
 from datetime import datetime, timezone
 
 import pytest
+import requests
 
 from jobradar import sources, storage, warehouse
 from jobradar.filters import is_data_role
@@ -776,3 +777,35 @@ def test_any_network_error_on_a_board_is_a_warning(monkeypatch):
     monkeypatch.setitem(sources.ATS_FETCHERS, "workday", boom)
     res = sources.extract_company_boards("workday", ["a.wd1/X"], 0)
     assert res.records == [] and "Response ended prematurely" in res.warnings[0]
+
+
+def _http_429():
+    resp = requests.Response()
+    resp.status_code = 429
+    resp.headers["Retry-After"] = "1"
+    return requests.HTTPError("429 Too Many Requests", response=resp)
+
+
+def test_arbeitnow_waits_and_retries_on_rate_limit(monkeypatch):
+    calls = []
+
+    def fake(url, params=None, headers=None):
+        calls.append(params["page"])
+        if len(calls) == 1:
+            raise _http_429()
+        return {"data": [{"slug": "a", "title": "Data Engineer"}], "links": {"next": None}}
+    monkeypatch.setattr(sources, "_get_json", fake)
+    monkeypatch.setattr(sources.time, "sleep", lambda s: None)
+    res = sources.extract_arbeitnow()
+    assert calls == [1, 1] and len(res.records) == 1 and not res.warnings
+
+
+def test_arbeitnow_keeps_earlier_pages_when_still_rate_limited(monkeypatch):
+    def fake(url, params=None, headers=None):
+        if params["page"] >= 2:
+            raise _http_429()
+        return {"data": [{"slug": "a", "title": "Data Engineer"}], "links": {"next": "p2"}}
+    monkeypatch.setattr(sources, "_get_json", fake)
+    monkeypatch.setattr(sources.time, "sleep", lambda s: None)
+    res = sources.extract_arbeitnow()
+    assert len(res.records) == 1 and "stopped at page 2" in res.warnings[0]

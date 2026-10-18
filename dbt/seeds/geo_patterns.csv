@@ -82,7 +82,7 @@ pattern,country,region
 "\m(lebanon|beirut)\M",Lebanon,MENA
 "\m(morocco|casablanca|rabat)\M",Morocco,MENA
 "\m(tunisia|tunis)\M",Tunisia,MENA
-"\m(israel|tel\s+aviv|jerusalem|haifa)\M",Israel,MENA
+"\m(israel|israeli|tel[\s-]+aviv|jerusalem|haifa|herzliya|herzliyya|ramat[\s-]+gan|petah[\s-]+tikva|petach[\s-]+tikva|netanya|rehovot|yokneam|beersheba|be'er[\s-]+sheva|beer[\s-]+sheva|ra'?anana|hod[\s-]+hasharon|kfar[\s-]+saba|caesarea|modiin|modi'in|rosh[\s-]+ha'?ayin|bnei[\s-]+brak|holon|ashdod|ashkelon|nazareth[\s-]+illit|or[\s-]+yehuda|ness[\s-]+ziona|givatayim|bat[\s-]+yam|rishon)\M",Israel,MENA
 "\m(nigeria|lagos|abuja)\M",Nigeria,Africa
 "\m(kenya|nairobi)\M",Kenya,Africa
 "\m(south\s+africa|cape\s+town|johannesburg)\M",South Africa,Africa
