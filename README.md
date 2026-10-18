@@ -37,6 +37,11 @@ the next skill to learn for *their* skills, pay by role, where the jobs are and 
 Visitors can **upload their CV** (PDF or Word) or paste its text: it is read in the browser (pdf.js and mammoth,
 self-hosted) with the same skill rules the pipeline uses on job descriptions, and never leaves the device.
 They get their skills, years of experience, likely role, best-matching jobs and "skills worth adding to your CV".
+A **What to learn next** card picks the three skills that would add the most matching jobs, one after the other
+("Airflow +85 jobs, then dbt +40...": a greedy plan over the jobs shown). Visitors can **save jobs and mark the
+ones they applied to** (kept in the browser, with closed applications kept as history), see **what's new since
+their last visit** (from each job's first-seen day), **share a job to WhatsApp** with a link that opens that job,
+and **install the site as an app** (web manifest + a service worker that keeps the last copy for weak connections).
 A **Trends** tab shows how hiring changes week by week for the visitor's country (new jobs per week by
 track, which tracks are hiring faster, skills on the rise and cooling down, how long jobs stay open), and
 the **weekly report** page (`report.html`) turns last week into a shareable 1080×1350 image plus a ready

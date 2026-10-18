@@ -166,3 +166,38 @@ def test_report_page_is_published():
     files = site_export.site_files(analytics_code="radarak")
     assert "report.html" in files and "report.js" in files
     assert b"goatcounter" in files["report.html"]      # analytics on every page
+
+
+def test_site_is_an_installable_app():
+    import json
+    files = site_export.site_files()
+    assert {"manifest.webmanifest", "sw.js"} <= set(files)
+    manifest = json.loads(files["manifest.webmanifest"])
+    assert manifest["display"] == "standalone" and manifest["start_url"].startswith("./")
+    for icon in manifest["icons"]:
+        assert icon["src"] in files, icon["src"]                       # every icon is published
+    assert any(i["purpose"] == "maskable" for i in manifest["icons"])
+    html = files["index.html"].decode()
+    assert 'rel="manifest"' in html and 'rel="apple-touch-icon"' in html
+    assert html.split('rel="apple-touch-icon" href="')[1].split('"')[0] in files
+    sw = files["sw.js"].decode()
+    for path in sw.split("const SHELL = [")[1].split("]")[0].replace('"', "").replace("\n", "").split(","):
+        path = path.strip()
+        assert path in ("./", "") or path in files, path                # the offline copy only lists real files
+    assert 'register("sw.js")' in files["app.js"].decode()
+
+
+def test_job_export_keeps_first_seen_day_for_new_since_last_visit():
+    import datetime as dt
+    row = ("abcdef1234567890", "Data Engineer", "Acme", "Data & Analytics", "Data Engineer", "Mid", "Remote",
+           "Software", "Cairo, Egypt", ["Egypt"], [], False, None, None, dt.date(2026, 10, 1), False,
+           "https://jobs.example.com/1", ["SQL"], False, False, False, "greenhouse", dt.date(2026, 10, 18))
+    same = row[:-1] + (dt.date(2026, 10, 1),)
+    conn = _FakeConn({"with jobs as": [row, same], "seeds.geo_patterns": [], "seeds.role_tracks": [],
+                      "count(*) from marts.fct_job_postings": [(2,)], "seeds.skills": [],
+                      "mart_weekly_new_jobs": [], "mart_skill_trends": [], "mart_time_to_close": [],
+                      "max(first_seen_date) - min(first_seen_date)": [(0,)]})
+    import json
+    jobs = json.loads(site_export.export_site_data(conn)["data/jobs.json"])
+    assert jobs[0]["p"] == "2026-10-01" and jobs[0]["fs"] == "2026-10-18"   # posted earlier, first seen yesterday
+    assert "fs" not in jobs[1]                                              # same day: not repeated

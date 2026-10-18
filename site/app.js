@@ -59,7 +59,7 @@
       more: (n) => `Show ${n} more`,
       emptyJobs: "No jobs match all of these filters.", emptyFix: "Clear the extra filters",
       emptyCountry: "Few jobs are open to this country with these filters. Try \"any tech\" or turn off a quick filter.",
-      savedHint: "Jobs you save are kept on this device. A job disappears from the list below when it's no longer open.",
+      savedHint: "Save jobs and tick the ones you applied to. Everything stays on this device, nothing is sent anywhere.",
       savedEmpty: "No saved jobs yet. Tap Save on any job to keep it here.",
       topSkills: "Skills these jobs ask for", topSkillsHint: "Share of jobs that mention each skill. Tap one to see only jobs that need it.",
       nextSkill: "The next skill to learn",
@@ -84,6 +84,17 @@
       cvGapTitle: "Worth adding to your CV, if you have them:",
       cvGapHint: "These skills appear in many jobs close to your profile but not in your CV.",
       cvShowRole: (r) => `Show ${r} jobs`, showNat: "Showing nationals-only", cvShowBest: "Show my best matches", cvClear: "Forget my CV skills",
+      learnTitle: "What to learn next", learnNow: (m) => `You match <b>${m}</b> jobs right now.`,
+      learnHint: "Each step counts the extra jobs you'd match (60%+ of their skills) after learning it and the ones above it.",
+      learnJobs: (n) => `+${n} jobs`, learnTotal: (a, b) => `Learn all ${a === 1 ? "of it" : "three"}: <b>${b}</b> jobs you match`,
+      learnKnow: "I know it", learnSee: "See jobs", learnNone: "You already match most jobs here, or they list too few skills to say.",
+      applied: "Applied", markApplied: "Mark as applied", appliedOn: (d) => `Applied ${d}`, savedOn: (d) => `Saved ${d}`,
+      savedAll: "All", savedTodo: "To apply", savedDone: "Applied", closedTag: "No longer listed", removeSaved: "Remove",
+      savedNone: "Nothing here yet.",
+      newTag: "New", newBanner: (n, d) => `<b>${n}</b> new ${n === 1 ? "job" : "jobs"} since your last visit (${d})`,
+      newShow: "Show only new", newAll: "Show all jobs", qNew: "New since last visit",
+      shareWa: "WhatsApp", shareMore: "Share", shareText: (ti, c) => `${ti}${c ? " at " + c : ""} (found on Radarak)`,
+      installApp: "Install app", iosHint: "To install Radarak: tap the Share button in Safari, then “Add to Home Screen”.", gotIt: "Got it",
     },
     ar: {
       brand: "رادارك", code: "الكود المصدري", skip: "انتقل للوظايف",
@@ -134,7 +145,7 @@
       more: (n) => `اعرض ${n} كمان`,
       emptyJobs: "مفيش وظايف بكل الفلاتر دي.", emptyFix: "امسح الفلاتر الزيادة",
       emptyCountry: "وظايف قليلة مفتوحة للبلد دي بالفلاتر دي. جرّب \"أي مجال تقني\" أو اقفل فلتر سريع.",
-      savedHint: "الوظايف اللي بتحفظها بتفضل على الجهاز ده. الوظيفة بتختفي من هنا لما تتقفل.",
+      savedHint: "احفظ الوظايف وعلّم على اللي قدّمت عليها. كل ده بيفضل على جهازك ومش بيتبعت لأي مكان.",
       savedEmpty: "مفيش وظايف محفوظة لسه. اضغط احفظ على أي وظيفة.",
       topSkills: "المهارات المطلوبة في الوظايف دي", topSkillsHint: "نسبة الوظايف اللي بتطلب كل مهارة. اضغط على مهارة عشان تشوف وظايفها بس.",
       nextSkill: "المهارة الجاية اللي تتعلمها",
@@ -159,6 +170,17 @@
       cvGapTitle: "تستاهل تضيفها للـ CV لو بتعرفها:",
       cvGapHint: "المهارات دي مطلوبة في وظايف كتير قريبة من بروفايلك ومش مكتوبة في الـ CV.",
       cvShowRole: (r) => `اعرض وظايف ${r}`, showNat: "بيعرض وظايف المواطنين فقط", cvShowBest: "اعرض أنسب وظايف ليا", cvClear: "امسح مهارات الـ CV",
+      learnTitle: "تتعلم إيه بعد كده", learnNow: (m) => `إنت مناسب لـ <b>${m}</b> وظيفة دلوقتي.`,
+      learnHint: "كل خطوة بتحسب الوظايف الزيادة اللي هتبقى مناسب لها (60%+ من مهاراتها) لو اتعلمت المهارة دي واللي فوقها.",
+      learnJobs: (n) => `+${n} وظيفة`, learnTotal: (a, b) => `لو اتعلمتهم ${a === 1 ? "" : "التلاتة"}: <b>${b}</b> وظيفة مناسبة ليك`,
+      learnKnow: "بعرفها", learnSee: "شوف الوظايف", learnNone: "إنت مناسب لأغلب الوظايف هنا، أو مهاراتها المكتوبة قليلة.",
+      applied: "قدّمت", markApplied: "قدّمت عليها", appliedOn: (d) => `قدّمت ${d}`, savedOn: (d) => `اتحفظت ${d}`,
+      savedAll: "الكل", savedTodo: "لسه هقدّم", savedDone: "قدّمت", closedTag: "مش معروضة دلوقتي", removeSaved: "شيلها",
+      savedNone: "مفيش حاجة هنا لسه.",
+      newTag: "جديدة", newBanner: (n, d) => `<b>${n}</b> وظيفة جديدة من آخر زيارة ليك (${d})`,
+      newShow: "اعرض الجديد بس", newAll: "اعرض كل الوظايف", qNew: "جديدة من آخر زيارة",
+      shareWa: "واتساب", shareMore: "شارك", shareText: (ti, c) => `${ti}${c ? " في " + c : ""} (لقيتها على رادارك)`,
+      installApp: "نزّل التطبيق", iosHint: "عشان تنزّل رادارك: دوس على زرار المشاركة في Safari، وبعدين \"Add to Home Screen\".", gotIt: "تمام",
     },
   };
   const ABOUT = {
@@ -212,8 +234,14 @@
   let trends = null;
   let meta = null, jobs = [], regionOf = {}, shown = PAGE, groups = [], current = [];
   let mySkills = new Set(store.get("mySkills", []));
-  let savedJobs = store.get("saved", {});               // id -> {t, c, l, u, p}
-  const quick = { remote: false, visa: false, junior: false, pay: false, week: false, hideNat: true };
+  let savedJobs = store.get("saved", {});               // id -> {t, c, l, u, sv: saved day, a: applied day}
+  let savedView = "all";                                // Saved tab: all | todo | done
+  const quick = { remote: false, visa: false, junior: false, pay: false, week: false, hideNat: true, fresh: false };
+  const NOT_IN_LINKS = new Set(["fresh"]);              // "new for me" depends on the visitor, so shared links don't carry it
+  let newSince = null;                                  // day of the data the visitor saw on their previous visit
+  const isNew = (j) => !!newSince && (j.fs || j.p) > newSince;
+  const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+  const shortDate = (iso) => new Date(iso + "T12:00:00Z").toLocaleDateString(lang === "ar" ? "ar-EG" : "en-GB", { day: "numeric", month: "short" });
   const openLocs = new Set();
   const t = (k) => T[lang][k] ?? T.en[k] ?? k;
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -292,7 +320,7 @@
   function readHash() {
     const h = new URLSearchParams(location.hash.slice(1));
     FIELDS.forEach((f) => { $(f).value = h.get(f) || (f === "sort" ? "new" : (f === "country" ? $(f).value : "")); });
-    Object.keys(quick).forEach((k) => { if (h.has(k)) quick[k] = h.get(k) === "1"; });
+    Object.keys(quick).forEach((k) => { if (h.has(k) && !NOT_IN_LINKS.has(k)) quick[k] = h.get(k) === "1"; });
     syncToggles();
     if (h.has("tab")) selectTab(h.get("tab"), false);
     const jid = h.get("job");
@@ -302,7 +330,7 @@
   function writeHash() {
     const h = new URLSearchParams();
     FIELDS.forEach((f) => { if ($(f).value && !(f === "sort" && $(f).value === "new")) h.set(f, $(f).value); });
-    Object.entries(quick).forEach(([k, v]) => { if (v !== (k === "hideNat")) h.set(k, v ? "1" : "0"); });
+    Object.entries(quick).forEach(([k, v]) => { if (v !== (k === "hideNat") && !NOT_IN_LINKS.has(k)) h.set(k, v ? "1" : "0"); });
     const tab = document.querySelector('[role="tab"][aria-selected="true"]').getAttribute("aria-controls");
     if (tab !== "jobs") h.set("tab", tab);
     if (currentJob) h.set("job", currentJob);
@@ -337,6 +365,7 @@
       if (quick.pay && !j.$) return false;
       if (quick.week && (j.p < weekAgo || (f & FLAG.longOpen))) return false;
       if (quick.hideNat && (f & FLAG.nationals)) return false;
+      if (quick.fresh && !isNew(j)) return false;
       if (ar === "req" && !(f & FLAG.arabic)) return false;
       if (ar === "not" && (f & FLAG.arabic)) return false;
       if (q && !j._text.includes(q)) return false;
@@ -382,6 +411,11 @@
   const mySkillIdx = () => new Set([...mySkills].map((s) => meta.skills.indexOf(s)).filter((i) => i >= 0));
 
   const BOOKMARK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4.5L6 21z"/></svg>';
+  const CHECK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
+  const WA_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path class="wafill" d="M12 2.2a9.7 9.7 0 0 0-8.4 14.6L2.3 21.8l5.1-1.3A9.7 9.7 0 1 0 12 2.2Zm0 17.7a8 8 0 0 1-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1 1 12 19.9Zm4.4-6c-.2-.1-1.4-.7-1.7-.8-.2-.1-.4-.1-.5.1l-.8 1c-.1.2-.3.2-.5.1a6.6 6.6 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.5-.4h-.5a.9.9 0 0 0-.7.3 2.8 2.8 0 0 0-.9 2.1 4.9 4.9 0 0 0 1 2.6 11.2 11.2 0 0 0 4.3 3.8c1.6.7 2.2.7 3 .6a2.6 2.6 0 0 0 1.7-1.2 2.1 2.1 0 0 0 .2-1.2c-.1-.1-.2-.2-.5-.3Z"/></svg>';
+  // a link that opens this job's details on Radarak (no filters, so it works for whoever receives it)
+  const jobLink = (j) => location.origin + location.pathname + "#job=" + encodeURIComponent(j.id);
+  const waLink = (j) => "https://wa.me/?text=" + encodeURIComponent(t("shareText")(j.t, j.c) + "\n" + jobLink(j));
   function matchRing(have, total) {
     const pct = Math.round((100 * have) / total), r = 17, c = 2 * Math.PI * r;
     const tone = pct >= 60 ? "hi" : pct >= 30 ? "mid" : "lo";
@@ -393,7 +427,10 @@
   function jobRow(g) {
     const j = g.job, f = g.flags, mine = mySkillIdx();
     const others = g.all.length - 1;
+    const sv = savedJobs[j.id];
     const facts = [
+      g.all.some(isNew) ? `<span class="fact new">${t("newTag")}</span>` : "",
+      sv && sv.a && !String(g.key).startsWith("saved:") ? `<span class="fact applied">✓ ${t("applied")}</span>` : "",
       g.pay ? `<span class="fact pay">${payText(g.pay)}</span>` : "",
       j.w === "Remote" ? `<span class="fact remote">${j.ww ? t("remoteWorld") : t("remote")}</span>` : `<span class="fact">${esc(j.w)}</span>`,
       f & FLAG.visa ? `<span class="fact visa">${t("visaTag")}</span>` : "",
@@ -422,7 +459,10 @@
       <div class="jside">
         ${mine.size && j.k.length ? matchRing(g.have, j.k.length) : ""}
         <span class="age">${f & FLAG.longOpen ? t("longOpen") : ago(j.p)}</span>
-        <button type="button" class="save" data-id="${esc(j.id)}" aria-pressed="${isSaved}">${BOOKMARK}<span>${isSaved ? t("saved") : t("save")}</span></button>
+        <div class="rowbtns">
+          <a class="wa" href="${esc(waLink(j))}" target="_blank" rel="noopener" data-share="${esc(j.id)}" aria-label="${esc(t("shareWa"))}" title="${esc(t("shareWa"))}">${WA_ICON}</a>
+          <button type="button" class="save" data-id="${esc(j.id)}" aria-pressed="${isSaved}">${BOOKMARK}<span>${isSaved ? t("saved") : t("save")}</span></button>
+        </div>
       </div>
     </li>`;
   }
@@ -446,16 +486,110 @@
   }
 
   function renderSaved() {
-    const ids = Object.keys(savedJobs);
     const open = new Map(jobs.map((j) => [j.id, j]));
-    const still = ids.filter((id) => open.has(id));
-    $("savedCount").hidden = !still.length;
-    $("savedCount").textContent = still.length;
+    const ids = Object.keys(savedJobs);
+    // saved jobs that closed are dropped, unless you applied: those stay as your application history
+    const keep = ids.filter((id) => open.has(id) || savedJobs[id].a);
+    const todo = keep.filter((id) => !savedJobs[id].a && open.has(id)), done = keep.filter((id) => savedJobs[id].a);
+    $("savedCount").hidden = !todo.length;
+    $("savedCount").textContent = todo.length;
     if ($("saved").hidden) return;
-    $("savedList").innerHTML = still.map((id) => jobRow({ key: "saved:" + id, job: open.get(id), all: [open.get(id)],
-      pay: open.get(id).$ || null, flags: open.get(id).f || 0, have: 0, match: -1 })).join("");
-    $("savedEmpty").hidden = still.length > 0;
-    $("savedEmpty").textContent = t("savedEmpty");
+    $("savedTabs").innerHTML = [["all", t("savedAll"), keep.length], ["todo", t("savedTodo"), todo.length], ["done", t("savedDone"), done.length]]
+      .map(([v, label, n]) => `<button type="button" class="stab${savedView === v ? " on" : ""}" data-saved-view="${v}" aria-pressed="${savedView === v}">${esc(label)} <span class="n">${num(n)}</span></button>`).join("");
+    const list = savedView === "todo" ? todo : savedView === "done" ? done : keep;
+    const byDay = (id) => savedJobs[id].a || savedJobs[id].sv || "";
+    list.sort((a, b) => (byDay(a) < byDay(b) ? 1 : -1));
+    $("savedList").innerHTML = list.map((id) => {
+      const s = savedJobs[id], j = open.get(id);
+      const status = `<p class="savedmeta">${s.a ? `<span class="fact applied">✓ ${esc(t("appliedOn")(shortDate(s.a)))}</span>` : s.sv ? esc(t("savedOn")(shortDate(s.sv))) : ""}
+        <button type="button" class="applybtn" data-applied="${esc(id)}" aria-pressed="${!!s.a}">${CHECK}<span>${s.a ? t("applied") : t("markApplied")}</span></button></p>`;
+      if (j) { const row = jobRow({ key: "saved:" + id, job: j, all: [j], pay: j.$ || null, flags: j.f || 0, have: 0, match: -1 }), at = row.lastIndexOf("</li>");
+        return row.slice(0, at) + status + row.slice(at); }
+      return `<li class="job closed"><span class="avatar" aria-hidden="true">${esc((s.c || s.t || "?").charAt(0).toUpperCase())}</span>
+        <div class="jmain"><h3>${s.u ? `<a class="closedlink" href="${esc(s.u)}" target="_blank" rel="noopener nofollow">${esc(s.t)}</a>` : esc(s.t)}</h3>
+          <p class="where"><b>${esc(s.c || "")}</b><span>${esc(s.l || "")}</span></p><div class="facts"><span class="fact">${t("closedTag")}</span></div></div>
+        <div class="jside"><button type="button" class="linkbtn" data-unsave="${esc(id)}">${t("removeSaved")}</button></div>${status}</li>`;
+    }).join("");
+    $("savedEmpty").hidden = list.length > 0;
+    $("savedEmpty").textContent = keep.length ? t("savedNone") : t("savedEmpty");
+  }
+  function toggleSaved(id) {
+    const j = jobs.find((x) => x.id === id);
+    if (savedJobs[id]) delete savedJobs[id];
+    else if (j) { savedJobs[id] = { t: j.t, c: j.c, l: j.l, u: j.u, sv: today() }; track("save-job"); }
+    store.set("saved", savedJobs);
+  }
+  function toggleApplied(id) {
+    const j = jobs.find((x) => x.id === id);
+    if (!savedJobs[id]) { if (!j) return; savedJobs[id] = { t: j.t, c: j.c, l: j.l, u: j.u, sv: today() }; }
+    if (savedJobs[id].a) delete savedJobs[id].a; else { savedJobs[id].a = today(); track("applied"); }
+    store.set("saved", savedJobs);
+  }
+
+  // ------------------------------------------------------------------ "what to learn next": the 3 skills that open the most jobs
+  function learnPlan() {
+    const mine = mySkillIdx();
+    if (!mine.size) return null;
+    const seen = new Set(), pool = [];
+    for (const j of current) {          // count each job once, the way the list shows it
+      if (j.k.length < 2) continue;
+      const key = j.t.toLowerCase() + "|" + (j.c || "").toLowerCase();
+      if (!seen.has(key)) { seen.add(key); pool.push(j); }
+    }
+    const isMatch = (j, have) => j.k.filter((k) => have.has(k)).length / j.k.length >= MATCH;
+    const have = new Set(mine);
+    let matched = pool.filter((j) => isMatch(j, have)).length;
+    const start = matched, steps = [];
+    for (let step = 0; step < 3; step++) {
+      const gain = new Map();
+      for (const j of pool) {
+        const known = j.k.filter((k) => have.has(k)).length;
+        if (known / j.k.length >= MATCH || (known + 1) / j.k.length < MATCH) continue;
+        j.k.forEach((k) => { if (!have.has(k)) gain.set(k, (gain.get(k) || 0) + 1); });
+      }
+      const best = [...gain.entries()].sort((a, b) => b[1] - a[1] || a[0] - b[0])[0];
+      if (!best || best[1] < 2) break;
+      have.add(best[0]); matched += best[1];
+      steps.push({ skill: meta.skills[best[0]], gain: best[1] });
+    }
+    return { start, end: matched, steps };
+  }
+  function renderLearn() {
+    const box = $("learnNext"), plan = learnPlan();
+    box.hidden = !plan;
+    if (!plan) return;
+    const top = Math.max(1, ...plan.steps.map((s) => s.gain));
+    box.innerHTML = `<div class="learnhead"><h3>🎯 ${t("learnTitle")}</h3><p>${t("learnNow")(num(plan.start))}</p></div>
+      ${plan.steps.length ? `<ol class="learnsteps">${plan.steps.map((s, i) => `<li>
+          <span class="lnum">${i + 1}</span>
+          <div class="lmain"><b>${esc(s.skill)}</b><span class="lbar"><i style="width:${Math.round((100 * s.gain) / top)}%"></i></span></div>
+          <span class="lgain">${t("learnJobs")(num(s.gain))}</span>
+          <span class="lbtns"><button type="button" class="linkbtn" data-learn-see="${esc(s.skill)}">${t("learnSee")}</button>
+            <button type="button" class="chip add" data-add="${esc(s.skill)}">+ ${t("learnKnow")}</button></span></li>`).join("")}</ol>
+        <p class="learntotal">${t("learnTotal")(plan.steps.length, `${num(plan.start)} → ${num(plan.end)}`)}
+          <span class="up">+${plan.start ? Math.round((100 * (plan.end - plan.start)) / plan.start) + "%" : num(plan.end - plan.start)}</span></p>
+        <p class="hint">${t("learnHint")}</p>` : `<p class="hint">${t("learnNone")}</p>`}`;
+  }
+
+  // ------------------------------------------------------------------ "new since your last visit"
+  function initVisit() {
+    const day = (meta.generated_at || "").slice(0, 10);
+    const v = store.get("visit", null);
+    if (!v) store.set("visit", { data: day, prev: null });
+    else if (v.data !== day) { newSince = v.data; store.set("visit", { data: day, prev: v.data }); }
+    else newSince = v.prev;
+  }
+  function renderNewBanner() {
+    const el = $("newBanner");
+    if (!newSince) { el.hidden = true; return; }
+    const was = quick.fresh;
+    quick.fresh = false;
+    const n = was ? groups.length : groups.filter((g) => g.all.some(isNew)).length;
+    quick.fresh = was;
+    el.hidden = !n && !was;
+    if (el.hidden) return;
+    el.innerHTML = `<span class="spark" aria-hidden="true">✨</span><p>${t("newBanner")(num(n), shortDate(newSince))}</p>
+      <button type="button" class="${was ? "linkbtn" : "primary sm"}" id="newToggle">${was ? t("newAll") : t("newShow")}</button>`;
   }
 
   function renderSkills() {
@@ -677,6 +811,7 @@
       <p class="hint">${t("cvAdded")}</p>
       ${gaps.length ? `<div class="gap"><p><b>${t("cvGapTitle")}</b></p><p class="hint">${t("cvGapHint")}</p>
         <div class="chips">${gaps.map((s) => `<button type="button" class="chip add" data-add="${esc(s)}">+ ${esc(s)}</button>`).join("")}</div></div>` : ""}
+      <button type="button" class="linkbtn learnjump" id="learnJump">${t("learnTitle")} ↓</button>
       <div class="actions">
         ${role ? `<button type="button" class="cvbtn" id="cvRoleBtn">${esc(t("cvShowRole")(role))}</button>` : ""}
         <button type="button" class="sharebtn" id="cvBestBtn">${t("cvShowBest")}</button>
@@ -684,6 +819,7 @@
       </div>`;
     if (role) $("cvRoleBtn").addEventListener("click", () => { track("cv-show-role"); $("role").value = "role:" + role; update(); goToJobs(); });
     $("cvBestBtn").addEventListener("click", goToJobs);
+    $("learnJump").addEventListener("click", () => $("learnNext").scrollIntoView({ behavior: "smooth", block: "center" }));
     $("cvClearBtn").addEventListener("click", () => { mySkills.clear(); store.set("mySkills", []); r.hidden = true; $("sort").value = "new"; update(); });
   }
   function goToJobs() { selectTab("jobs"); $("results").scrollIntoView({ behavior: "smooth", block: "start" }); }
@@ -825,6 +961,11 @@
         <a class="apply" href="${esc(j.u)}" target="_blank" rel="noopener nofollow">${t("applyOn")}
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></a>
         <button type="button" class="save" data-id="${esc(j.id)}" aria-pressed="${!!savedJobs[j.id]}">${BOOKMARK}<span>${savedJobs[j.id] ? t("saved") : t("save")}</span></button>
+        <button type="button" class="applybtn" data-applied="${esc(j.id)}" aria-pressed="${!!(savedJobs[j.id] && savedJobs[j.id].a)}">${CHECK}<span>${savedJobs[j.id] && savedJobs[j.id].a ? t("applied") : t("markApplied")}</span></button>
+      </div>
+      <div class="dshare">
+        <a class="wabtn" href="${esc(waLink(j))}" target="_blank" rel="noopener" data-share="${esc(j.id)}">${WA_ICON}<span>${t("shareWa")}</span></a>
+        ${navigator.share ? `<button type="button" class="ghostbtn" id="shareJob">${t("shareMore")}</button>` : ""}
         <button type="button" class="ghostbtn" id="copyJob">${t("copyLink")}</button>
       </div>
       <section class="dsection">${match}</section>
@@ -842,6 +983,11 @@
       ${similar.length ? `<section class="dsection"><h3>${t("similarTitle")}</h3><ul class="similar">${similar.map((x) =>
         `<li style="${tc(x.tr)}"><button type="button" data-open="${esc(x.id)}"><span class="avatar sm" aria-hidden="true">${esc((x.c || "?").charAt(0).toUpperCase())}</span>
           <span><b>${esc(x.t)}</b><small>${esc(x.c || "")} · ${esc(x.l || "")}</small></span></button></li>`).join("")}</ul></section>` : ""}`;
+  }
+  function refreshDrawer() {
+    if (!currentJob) return;
+    const g = groupFor(currentJob), j = jobs.find((x) => x.id === currentJob);
+    if (g && j) { const top = $("drawerBody").scrollTop; renderDrawer(g, j); $("drawerBody").scrollTop = top; }
   }
   function openJob(id, opener, write = true) {
     const g = groupFor(id), j = jobs.find((x) => x.id === id);
@@ -879,6 +1025,7 @@
     const flagLabel = { remote: "qRemote", visa: "qVisa", junior: "qJunior", pay: "qPay", week: "qWeek" };
     Object.entries(flagLabel).forEach(([k, label]) => { if (quick[k]) add(t(label), `data-flag-off="${k}"`); });
     if (!quick.hideNat) add(t("showNat"), 'data-flag-on="hideNat"');
+    if (quick.fresh) add(t("qNew"), 'data-flag-off="fresh"');
     $("activeFilters").innerHTML = chips.length > 1 || (chips.length && !$("country").value)
       ? chips.join("") + `<button type="button" class="linkbtn" id="chipsClear">${t("clearAll")}</button>` : chips.join("");
   }
@@ -928,7 +1075,7 @@
     $("count").textContent = num(groups.length);
     $("countLabel").textContent = $("country").value ? t("countLabel") : t("countAll");
     const extra = ["seniority", "workMode", "industry", "skill", "arabic"].filter((f) => $(f).value).length
-      + Object.entries(quick).filter(([k, v]) => v !== (k === "hideNat")).length;
+      + Object.entries(quick).filter(([k, v]) => v !== (k === "hideNat") && k !== "fresh").length;
     $("filterSummary").textContent = extra ? t("filtersN")(extra) : t("filters");
     $("filterOpen").classList.toggle("on", extra > 0);
     $("sheetDone").textContent = t("showN")(num(groups.length));
@@ -936,6 +1083,8 @@
     renderChips();
     if (document.activeElement !== $("qMini")) $("qMini").value = $("q").value;
     renderSkills();
+    renderLearn();
+    renderNewBanner();
     renderJobs();
     if (currentJob) { const g = groupFor(currentJob), j = jobs.find((x) => x.id === currentJob); if (g && j) renderDrawer(g, j); }
     renderSaved();
@@ -1037,17 +1186,26 @@
     $("mySkillInput").addEventListener("keydown", (e) => { if (e.key === "Enter" && addSkill(e.target.value)) e.target.value = ""; });
     // delegated clicks: remove/add skill chips, save buttons, location toggles
     document.addEventListener("click", (e) => {
+      const x = e.target.closest("[data-applied],[data-unsave],[data-saved-view],[data-learn-see],[data-share],#newToggle");
+      if (x) {
+        if (x.dataset.applied) { toggleApplied(x.dataset.applied); renderJobs(); renderSaved(); refreshDrawer(); }
+        else if (x.dataset.unsave) { delete savedJobs[x.dataset.unsave]; store.set("saved", savedJobs); renderSaved(); }
+        else if (x.dataset.savedView) { savedView = x.dataset.savedView; renderSaved(); }
+        else if (x.dataset.learnSee) { $("skill").value = x.dataset.learnSee; update(); goToJobs(); track("learn-see"); }
+        else if (x.dataset.share) { const j = jobs.find((y) => y.id === x.dataset.share); track("job-share/whatsapp/" + (j ? j.tr : "unknown")); }
+        else if (x.id === "newToggle") { quick.fresh = !quick.fresh; if (quick.fresh) track("new-since-visit"); update(); }
+        return;
+      }
       const el = e.target.closest("[data-skill],[data-add],[data-id],.locbtn");
       if (!el) return;
       if (el.dataset.skill) { mySkills.delete(el.dataset.skill); store.set("mySkills", [...mySkills]); update(true); }
       else if (el.dataset.add) addSkill(el.dataset.add);
       else if (el.dataset.id) {
-        const id = el.dataset.id, j = jobs.find((x) => x.id === id);
-        if (savedJobs[id]) delete savedJobs[id]; else if (j) { savedJobs[id] = { t: j.t, c: j.c, u: j.u }; track("save-job"); }
-        store.set("saved", savedJobs);
+        const id = el.dataset.id;
+        toggleSaved(id);
         el.setAttribute("aria-pressed", String(!!savedJobs[id]));
         el.querySelector("span").textContent = savedJobs[id] ? t("saved") : t("save");
-        if (el.closest(".drawer")) renderJobs();
+        if (el.closest(".drawer")) { renderJobs(); refreshDrawer(); }
         renderSaved();
       } else if (el.classList.contains("locbtn")) {
         const k = el.dataset.key;
@@ -1081,8 +1239,13 @@
       if (e.target.closest("#drawerAddSkills")) { closeJob(); selectTab("jobs"); document.querySelector(".skillsbox").scrollIntoView({ behavior: "smooth" }); $("mySkillInput").focus(); }
       if (e.target.closest("#copyJob")) {
         const b = e.target.closest("#copyJob");
-        navigator.clipboard.writeText(location.href).then(() => { b.textContent = t("linkCopied"); setTimeout(() => { b.textContent = t("copyLink"); }, 2000); }).catch(() => {});
-        track("job-share");
+        const j = jobs.find((x) => x.id === currentJob);
+        navigator.clipboard.writeText(j ? jobLink(j) : location.href).then(() => { b.textContent = t("linkCopied"); setTimeout(() => { b.textContent = t("copyLink"); }, 2000); }).catch(() => {});
+        track("job-share/copy");
+      }
+      if (e.target.closest("#shareJob")) {
+        const j = jobs.find((x) => x.id === currentJob);
+        if (j) navigator.share({ title: j.t, text: t("shareText")(j.t, j.c), url: jobLink(j) }).then(() => track("job-share/native")).catch(() => {});
       }
     });
     // active filter chips
@@ -1102,8 +1265,30 @@
     window.addEventListener("resize", sizeHero);
   }
 
+  // ------------------------------------------------------------------ install as an app (PWA)
+  let installEvt = null;
+  const standalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+  function setupInstall() {
+    if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
+      navigator.serviceWorker.register("sw.js").catch(() => {});
+    }
+    const btn = $("installBtn");
+    if (standalone()) return;
+    window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installEvt = e; btn.hidden = false; });
+    window.addEventListener("appinstalled", () => { btn.hidden = true; track("app-installed"); });
+    if (isIOS()) btn.hidden = false;           // Safari has no install prompt: show how to do it by hand
+    btn.addEventListener("click", async () => {
+      track("install-click");
+      if (installEvt) { installEvt.prompt(); const r = await installEvt.userChoice.catch(() => null); if (r && r.outcome === "accepted") btn.hidden = true; installEvt = null; return; }
+      $("iosHint").hidden = false;
+    });
+    $("iosHintClose").addEventListener("click", () => { $("iosHint").hidden = true; });
+  }
+
   async function start() {
     applyLanguage();
+    setupInstall();
     try {
       const [m, j] = await Promise.all([
         fetch("data/meta.json").then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }),
@@ -1120,6 +1305,7 @@
       return;
     }
     meta.countries.forEach((c) => { regionOf[c.name] = c.region; });
+    initVisit();
     meta.tracks.forEach((tr) => tr.roles.forEach((r) => { trackOfRole[r] = tr.name; }));
     jobs.forEach((j) => { j._text = [j.t, j.c, j.r, ...j.k.map((k) => meta.skills[k])].join(" ").toLowerCase(); });
     applyLanguage();

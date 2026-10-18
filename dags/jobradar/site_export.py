@@ -66,7 +66,8 @@ select j.job_id, j.job_title, j.company_name, j.track, j.role_family, j.seniorit
             else coalesce(j.posted_at::date, j.first_seen_date) end as posted,
        j.posted_at::date < j.first_seen_date - %(stale_days)s as long_open,
        j.job_url, coalesce(s.skills, '{}'),
-       j.offers_visa_or_relocation, j.nationals_only, j.arabic_required, j.primary_source
+       j.offers_visa_or_relocation, j.nationals_only, j.arabic_required, j.primary_source,
+       j.first_seen_date
 from jobs j
 left join geo g using (job_id)
 left join sk s using (job_id)
@@ -94,7 +95,8 @@ def export_site_data(conn, generated_at: dt.datetime | None = None) -> dict[str,
     skill_idx = {s: i for i, s in enumerate(skills)}
     jobs = []
     for (job_id, title, company, track, role, seniority, work_mode, industry, loc, countries, regions,
-         worldwide, sal_min, sal_max, posted, long_open, url, job_skills, visa, nationals, arabic, source) in rows:
+         worldwide, sal_min, sal_max, posted, long_open, url, job_skills, visa, nationals, arabic, source,
+         first_seen) in rows:
         flags = (1 if visa else 0) | (2 if nationals else 0) | (4 if arabic else 0) | (8 if long_open else 0)
         job = {"id": job_id[:12], "t": title, "c": company, "tr": track, "r": role, "s": seniority,
                "w": work_mode, "i": industry, "l": loc, "co": list(countries), "rg": list(regions),
@@ -107,6 +109,9 @@ def export_site_data(conn, generated_at: dt.datetime | None = None) -> dict[str,
             job["f"] = flags
         if source in SOURCE_CREDITS:
             job["by"] = SOURCE_CREDITS[source]
+        # the day Radarak first saw the job, for "new since your last visit" (only when it differs from "p")
+        if first_seen and first_seen.isoformat() != job["p"]:
+            job["fs"] = first_seen.isoformat()
         jobs.append(job)
 
     countries = _rows(conn, """
