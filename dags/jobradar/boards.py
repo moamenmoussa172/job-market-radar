@@ -243,6 +243,7 @@ COUNTRY_KEYWORDS = {
     "Bahrain": ["bahrain", "manama"],
     "Oman": ["oman", "muscat"],
     "Jordan": ["jordan", "amman"],
+    "Palestine": ["palestine", "ramallah", "gaza", "nablus", "bethlehem", "hebron"],
     # remote-first employers: accept the board if its tech jobs are remote
     "Remote": ["remote", "anywhere", "worldwide", "work from home", "distributed"],
     "Netherlands": ["netherlands", "amsterdam", "rotterdam", "utrecht", "eindhoven", "the hague"],
@@ -258,7 +259,7 @@ COUNTRY_KEYWORDS = {
     "Czechia": ["czech", "czechia", "prague", "brno"],
 }
 _MENA = ["mena", "middle east", "gcc"]
-MENA_COUNTRIES = ("Egypt", "United Arab Emirates", "Saudi Arabia", "Qatar", "Kuwait", "Bahrain", "Oman", "Jordan")
+MENA_COUNTRIES = ("Egypt", "United Arab Emirates", "Saudi Arabia", "Qatar", "Kuwait", "Bahrain", "Oman", "Jordan", "Palestine")
 
 
 def load_companies(path: Path = COMPANIES_FILE) -> list[dict]:

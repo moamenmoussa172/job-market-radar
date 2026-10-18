@@ -390,7 +390,7 @@ WORKDAY_MAX_PAGES = int(os.environ.get("WORKDAY_MAX_PAGES", "15"))       # per c
 WORKDAY_MAX_DETAILS = int(os.environ.get("WORKDAY_MAX_DETAILS", "80"))   # per board
 WORKDAY_HEADERS = {"Accept": "application/json", "Accept-Language": "en-US", "Content-Type": "application/json"}
 MENA_COUNTRY_NAMES = ("Egypt", "United Arab Emirates", "Saudi Arabia", "Qatar", "Kuwait", "Bahrain", "Oman",
-                      "Jordan", "Morocco", "Lebanon", "Tunisia")
+                      "Jordan", "Palestine", "Morocco", "Lebanon", "Tunisia")
 EUROPE_COUNTRY_NAMES = ("Austria", "Belgium", "Bulgaria", "Croatia", "Cyprus", "Czechia", "Czech Republic",
                         "Denmark", "Estonia", "Finland", "France", "Germany", "Greece", "Hungary", "Ireland",
                         "Italy", "Latvia", "Lithuania", "Luxembourg", "Malta", "Netherlands", "Norway", "Poland",

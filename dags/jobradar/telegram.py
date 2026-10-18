@@ -40,12 +40,12 @@ TRACK_EMOJI = {
 }
 FLAGS = {
     "Egypt": "🇪🇬", "Saudi Arabia": "🇸🇦", "United Arab Emirates": "🇦🇪", "Qatar": "🇶🇦", "Kuwait": "🇰🇼",
-    "Bahrain": "🇧🇭", "Oman": "🇴🇲", "Jordan": "🇯🇴", "Morocco": "🇲🇦", "Germany": "🇩🇪", "United Kingdom": "🇬🇧",
+    "Bahrain": "🇧🇭", "Oman": "🇴🇲", "Jordan": "🇯🇴", "Palestine": "🇵🇸", "Morocco": "🇲🇦", "Germany": "🇩🇪", "United Kingdom": "🇬🇧",
     "Netherlands": "🇳🇱", "France": "🇫🇷", "Spain": "🇪🇸", "Ireland": "🇮🇪", "Poland": "🇵🇱", "Remote": "🌍",
 }
 AR_PLACES = {
     "Egypt": "مصر", "Saudi Arabia": "السعودية", "United Arab Emirates": "الإمارات", "Qatar": "قطر",
-    "Kuwait": "الكويت", "Bahrain": "البحرين", "Oman": "عُمان", "Jordan": "الأردن", "Morocco": "المغرب",
+    "Kuwait": "الكويت", "Bahrain": "البحرين", "Oman": "عُمان", "Jordan": "الأردن", "Palestine": "فلسطين", "Morocco": "المغرب",
     "Germany": "ألمانيا", "United Kingdom": "بريطانيا", "Netherlands": "هولندا", "France": "فرنسا",
     "Spain": "إسبانيا", "Ireland": "أيرلندا", "Poland": "بولندا", "Remote": "ريموت",
 }

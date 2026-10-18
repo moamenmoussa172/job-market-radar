@@ -1,9 +1,9 @@
 -- Every listing gets a job_id: normalized company + title + work mode + primary
 -- country. Listings that share a job_id are the same job on different boards.
--- Jobs located in Israel (or open only to people there) are excluded from the whole
--- project: they never reach the site, the dashboard, trends or reports.
+-- Jobs in excluded locations (geo_patterns rows labelled 'Excluded') are dropped from the
+-- whole project: they never reach the site, the dashboard, trends or reports.
 with excluded as (
-    select distinct posting_key from {{ ref('int_posting_geo') }} where country = 'Israel'
+    select distinct posting_key from {{ ref('int_posting_geo') }} where country = 'Excluded'
 ),
 
 p as (

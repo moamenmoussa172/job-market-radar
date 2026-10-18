@@ -13,7 +13,7 @@
   };
   const AR_PLACES = {
     All: "كل الأماكن", Remote: "ريموت", Egypt: "مصر", "Saudi Arabia": "السعودية", "United Arab Emirates": "الإمارات",
-    Qatar: "قطر", Kuwait: "الكويت", Bahrain: "البحرين", Oman: "عُمان", Jordan: "الأردن", Morocco: "المغرب",
+    Qatar: "قطر", Kuwait: "الكويت", Bahrain: "البحرين", Oman: "عُمان", Jordan: "الأردن", Palestine: "فلسطين", Morocco: "المغرب",
     Germany: "ألمانيا", "United Kingdom": "بريطانيا", Netherlands: "هولندا", France: "فرنسا", Spain: "إسبانيا",
     Ireland: "أيرلندا", Poland: "بولندا", Italy: "إيطاليا", "United States": "أمريكا", Canada: "كندا", India: "الهند",
   };
