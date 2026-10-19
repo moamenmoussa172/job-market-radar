@@ -15,7 +15,7 @@ class FakeResp:
         return self._body
 
 
-def fake_github(monkeypatch, ref_exists: bool):
+def fake_github(monkeypatch, ref_exists: bool, existing: dict | None = None):
     calls = []
 
     def request(method, url, json=None, timeout=None, headers=None):
@@ -24,8 +24,13 @@ def fake_github(monkeypatch, ref_exists: bool):
         assert headers["Authorization"] == "Bearer tok"
         if path.endswith("/git/blobs"):
             return FakeResp(201, {"sha": f"blob{len(calls)}"})
+        if "/git/trees/" in path:            # what the branch has now
+            if existing is None:
+                return FakeResp(404, {"message": "Not Found"})
+            return FakeResp(200, {"tree": [{"path": k, "type": "blob", "sha": site_export.git_blob_sha(v)}
+                                           for k, v in existing.items()]})
         if path.endswith("/git/trees"):
-            return FakeResp(201, {"sha": "tree1"})
+            return FakeResp(201, {"sha": f"tree{sum(1 for c in calls if c[1].endswith('/git/trees'))}"})
         if path.endswith("/git/commits"):
             return FakeResp(201, {"sha": "commit1"})
         if method == "GET":
@@ -38,14 +43,31 @@ def fake_github(monkeypatch, ref_exists: bool):
 
 def test_publish_creates_branch_with_one_parentless_commit(monkeypatch):
     calls = fake_github(monkeypatch, ref_exists=False)
-    sha = site_export.publish({"index.html": b"<html>", "data/jobs.json": b"[]"}, "me/repo", "gh-pages", "tok")
+    sha = site_export.publish({"index.html": b"<html>", "data/jobs.json": b"[]", "og.png": b"\x89PNG\xff"},
+                              "me/repo", "gh-pages", "tok")
     assert sha == "commit1"
     methods = [(m, p.split("/git/")[1]) for m, p, _ in calls]
-    assert methods == [("POST", "blobs"), ("POST", "blobs"), ("POST", "trees"), ("POST", "commits"),
-                       ("GET", "ref/heads/gh-pages"), ("POST", "refs")]
+    assert methods == [("GET", "trees/gh-pages?recursive=1"), ("POST", "blobs"), ("POST", "trees"), ("POST", "commits"),
+                       ("GET", "ref/heads/gh-pages"), ("POST", "refs")]           # text goes inline, only the PNG is a blob
     commit_body = calls[3][2]
     assert commit_body["parents"] == [] and commit_body["tree"] == "tree1"
-    assert sorted(e["path"] for e in calls[2][2]["tree"]) == ["data/jobs.json", "index.html"]
+    tree = {e["path"]: e for e in calls[2][2]["tree"]}
+    assert sorted(tree) == ["data/jobs.json", "index.html", "og.png"] and "base_tree" not in calls[2][2]
+    assert tree["index.html"]["content"] == "<html>" and tree["og.png"]["sha"].startswith("blob")
+
+
+def test_publish_reuses_unchanged_files_and_batches_big_ones(monkeypatch):
+    old = {"og.png": b"\x89PNG\xff", "style.css": b"body{}"}
+    calls = fake_github(monkeypatch, ref_exists=True, existing=old)
+    monkeypatch.setattr(site_export, "TREE_BATCH_BYTES", 10)
+    files = {**old, "a.html": b"x" * 8, "b.html": b"y" * 8, "c.html": b"z" * 8}
+    site_export.publish(files, "me/repo", "gh-pages", "tok")
+    assert not any(p.endswith("/git/blobs") for _, p, _ in calls)                 # nothing binary changed
+    trees = [b for m, p, b in calls if p.endswith("/git/trees")]
+    assert len(trees) == 3 and "base_tree" not in trees[0] and trees[1]["base_tree"] == "tree1"
+    first = {e["path"]: e for e in trees[0]["tree"]}
+    assert first["og.png"]["sha"] == site_export.git_blob_sha(old["og.png"])     # reused by id
+    assert sorted(e["path"] for t in trees for e in t["tree"]) == sorted(files)
 
 
 def test_publish_force_updates_existing_branch(monkeypatch):
@@ -201,3 +223,18 @@ def test_job_export_keeps_first_seen_day_for_new_since_last_visit():
     jobs = json.loads(site_export.export_site_data(conn)["data/jobs.json"])
     assert jobs[0]["p"] == "2026-10-01" and jobs[0]["fs"] == "2026-10-18"   # posted earlier, first seen yesterday
     assert "fs" not in jobs[1]                                              # same day: not repeated
+
+
+def test_custom_domain_survives_every_publish():
+    files = site_export.site_files(domain="https://Radarak.com/")
+    assert files["CNAME"] == b"radarak.com\n"                     # GitHub Pages keeps the domain only with this file
+    html = files["index.html"].decode()
+    assert 'content="https://radarak.com/og.png"' in html and "github.io/job-market-radar" not in html
+    assert "CNAME" not in site_export.site_files(domain="")       # no domain: plain github.io
+    assert "CNAME" not in site_export.site_files(domain='x"><script>')
+    assert site_export.clean_domain("www.radarak.app") == "www.radarak.app"
+
+
+def test_index_preview_image_uses_the_known_github_pages_url():
+    html = site_export.site_files(domain="")["index.html"].decode()
+    assert site_export.GITHUB_PAGES_URL + "og.png" in html        # what gets swapped when a domain is set

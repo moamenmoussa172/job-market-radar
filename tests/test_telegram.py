@@ -89,3 +89,9 @@ def test_post_from_env_records_posts_and_one_bad_channel_does_not_stop_others(mo
 def test_nothing_happens_without_configuration(monkeypatch):
     monkeypatch.delenv("TELEGRAM_BOT_TOKEN", raising=False)
     assert telegram.post_from_env(object()) == {}
+
+
+def test_links_use_the_custom_domain_when_set(monkeypatch):
+    monkeypatch.delenv("SITE_URL", raising=False)
+    monkeypatch.setenv("SITE_DOMAIN", "radarak.com")
+    assert telegram.site_url() == "https://radarak.com/"

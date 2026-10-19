@@ -513,6 +513,9 @@ button.bar:hover .name { color: var(--violet-ink); }
 .foot-in { max-width: var(--wrap); margin-inline: auto; padding: 24px 20px 40px; color: var(--muted); font-size: 14px; }
 
 /* ---------- tablet & phone */
+.footnav { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-bottom: 10px; }
+.footnav a { font-weight: 600; color: var(--violet-ink); }
+
 /* ---------- quick wins: learn next, new since last visit, applied tracker, share, install */
 .learn { margin-top: 16px; padding: 16px 18px; border-radius: var(--r-m); background: linear-gradient(135deg, var(--violet-soft), color-mix(in srgb, var(--mint-soft) 60%, var(--surface))); border: 1px solid var(--line); }
 .learnhead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }

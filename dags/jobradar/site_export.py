@@ -204,20 +204,63 @@ def analytics_snippet(code: str | None) -> str:
             f'async src="https://gc.zgo.at/count.js"></script>')
 
 
-def site_files(site_dir: Path = SITE_DIR, analytics_code: str | None = None) -> dict[str, bytes]:
-    """The static website (HTML/CSS/JS) that goes next to the data files.
-    With a GoatCounter code (env GOATCOUNTER_CODE) the counting tag is added to every page."""
+GITHUB_PAGES_URL = "https://moamenmoussa172.github.io/job-market-radar/"
+_DOMAIN_RE = re.compile(r"(?=.{4,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}")
+
+
+def clean_domain(value: str | None) -> str:
+    """'https://www.Radarak.com/' -> 'www.radarak.com'; anything that isn't a plain host name -> ''."""
+    d = (value or "").strip().lower()
+    d = re.sub(r"^https?://", "", d).split("/")[0]
+    return d if _DOMAIN_RE.fullmatch(d) else ""
+
+
+def add_analytics(files: dict[str, bytes], analytics_code: str | None = None) -> dict[str, bytes]:
+    """Add the GoatCounter tag to every HTML page in `files` (in place)."""
     if analytics_code is None:
         analytics_code = os.environ.get("GOATCOUNTER_CODE", "")
-    files = {}
-    for path in sorted(site_dir.rglob("*")):
-        if path.is_file() and not path.name.startswith(".") and "data" not in path.relative_to(site_dir).parts:
-            files[path.relative_to(site_dir).as_posix()] = path.read_bytes()
     tag = analytics_snippet(analytics_code)
     if tag:
         for name in [n for n in files if n.endswith(".html")]:
             html = files[name].decode("utf-8")
             files[name] = html.replace("</body>", f"  {tag}\n</body>", 1).encode("utf-8")
+    return files
+
+
+def site_base_url(domain: str | None = None) -> str:
+    """The address people see: the custom domain when set, else the github.io address."""
+    domain = clean_domain(os.environ.get("SITE_DOMAIN", "") if domain is None else domain)
+    return f"https://{domain}/" if domain else GITHUB_PAGES_URL
+
+
+def all_site_files(conn) -> dict[str, bytes]:
+    """Everything that is published: the app, its data, and the pages for search engines."""
+    from jobradar import seo_pages
+    data = export_site_data(conn)
+    seo = seo_pages.seo_files(json.loads(data["data/jobs.json"]), json.loads(data["data/meta.json"]), site_base_url())
+    return {**site_files(), **data, **add_analytics(seo)}
+
+
+def site_files(site_dir: Path = SITE_DIR, analytics_code: str | None = None,
+               domain: str | None = None) -> dict[str, bytes]:
+    """The static website (HTML/CSS/JS) that goes next to the data files.
+    With a GoatCounter code (env GOATCOUNTER_CODE) the counting tag is added to every page.
+    With a custom domain (env SITE_DOMAIN, e.g. radarak.com) a CNAME file is published too: the branch is
+    replaced on every publish, so without it GitHub Pages would drop the domain the next day."""
+    if analytics_code is None:
+        analytics_code = os.environ.get("GOATCOUNTER_CODE", "")
+    if domain is None:
+        domain = os.environ.get("SITE_DOMAIN", "")
+    domain = clean_domain(domain)
+    files = {}
+    for path in sorted(site_dir.rglob("*")):
+        if path.is_file() and not path.name.startswith(".") and "data" not in path.relative_to(site_dir).parts:
+            files[path.relative_to(site_dir).as_posix()] = path.read_bytes()
+    add_analytics(files, analytics_code)
+    if domain:
+        files["CNAME"] = (domain + "\n").encode()
+        for name in [n for n in files if n.endswith(".html")]:   # link previews need the address people see
+            files[name] = files[name].replace(GITHUB_PAGES_URL.encode(), f"https://{domain}/".encode())
     files[".nojekyll"] = b""  # serve files as-is (no Jekyll processing)
     return files
 
@@ -238,15 +281,63 @@ def _gh(method: str, path: str, token: str, body: dict | None = None, ok=(200, 2
     return resp.json() if resp.content else {}
 
 
+TEXT_TYPES = (".html", ".css", ".js", ".json", ".xml", ".txt", ".webmanifest", ".md", ".svg")
+TREE_BATCH_BYTES = 3 * 1024 * 1024   # text sent inline per "create tree" request
+
+
+def git_blob_sha(content: bytes) -> str:
+    """The id git gives a file's content, so unchanged files are not uploaded again."""
+    import hashlib
+    return hashlib.sha1(b"blob %d\0" % len(content) + content).hexdigest()
+
+
+def _existing_blobs(repo: str, branch: str, token: str) -> set[str]:
+    try:
+        tree = _gh("GET", f"/repos/{repo}/git/trees/{branch}?recursive=1", token)
+    except RuntimeError:
+        return set()
+    return {e["sha"] for e in (tree or {}).get("tree", []) if e.get("type") == "blob"}
+
+
 def publish(files: dict[str, bytes], repo: str, branch: str, token: str,
             message: str = "Daily site update") -> str:
-    """Replace the branch content with `files` in a single commit. Returns the commit sha."""
-    tree = []
+    """Replace the branch content with `files` in a single commit. Returns the commit sha.
+    Files already on the branch are reused by id; changed text files go inline in a few "create tree"
+    requests (built on top of each other); only changed binary files are uploaded one by one. A daily
+    publish of ~1,000 pages therefore takes a handful of API calls instead of one per file."""
+    have = _existing_blobs(repo, branch, token)
+    reused, inline, binary = [], [], []
     for path, content in sorted(files.items()):
-        blob = _gh("POST", f"/repos/{repo}/git/blobs", token,
-                   {"content": base64.b64encode(content).decode("ascii"), "encoding": "base64"})
-        tree.append({"path": path, "mode": "100644", "type": "blob", "sha": blob["sha"]})
-    new_tree = _gh("POST", f"/repos/{repo}/git/trees", token, {"tree": tree})
+        sha = git_blob_sha(content)
+        if sha in have:
+            reused.append({"path": path, "mode": "100644", "type": "blob", "sha": sha})
+            continue
+        try:
+            text = content.decode("utf-8")
+            is_text = path.endswith(TEXT_TYPES) or "." not in path.rsplit("/", 1)[-1] or path.endswith("CNAME")
+        except UnicodeDecodeError:
+            is_text = False
+        if is_text:
+            inline.append({"path": path, "mode": "100644", "type": "blob", "content": text})
+        else:
+            blob = _gh("POST", f"/repos/{repo}/git/blobs", token,
+                       {"content": base64.b64encode(content).decode("ascii"), "encoding": "base64"})
+            binary.append({"path": path, "mode": "100644", "type": "blob", "sha": blob["sha"]})
+    batches, cur, size = [], reused + binary, 0
+    for entry in inline:
+        if cur and size + len(entry["content"]) > TREE_BATCH_BYTES and any("content" in e for e in cur):
+            batches.append(cur)
+            cur, size = [], 0
+        cur.append(entry)
+        size += len(entry["content"])
+    batches.append(cur)
+    tree_sha = None
+    for batch in batches:
+        body = {"tree": batch, **({"base_tree": tree_sha} if tree_sha else {})}
+        tree_sha = _gh("POST", f"/repos/{repo}/git/trees", token, body)["sha"]
+    new_tree = {"sha": tree_sha}
+    log.info("publish: %s files (%s unchanged, %s text, %s binary uploaded) in %s tree requests",
+             len(files), len(reused), len(inline), len(binary), len(batches))
     commit = _gh("POST", f"/repos/{repo}/git/commits", token,
                  {"message": message, "tree": new_tree["sha"], "parents": []})
     ref = f"heads/{branch}"
@@ -266,6 +357,6 @@ def publish_from_env(conn) -> str | None:
     if not token or not repo:
         log.warning("SITE_GITHUB_TOKEN / SITE_REPO not set - website not published")
         return None
-    files = {**site_files(), **export_site_data(conn)}
+    files = all_site_files(conn)
     return publish(files, repo, branch, token,
                    message=f"Site update {dt.date.today().isoformat()}")

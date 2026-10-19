@@ -6,7 +6,7 @@
 software, mobile (iOS, Android, Flutter), QA & testing, UI/UX design, DevOps & cloud, security, ERP, networks, product, IT) from 19 public and licensed sources, models them with dbt, and answers those questions in a
 self-service dashboard, from the point of view of *one specific person* (their country, role and skills).
 
-**Live site: https://moamenmoussa172.github.io/job-market-radar/** (Arabic + English, updated daily)
+**Live site: https://radarak.online/** (Arabic + English, updated daily)
 
 ![CI](https://github.com/moamenmoussa172/job-market-radar/actions/workflows/ci.yml/badge.svg)
 
@@ -42,6 +42,11 @@ A **What to learn next** card picks the three skills that would add the most mat
 ones they applied to** (kept in the browser, with closed applications kept as history), see **what's new since
 their last visit** (from each job's first-seen day), **share a job to WhatsApp** with a link that opens that job,
 and **install the site as an app** (web manifest + a service worker that keeps the last copy for weak connections).
+For search engines, every publish also writes **static pages per country, track and role** in English and Arabic
+(`/jobs/egypt/data-engineer/`, `/ar/jobs/...`: `dags/jobradar/seo_pages.py`) with that day's jobs, top skills,
+companies and pay, plus `sitemap.xml` and `robots.txt`. Thin pages are skipped (a role needs 5+ jobs in a place).
+Publishing reuses unchanged files by their git id and sends changed pages inline in a few batched requests, so
+~2,000 files go up in about a dozen GitHub API calls.
 A **Trends** tab shows how hiring changes week by week for the visitor's country (new jobs per week by
 track, which tracks are hiring faster, skills on the rise and cooling down, how long jobs stay open), and
 the **weekly report** page (`report.html`) turns last week into a shareable 1080×1350 image plus a ready

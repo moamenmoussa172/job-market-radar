@@ -20,6 +20,7 @@ import datetime as dt
 import html
 import logging
 import os
+import re
 import time
 from dataclasses import dataclass
 from urllib.parse import quote
@@ -155,6 +156,9 @@ def site_url() -> str:
     explicit = os.environ.get("SITE_URL", "").strip()
     if explicit:
         return explicit.rstrip("/") + "/"
+    domain = os.environ.get("SITE_DOMAIN", "").strip().lower()
+    if domain:
+        return "https://" + re.sub(r"^https?://", "", domain).split("/")[0] + "/"
     repo = os.environ.get("SITE_REPO", "").strip()
     if "/" in repo:
         owner, name = repo.split("/", 1)

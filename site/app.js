@@ -84,6 +84,7 @@
       cvGapTitle: "Worth adding to your CV, if you have them:",
       cvGapHint: "These skills appear in many jobs close to your profile but not in your CV.",
       cvShowRole: (r) => `Show ${r} jobs`, showNat: "Showing nationals-only", cvShowBest: "Show my best matches", cvClear: "Forget my CV skills",
+      browseJobs: "Jobs by country", browseJobsAll: "Browse tech jobs by country and role",
       learnTitle: "What to learn next", learnNow: (m) => `You match <b>${m}</b> jobs right now.`,
       learnHint: "Each step counts the extra jobs you'd match (60%+ of their skills) after learning it and the ones above it.",
       learnJobs: (n) => `+${n} jobs`, learnTotal: (a, b) => `Learn all ${a === 1 ? "of it" : "three"}: <b>${b}</b> jobs you match`,
@@ -170,6 +171,7 @@
       cvGapTitle: "تستاهل تضيفها للـ CV لو بتعرفها:",
       cvGapHint: "المهارات دي مطلوبة في وظايف كتير قريبة من بروفايلك ومش مكتوبة في الـ CV.",
       cvShowRole: (r) => `اعرض وظايف ${r}`, showNat: "بيعرض وظايف المواطنين فقط", cvShowBest: "اعرض أنسب وظايف ليا", cvClear: "امسح مهارات الـ CV",
+      browseJobs: "الوظايف حسب البلد", browseJobsAll: "تصفّح وظايف التك حسب البلد والوظيفة",
       learnTitle: "تتعلم إيه بعد كده", learnNow: (m) => `إنت مناسب لـ <b>${m}</b> وظيفة دلوقتي.`,
       learnHint: "كل خطوة بتحسب الوظايف الزيادة اللي هتبقى مناسب لها (60%+ من مهاراتها) لو اتعلمت المهارة دي واللي فوقها.",
       learnJobs: (n) => `+${n} وظيفة`, learnTotal: (a, b) => `لو اتعلمتهم ${a === 1 ? "" : "التلاتة"}: <b>${b}</b> وظيفة مناسبة ليك`,
@@ -307,6 +309,7 @@
     btn.textContent = lang === "ar" ? "English" : "العربية";
     btn.lang = lang === "ar" ? "en" : "ar";
     $("aboutText").innerHTML = ABOUT[lang];
+    document.querySelectorAll(".jobsidx").forEach((a) => { a.href = lang === "ar" ? "ar/jobs/" : "jobs/"; });
     if (meta) {
       buildOptions();
       const d = new Date(meta.generated_at);

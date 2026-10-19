@@ -130,6 +130,21 @@ Every successful daily run then replaces the `gh-pages` branch with one fresh co
 Edit the site in `site/` (index.html, style.css, app.js); changes go live with the next publish.
 If the token expires, the run still succeeds and logs "website not published".
 
+### Custom domain (e.g. radarak.com)
+
+1. At the domain registrar, DNS: four `A` records for `@` -> `185.199.108.153`, `185.199.109.153`,
+   `185.199.110.153`, `185.199.111.153`, and a `CNAME` for `www` -> `moamenmoussa172.github.io`.
+2. Put `SITE_DOMAIN=radarak.com` in `.env`, `docker compose up -d`, and publish once. Every publish now
+   includes the `CNAME` file; without it GitHub would drop the domain when the branch is replaced.
+3. GitHub: **Settings -> Pages -> Custom domain** -> `radarak.com` -> Save; when the DNS check is green,
+   tick **Enforce HTTPS**. The old github.io address redirects to the new one.
+
+### Google (Search Console)
+
+After the first publish with the search pages, open search.google.com/search-console -> property `radarak.online`
+-> **Sitemaps** -> enter `sitemap.xml` -> Submit. The sitemap is regenerated every day; no need to resubmit.
+**Pages** shows what is indexed, **Performance** what people searched for.
+
 ### Trends and the weekly report
 
 The **Trends** tab and `report.html` read `data/trends.json` (from `mart_weekly_new_jobs`,
