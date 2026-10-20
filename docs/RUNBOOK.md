@@ -145,6 +145,19 @@ After the first publish with the search pages, open search.google.com/search-con
 -> **Sitemaps** -> enter `sitemap.xml` -> Submit. The sitemap is regenerated every day; no need to resubmit.
 **Pages** shows what is indexed, **Performance** what people searched for.
 
+### Radarak Weekly (newsletter)
+
+1. Sign up free at buttondown.com (free up to 100 subscribers). Pick a username, e.g. `radarak`.
+2. Buttondown -> Settings -> API -> copy the key. In `.env`: `BUTTONDOWN_API_KEY=...`, `BUTTONDOWN_USERNAME=radarak`,
+   `BUTTONDOWN_STATUS=draft`, then `docker compose up -d` and publish (the subscribe box appears on the site).
+3. Every Sunday's run creates the email. With `draft` it waits in Buttondown -> Emails for you to read and press
+   Send; switch to `about_to_send` once you trust it. One email per week (`raw.newsletter_log`).
+
+### Reported jobs
+
+GoatCounter -> filter `report-closed` shows jobs visitors reported as closed or wrong (`report-closed/<id>/<company>`).
+Many reports for one company usually mean its board needs a look in `raw.company_boards`.
+
 ### Trends and the weekly report
 
 The **Trends** tab and `report.html` read `data/trends.json` (from `mart_weekly_new_jobs`,

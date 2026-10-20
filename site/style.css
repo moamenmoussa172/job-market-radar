@@ -516,6 +516,20 @@ button.bar:hover .name { color: var(--violet-ink); }
 .footnav { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-bottom: 10px; }
 .footnav a { font-weight: 600; color: var(--violet-ink); }
 
+.newsletter { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px 24px; padding: 20px 22px; margin-bottom: 18px;
+  border-radius: var(--r-l); background: linear-gradient(135deg, var(--violet-soft), color-mix(in srgb, var(--amber) 14%, var(--surface))); border: 1px solid var(--line); }
+.newsletter h2 { margin: 0 0 4px; font: 800 20px/1.2 var(--display); color: var(--ink); }
+.newsletter p { margin: 0; color: var(--ink-2); font-size: 15px; max-width: 520px; }
+.newsletter form { display: flex; gap: 8px; flex: 1 1 320px; max-width: 460px; min-width: 0; }
+.newsletter > div { min-width: 0; }
+.newsletter button { flex: none; }
+@media (max-width: 600px) { .newsletter form { flex-basis: 100%; max-width: none; } .newsletter { padding: 16px; } }
+.newsletter input { flex: 1 1 auto; width: 0; min-width: 0; font: 400 15px/1.2 var(--font); color: var(--ink); background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--r-s); padding: 12px 14px; }
+.dreport { margin: 18px 0 0; }
+.dreport .linkbtn { font-size: 14px; color: var(--muted); }
+.toast { position: fixed; inset-inline: 0; bottom: 22px; margin: 0 auto; width: max-content; max-width: calc(100vw - 32px); z-index: 70;
+  background: var(--night); color: #fff; padding: 12px 18px; border-radius: 99px; font-size: 14px; box-shadow: 0 12px 30px -12px rgba(0,0,0,.5); }
+
 /* ---------- quick wins: learn next, new since last visit, applied tracker, share, install */
 .learn { margin-top: 16px; padding: 16px 18px; border-radius: var(--r-m); background: linear-gradient(135deg, var(--violet-soft), color-mix(in srgb, var(--mint-soft) 60%, var(--surface))); border: 1px solid var(--line); }
 .learnhead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }

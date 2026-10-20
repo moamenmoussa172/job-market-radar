@@ -227,6 +227,35 @@ def add_analytics(files: dict[str, bytes], analytics_code: str | None = None) ->
     return files
 
 
+def newsletter_name(value: str | None = None) -> str:
+    name = (os.environ.get("BUTTONDOWN_USERNAME", "") if value is None else value).strip().lower()
+    return name if re.fullmatch(r"[a-z0-9][a-z0-9_-]{0,63}", name) else ""
+
+
+NEWSLETTER_FORM = {
+    "en": ("Radarak Weekly", "The week's new tech jobs in one short email, every Sunday.", "you@example.com", "Subscribe"),
+    "ar": ("نشرة رادارك الأسبوعية", "وظايف التك الجديدة كل أسبوع في إيميل واحد قصير، كل يوم حد.", "you@example.com", "اشترك"),
+}
+
+
+def add_newsletter(files: dict[str, bytes], name: str | None = None) -> dict[str, bytes]:
+    """With BUTTONDOWN_USERNAME set: switch on the app's signup box and put a signup form on the search pages."""
+    name = newsletter_name(name)
+    if not name:
+        return files
+    for path in [p for p in files if p.endswith(".html")]:
+        html = files[path].decode("utf-8")
+        html = html.replace('data-bd=""', f'data-bd="{name}"', 1)
+        for lang, (title, text, ph, btn) in NEWSLETTER_FORM.items():
+            html = html.replace(f"<!--newsletter:{lang}-->", (
+                f'<section class="newsletter"><div><h2>{title}</h2><p>{text}</p></div>'
+                f'<form action="https://buttondown.com/api/emails/embed-subscribe/{name}" method="post" target="_blank">'
+                f'<input type="email" name="email" required placeholder="{ph}" aria-label="Email">'
+                f'<input type="hidden" name="embed" value="1"><button class="primary" type="submit">{btn}</button></form></section>'))
+        files[path] = html.encode("utf-8")
+    return files
+
+
 def site_base_url(domain: str | None = None) -> str:
     """The address people see: the custom domain when set, else the github.io address."""
     domain = clean_domain(os.environ.get("SITE_DOMAIN", "") if domain is None else domain)
@@ -238,7 +267,7 @@ def all_site_files(conn) -> dict[str, bytes]:
     from jobradar import seo_pages
     data = export_site_data(conn)
     seo = seo_pages.seo_files(json.loads(data["data/jobs.json"]), json.loads(data["data/meta.json"]), site_base_url())
-    return {**site_files(), **data, **add_analytics(seo)}
+    return {**site_files(), **data, **add_newsletter(add_analytics(seo))}
 
 
 def site_files(site_dir: Path = SITE_DIR, analytics_code: str | None = None,
@@ -257,6 +286,7 @@ def site_files(site_dir: Path = SITE_DIR, analytics_code: str | None = None,
         if path.is_file() and not path.name.startswith(".") and "data" not in path.relative_to(site_dir).parts:
             files[path.relative_to(site_dir).as_posix()] = path.read_bytes()
     add_analytics(files, analytics_code)
+    add_newsletter(files)
     if domain:
         files["CNAME"] = (domain + "\n").encode()
         for name in [n for n in files if n.endswith(".html")]:   # link previews need the address people see

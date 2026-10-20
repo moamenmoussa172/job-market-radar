@@ -33,7 +33,10 @@
         <span data-i18n="brand">Radarak</span>
       </a>
       <nav class="topnav" aria-label="Site">
-        <a class="navlink hide-s jobsidx" href="jobs/" data-i18n="browseJobs">Jobs by country</a>
+        <a class="navlink hide-s langpath" href="jobs/" data-path="jobs/" data-i18n="browseJobs">Jobs by country</a>
+        <a class="navlink hide-s langpath" href="companies/" data-path="companies/" data-i18n="navCompanies">Companies</a>
+        <a class="navlink hide-s langpath" href="juniors/" data-path="juniors/" data-i18n="navJuniors">Juniors</a>
+        <a class="navlink hide-s langpath" href="salaries/" data-path="salaries/" data-i18n="navSalaries">Salaries</a>
         <a class="navlink hide-s" href="report.html" data-i18n="weeklyReport">Weekly report</a>
         <a class="navlink hide-s" href="https://github.com/moamenmoussa172/job-market-radar" target="_blank" rel="noopener" data-i18n="code">Source code</a>
         <button id="installBtn" class="installbtn" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14"/></svg><span data-i18n="installApp">Install app</span></button>
@@ -274,6 +277,7 @@
     <div class="drawer-body" id="drawerBody"></div>
   </aside>
 
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
   <div class="ioshint" id="iosHint" role="dialog" aria-labelledby="iosHintText" hidden>
     <p id="iosHintText" data-i18n="iosHint">To install Radarak: tap the Share button in Safari, then “Add to Home Screen”.</p>
     <button type="button" class="primary sm" id="iosHintClose" data-i18n="gotIt">Got it</button>
@@ -281,8 +285,21 @@
 
   <footer class="foot">
     <div class="foot-in">
-      <nav class="footnav"><a class="jobsidx" href="jobs/" data-i18n="browseJobsAll">Browse tech jobs by country and role</a>
-        <a href="report.html" data-i18n="weeklyReport">Weekly report</a></nav>
+      <section class="newsletter" id="newsletter" data-bd="" hidden>
+        <div><h2 data-i18n="nlTitle">Radarak Weekly</h2><p data-i18n="nlText">Every Sunday: the week's new tech jobs in Egypt, the Gulf and remote, in one short email.</p></div>
+        <form id="nlForm" method="post" target="_blank">
+          <label class="sr" for="nlEmail" data-i18n="nlEmail">Your email</label>
+          <input id="nlEmail" type="email" name="email" required autocomplete="email" data-i18n-placeholder="nlEmailPh" placeholder="you@example.com">
+          <input type="hidden" name="embed" value="1">
+          <button class="primary" type="submit" data-i18n="nlBtn">Subscribe</button>
+        </form>
+      </section>
+      <nav class="footnav"><a class="langpath" href="jobs/" data-path="jobs/" data-i18n="browseJobsAll">Browse tech jobs by country and role</a>
+        <a class="langpath" href="companies/" data-path="companies/" data-i18n="navCompanies">Companies</a>
+        <a class="langpath" href="juniors/" data-path="juniors/" data-i18n="navJuniors">Juniors</a>
+        <a class="langpath" href="salaries/" data-path="salaries/" data-i18n="navSalaries">Salaries</a>
+        <a href="report.html" data-i18n="weeklyReport">Weekly report</a>
+        <a href="mailto:hello@radarak.online?subject=Radarak%20feedback" data-i18n="feedback">Send feedback</a></nav>
       <p id="footText"></p>
     </div>
   </footer>

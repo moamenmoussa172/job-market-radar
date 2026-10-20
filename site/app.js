@@ -85,6 +85,10 @@
       cvGapHint: "These skills appear in many jobs close to your profile but not in your CV.",
       cvShowRole: (r) => `Show ${r} jobs`, showNat: "Showing nationals-only", cvShowBest: "Show my best matches", cvClear: "Forget my CV skills",
       browseJobs: "Jobs by country", browseJobsAll: "Browse tech jobs by country and role",
+      navCompanies: "Companies", navJuniors: "Juniors", navSalaries: "Salaries", feedback: "Send feedback",
+      reportClosed: "Job closed or wrong? Tell us", reported: "Thanks! We hid this job for you and will check it.",
+      nlTitle: "Radarak Weekly", nlText: "Every Sunday: the week's new tech jobs in Egypt, the Gulf and remote, in one short email.",
+      nlEmail: "Your email", nlEmailPh: "you@example.com", nlBtn: "Subscribe", nlThanks: "Check your inbox to confirm.",
       learnTitle: "What to learn next", learnNow: (m) => `You match <b>${m}</b> jobs right now.`,
       learnHint: "Each step counts the extra jobs you'd match (60%+ of their skills) after learning it and the ones above it.",
       learnJobs: (n) => `+${n} jobs`, learnTotal: (a, b) => `Learn all ${a === 1 ? "of it" : "three"}: <b>${b}</b> jobs you match`,
@@ -172,6 +176,10 @@
       cvGapHint: "المهارات دي مطلوبة في وظايف كتير قريبة من بروفايلك ومش مكتوبة في الـ CV.",
       cvShowRole: (r) => `اعرض وظايف ${r}`, showNat: "بيعرض وظايف المواطنين فقط", cvShowBest: "اعرض أنسب وظايف ليا", cvClear: "امسح مهارات الـ CV",
       browseJobs: "الوظايف حسب البلد", browseJobsAll: "تصفّح وظايف التك حسب البلد والوظيفة",
+      navCompanies: "الشركات", navJuniors: "الجونيور", navSalaries: "المرتبات", feedback: "ابعتلنا رأيك",
+      reportClosed: "الوظيفة اتقفلت أو فيها غلط؟ قولنا", reported: "شكرًا! خبّينا الوظيفة دي عندك وهنراجعها.",
+      nlTitle: "نشرة رادارك الأسبوعية", nlText: "كل يوم حد: وظايف التك الجديدة في مصر والخليج والريموت، في إيميل واحد قصير.",
+      nlEmail: "الإيميل بتاعك", nlEmailPh: "you@example.com", nlBtn: "اشترك", nlThanks: "شوف الإيميل بتاعك عشان تأكد الاشتراك.",
       learnTitle: "تتعلم إيه بعد كده", learnNow: (m) => `إنت مناسب لـ <b>${m}</b> وظيفة دلوقتي.`,
       learnHint: "كل خطوة بتحسب الوظايف الزيادة اللي هتبقى مناسب لها (60%+ من مهاراتها) لو اتعلمت المهارة دي واللي فوقها.",
       learnJobs: (n) => `+${n} وظيفة`, learnTotal: (a, b) => `لو اتعلمتهم ${a === 1 ? "" : "التلاتة"}: <b>${b}</b> وظيفة مناسبة ليك`,
@@ -241,6 +249,7 @@
   const quick = { remote: false, visa: false, junior: false, pay: false, week: false, hideNat: true, fresh: false };
   const NOT_IN_LINKS = new Set(["fresh"]);              // "new for me" depends on the visitor, so shared links don't carry it
   let newSince = null;                                  // day of the data the visitor saw on their previous visit
+  const hiddenJobs = new Set(store.get("hidden", []));  // jobs this visitor reported as closed
   const isNew = (j) => !!newSince && (j.fs || j.p) > newSince;
   const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
   const shortDate = (iso) => new Date(iso + "T12:00:00Z").toLocaleDateString(lang === "ar" ? "ar-EG" : "en-GB", { day: "numeric", month: "short" });
@@ -309,7 +318,7 @@
     btn.textContent = lang === "ar" ? "English" : "العربية";
     btn.lang = lang === "ar" ? "en" : "ar";
     $("aboutText").innerHTML = ABOUT[lang];
-    document.querySelectorAll(".jobsidx").forEach((a) => { a.href = lang === "ar" ? "ar/jobs/" : "jobs/"; });
+    document.querySelectorAll(".langpath").forEach((a) => { a.href = (lang === "ar" ? "ar/" : "") + a.dataset.path; });
     if (meta) {
       buildOptions();
       const d = new Date(meta.generated_at);
@@ -369,6 +378,7 @@
       if (quick.week && (j.p < weekAgo || (f & FLAG.longOpen))) return false;
       if (quick.hideNat && (f & FLAG.nationals)) return false;
       if (quick.fresh && !isNew(j)) return false;
+      if (hiddenJobs.has(j.id)) return false;
       if (ar === "req" && !(f & FLAG.arabic)) return false;
       if (ar === "not" && (f & FLAG.arabic)) return false;
       if (q && !j._text.includes(q)) return false;
@@ -983,6 +993,7 @@
       </dl>
       ${g.all.length > 1 ? `<section class="dsection"><h3>${t("alsoIn")}</h3><ul class="dlocs">${g.all.filter((x) => x.id !== j.id).map((x) =>
         `<li><a href="${esc(x.u)}" target="_blank" rel="noopener nofollow">${esc(x.l || x.t)}</a></li>`).join("")}</ul></section>` : ""}
+      <p class="dreport"><button type="button" class="linkbtn" id="reportJob">⚑ ${t("reportClosed")}</button></p>
       ${similar.length ? `<section class="dsection"><h3>${t("similarTitle")}</h3><ul class="similar">${similar.map((x) =>
         `<li style="${tc(x.tr)}"><button type="button" data-open="${esc(x.id)}"><span class="avatar sm" aria-hidden="true">${esc((x.c || "?").charAt(0).toUpperCase())}</span>
           <span><b>${esc(x.t)}</b><small>${esc(x.c || "")} · ${esc(x.l || "")}</small></span></button></li>`).join("")}</ul></section>` : ""}`;
@@ -1246,6 +1257,12 @@
         navigator.clipboard.writeText(j ? jobLink(j) : location.href).then(() => { b.textContent = t("linkCopied"); setTimeout(() => { b.textContent = t("copyLink"); }, 2000); }).catch(() => {});
         track("job-share/copy");
       }
+      if (e.target.closest("#reportJob")) {
+        const id = currentJob, j = jobs.find((x) => x.id === id);
+        track("report-closed/" + id + (j ? "/" + (j.c || "").replace(/[^\w-]+/g, "-") : ""));
+        hiddenJobs.add(id); store.set("hidden", [...hiddenJobs].slice(-500));
+        closeJob(); update(true); toast(t("reported"));
+      }
       if (e.target.closest("#shareJob")) {
         const j = jobs.find((x) => x.id === currentJob);
         if (j) navigator.share({ title: j.t, text: t("shareText")(j.t, j.c), url: jobLink(j) }).then(() => track("job-share/native")).catch(() => {});
@@ -1266,6 +1283,20 @@
     $("qMini").addEventListener("keydown", (e) => { if (e.key === "Enter") { selectTab("jobs"); $("results").scrollIntoView({ behavior: "smooth" }); } });
     window.addEventListener("hashchange", () => { readHash(); update(); });
     window.addEventListener("resize", sizeHero);
+  }
+
+  let toastTimer = null;
+  function toast(msg) {
+    const el = $("toast"); el.textContent = msg; el.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.hidden = true; }, 3500);
+  }
+  // weekly email (Buttondown): shown only when the publish step filled in the newsletter name
+  function setupNewsletter() {
+    const box = $("newsletter"), name = box.dataset.bd;
+    if (!name) return;
+    box.hidden = false;
+    $("nlForm").action = "https://buttondown.com/api/emails/embed-subscribe/" + encodeURIComponent(name);
+    $("nlForm").addEventListener("submit", () => { track("newsletter-subscribe"); setTimeout(() => toast(t("nlThanks")), 300); });
   }
 
   // ------------------------------------------------------------------ install as an app (PWA)
@@ -1292,6 +1323,7 @@
   async function start() {
     applyLanguage();
     setupInstall();
+    setupNewsletter();
     try {
       const [m, j] = await Promise.all([
         fetch("data/meta.json").then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }),

@@ -47,6 +47,11 @@ For search engines, every publish also writes **static pages per country, track 
 companies and pay, plus `sitemap.xml` and `robots.txt`. Thin pages are skipped (a role needs 5+ jobs in a place).
 Publishing reuses unchanged files by their git id and sends changed pages inline in a few batched requests, so
 ~2,000 files go up in about a dozen GitHub API calls.
+It also writes **company pages** (`/companies/<name>/`, 3+ open jobs), a **juniors corner** (`/juniors/`) and a
+**salary guide** (`/salaries/`, per place where 15+ jobs publish pay; a role needs 5+). **Radarak Weekly**
+(`dags/jobradar/newsletter.py`) drafts or sends a Sunday email of the week's new jobs through Buttondown when
+`BUTTONDOWN_API_KEY` is set; `BUTTONDOWN_USERNAME` switches on the subscribe box. Visitors can **report a closed
+job** (it's hidden for them and counted in GoatCounter as `report-closed/<id>/<company>`).
 A **Trends** tab shows how hiring changes week by week for the visitor's country (new jobs per week by
 track, which tracks are hiring faster, skills on the rise and cooling down, how long jobs stay open), and
 the **weekly report** page (`report.html`) turns last week into a shareable 1080×1350 image plus a ready

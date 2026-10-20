@@ -67,6 +67,7 @@ T = {
         "desc": "{n} open {what}{inp} at {c} companies, updated {d}.{sk} Free, no sign-up.",
         "desc_sk": " Top skills: {skills}.", "inp": " in {p}", "and": "and",
         "credits": "Each job links to the original posting; apply there.",
+        "nav_companies": "Companies", "nav_juniors": "Juniors", "nav_salaries": "Salaries", "nav_jobs": "Jobs by country",
     },
     "ar": {
         "dir": "rtl", "home": "رادارك", "jobs": "الوظايف", "other": "English",
@@ -94,6 +95,7 @@ T = {
         "desc": "{n} {what} متاحة{inp} في {c} شركة، آخر تحديث {d}.{sk} مجاني ومن غير تسجيل.",
         "desc_sk": " أهم المهارات: {skills}.", "inp": " في {p}", "and": "و",
         "credits": "كل وظيفة ليها لينك للإعلان الأصلي، والتقديم بيكون هناك.",
+        "nav_companies": "الشركات", "nav_juniors": "الجونيور", "nav_salaries": "المرتبات", "nav_jobs": "الوظايف حسب البلد",
     },
 }
 
@@ -188,7 +190,7 @@ CSS = """
 .seo .ctarow{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin:0 0 22px}
 .seo .ctarow .primary{text-decoration:none;display:inline-flex;padding:13px 18px}
 .seo .ctarow span{font-size:14px;color:var(--muted)}
-.seo .stats{margin:0 0 22px}
+.seo .stats{margin:0 0 22px;display:flex;flex-wrap:wrap}.seo .stat{flex:1 1 170px}
 .seo .summary{font-size:16px;line-height:1.7;margin:0 0 24px;max-width:860px}
 .seo .cols{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:22px;align-items:start}
 .seo .panel h2,.seo section h2{font:800 20px/1.2 var(--display);margin:0 0 12px}
@@ -247,15 +249,19 @@ def _shell(lang: str, rel: str, title: str, desc: str, canonical: str, alt_en: s
   <link rel="manifest" href="{rel}manifest.webmanifest">
   <link rel="stylesheet" href="{rel}style.css">
   <link rel="stylesheet" href="{rel}seo.css">
+  <link rel="stylesheet" href="{rel}extra.css">
   <script type="application/ld+json">{json.dumps(jsonld, ensure_ascii=False)}</script>
 </head>
 <body class="seopage">
   <header class="topbar"><div class="topbar-in">
     <a class="brand" href="{rel}">{BRAND_SVG}<span>{t['home']}</span></a>
-    <nav class="topnav"><a class="langbtn" href="{_e(other_href)}" lang="{'en' if lang == 'ar' else 'ar'}">{t['other']}</a></nav>
+    <nav class="topnav seonav">{''.join(f'<a class="navlink" href="{rel}{"ar/" if lang == "ar" else ""}{h}/">{_e(t[k])}</a>'
+                                         for h, k in (("jobs", "nav_jobs"), ("companies", "nav_companies"),
+                                                      ("juniors", "nav_juniors"), ("salaries", "nav_salaries")))}
+      <a class="langbtn" href="{_e(other_href)}" lang="{'en' if lang == 'ar' else 'ar'}">{t['other']}</a></nav>
   </div></header>
 {body}
-  <footer class="seofoot"><p>{_e(t['about'])}</p><p>{_e(t['credits'])}</p></footer>
+  <footer class="seofoot"><!--newsletter:{lang}--><p>{_e(t['about'])}</p><p>{_e(t['credits'])}</p></footer>
 </body>
 </html>
 """
@@ -304,6 +310,24 @@ def _app_hash(page: _Page) -> str:
     elif page.kind == "role":
         h.append("role=" + quote("role:" + page.label))
     return "#" + "&".join(h)
+
+
+def _job_li(j: dict, rel: str, lang: str, today: dt.date, skills: list[str]) -> str:
+    """One job row: title (opens it in the app), company, place, mode, age, pay, skills and Apply."""
+    t = T[lang]
+    meta_bits = [t["remote"] if j.get("w") == "Remote" else (j.get("w") or ""), _ago(j.get("p", ""), today, lang)]
+    if j.get("$"):
+        lo, hi = j["$"]
+        meta_bits.append(f"${lo}k" if lo == hi else f"${lo}k–${hi}k")
+    if (j.get("f") or 0) & 1:
+        meta_bits.append(t["visa"])
+    sk = "".join(f"<span>{_e(skills[i])}</span>" for i in j.get("k", [])[:6] if i < len(skills))
+    by = f' <span class="m">· {_e(j["by"])}</span>' if j.get("by") else ""
+    return (f'<li><div><h3><a href="{_e(rel)}#job={quote(j["id"])}">{_e(j.get("t"))}</a></h3>'
+            f'<p><b>{_e(j.get("c") or "")}</b> · {_e(j.get("l") or "")}</p>'
+            f'<p class="m">{_e(" · ".join(b for b in meta_bits if b))}{by}</p>'
+            + (f'<p class="sk">{sk}</p>' if sk else "")
+            + f'</div><a class="go" href="{_e(j.get("u"))}" target="_blank" rel="nofollow noopener">{t["apply"]}</a></li>')
 
 
 def _render(page: _Page, lang: str, pages_by_place: dict, all_pages: list[_Page], meta: dict, base: str,
@@ -374,29 +398,16 @@ def _render(page: _Page, lang: str, pages_by_place: dict, all_pages: list[_Page]
         stats.append((f"${pay}k", t["s_pay"]))
     stats_html = "".join(f'<div class="stat"><b>{v}</b><span>{_e(label)}</span></div>' for v, label in stats)
 
-    def job_li(j: dict) -> str:
-        facts = [j.get("l") or ""]
-        meta_bits = [t["remote"] if j.get("w") == "Remote" else (j.get("w") or ""), _ago(j.get("p", ""), today, lang)]
-        if j.get("$"):
-            lo, hi = j["$"]
-            meta_bits.append(f"${lo}k" if lo == hi else f"${lo}k–${hi}k")
-        if (j.get("f") or 0) & 1:
-            meta_bits.append(t["visa"])
-        sk = "".join(f"<span>{_e(skills[i])}</span>" for i in j.get("k", [])[:6] if i < len(skills))
-        by = f' <span class="m">· {_e(j["by"])}</span>' if j.get("by") else ""
-        return (f'<li><div><h3><a href="{_e(rel)}#job={quote(j["id"])}">{_e(j.get("t"))}</a></h3>'
-                f'<p><b>{_e(j.get("c") or "")}</b> · {_e(facts[0])}</p>'
-                f'<p class="m">{_e(" · ".join(b for b in meta_bits if b))}{by}</p>'
-                + (f'<p class="sk">{sk}</p>' if sk else "")
-                + f'</div><a class="go" href="{_e(j.get("u"))}" target="_blank" rel="nofollow noopener">{t["apply"]}</a></li>')
-
     listed = uj[:JOBS_LISTED]
     more = (f'<a class="more2" href="{_e(app)}">{_e(t["list_more"].format(k=len(listed), n=_num(n)))}</a>'
             if n > len(listed) else "")
     top_max = max([v for _, v in top] or [1])
     skills_html = "".join(f'<li><span>{_e(s)}</span><span><i style="width:{max(3, round(100 * v / top_max))}%"></i></span><b>{v}%</b></li>'
                           for s, v in top)
-    comp_html = "".join(f"<li>{_e(name)} <span class=\"m\">({v})</span></li>" for name, v in comps.most_common(8))
+    cslugs = meta.get("_company_slugs", {})
+    comp_html = "".join((f'<li><a href="{_e(rel + ("ar/" if lang == "ar" else "") + "companies/" + cslugs[name] + "/")}">{_e(name)}</a>'
+                         if name in cslugs else f"<li>{_e(name)}") + f' <span class="m">({v})</span></li>'
+                        for name, v in comps.most_common(8))
 
     siblings = pages_by_place[page.place]
     def link(p: _Page, label: str) -> str:
@@ -425,7 +436,7 @@ def _render(page: _Page, lang: str, pages_by_place: dict, all_pages: list[_Page]
     <div class="stats">{stats_html}</div>
     <p class="summary">{_e(summary)}</p>
     <div class="cols">
-      <section style="margin-top:0"><h2>{_e(t['list'])}</h2><ol class="slist">{''.join(job_li(j) for j in listed)}</ol>{more}</section>
+      <section style="margin-top:0"><h2>{_e(t['list'])}</h2><ol class="slist">{''.join(_job_li(j, rel, lang, today, skills) for j in listed)}</ol>{more}</section>
       <aside class="side">
         {f'<div class="panel"><h2>{_e(t["skills"])}</h2><ol class="skb">{skills_html}</ol></div>' if top else ''}
         {f'<div class="panel"><h2>{_e(t["companies_h"])}</h2><ol class="complist">{comp_html}</ol></div>' if comp_html else ''}
@@ -471,6 +482,8 @@ def seo_files(jobs: list[dict], meta: dict, base_url: str, today: dt.date | None
     today = today or dt.date.today()
     base = base_url.rstrip("/") + "/"
     pages = build_pages(jobs, meta)
+    from jobradar.extra_pages import company_slugs
+    meta = {**meta, "_company_slugs": company_slugs(jobs)}
     by_place: dict[str, list[_Page]] = {}
     for p in pages:
         by_place.setdefault(p.place, []).append(p)
@@ -489,6 +502,11 @@ def seo_files(jobs: list[dict], meta: dict, base_url: str, today: dt.date | None
     for p in pages:
         prio = "0.8" if p.kind == "country" else "0.7" if p.kind == "track" else "0.6"
         urls += [(base + p.url_path("en"), prio), (base + p.url_path("ar"), prio)]
+    from jobradar import extra_pages
+    place_pages = {p.place: p.url_path("en") for p in pages if p.kind == "country"}
+    extra, extra_urls = extra_pages.extra_files(jobs, meta, base, today, place_pages)
+    out.update(extra)
+    urls += extra_urls
     lastmod = today.isoformat()
     out["sitemap.xml"] = ('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
                           + "".join(f"  <url><loc>{_e(u)}</loc><lastmod>{lastmod}</lastmod><changefreq>daily</changefreq>"

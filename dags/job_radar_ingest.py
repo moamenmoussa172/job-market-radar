@@ -22,6 +22,7 @@ sync_boards / discover_boards / probe_companies: the self-expanding company
 from __future__ import annotations
 
 import logging
+import os
 from datetime import timedelta
 
 import pendulum
@@ -82,6 +83,25 @@ def job_radar_ingest():
         except Exception as exc:  # noqa: BLE001 - the website never fails the data run
             log.warning("website not published: %s", exc)
             return None
+        finally:
+            conn.close()
+
+    @task(retries=0)
+    def send_newsletter() -> dict:
+        """Radarak Weekly: create this week's email in Buttondown on newsletter day (optional)."""
+        import datetime as _dt
+        import json as _json
+        from jobradar import newsletter
+        conn = PostgresHook(postgres_conn_id=WAREHOUSE_CONN_ID).get_conn()
+        try:
+            if not os.environ.get("BUTTONDOWN_API_KEY", "").strip():
+                return {"skipped": "BUTTONDOWN_API_KEY not set"}
+            data = site_export.export_site_data(conn)
+            return newsletter.send_from_env(conn, _json.loads(data["data/jobs.json"]), _json.loads(data["data/meta.json"]),
+                                            site_export.site_base_url(), _dt.date.today())
+        except Exception as exc:  # noqa: BLE001 - the newsletter never fails the data run
+            log.warning("newsletter not created: %s", exc)
+            return {"error": str(exc)[:200]}
         finally:
             conn.close()
 
@@ -216,6 +236,7 @@ def job_radar_ingest():
     [check(loaded), rates] >> dbt_build
     dbt_build >> publish_site()
     dbt_build >> post_telegram()
+    dbt_build >> send_newsletter()
     discover_boards(loaded)
 
 
