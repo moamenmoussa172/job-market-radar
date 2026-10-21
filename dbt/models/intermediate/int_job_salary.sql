@@ -2,8 +2,12 @@
 --   1. period  -> annual multiplier via seeds/salary_periods.csv
 --   2. currency -> EUR via the ECB rate on (or before) the day we first saw
 --      the job, then EUR -> USD with that same day's USD rate
---   3. plausibility check: annual USD outside 5k..1.5M is kept but flagged
---      (usually a monthly figure labelled as yearly, or a typo)
+--   3. plausibility check: kept but flagged (not shown on the site) when
+--        - the annual midpoint is outside 5k..1.5M USD, or the floor is under 5k USD
+--          (aggregators send "0" or "1" as a floor: "$0k - $217k")
+--        - the top is more than 8x the floor ("$12k - $347k": two different numbers mixed up)
+--        - a job-aggregator listing (Adzuna, Jooble, JSearch, ...) claims a midpoint over 400k USD
+--          (seen: Polish listings 5-15x too high). Company boards (e.g. OpenAI's real ranges) are trusted.
 -- Jobs with no structured salary are not in this model.
 -- The salary comes from the best listing of the job that HAS one: the dedup
 -- survivor (e.g. a Greenhouse page) often has no salary while the same job on
@@ -11,8 +15,10 @@
 with salaried_listings as (
     select distinct on (job_id)
         job_id,
-        salary_min,
+        source,
+        nullif(salary_min, 0)                        as salary_min,   -- "0" = no floor given
         salary_max,
+        coalesce(salary_min, salary_max) = 0         as floor_was_zero,
         upper(trim(salary_currency))                 as currency,
         lower(trim(salary_period))                   as period
     from {{ ref('int_postings_keyed') }}
@@ -98,7 +104,12 @@ select
     round((annual_min_local + annual_max_local) / 2 / cur_per_eur, 0)
                                                               as annual_mid_eur,
     coalesce(
-        (annual_min_local + annual_max_local) / 2 / cur_per_eur * usd_per_eur between 5000 and 1500000,
+        not floor_was_zero
+        and (annual_min_local + annual_max_local) / 2 / cur_per_eur * usd_per_eur between 5000 and 1500000
+        and annual_min_local / cur_per_eur * usd_per_eur >= 5000
+        and annual_max_local <= 8 * annual_min_local
+        and not (source in ('adzuna', 'jooble', 'jsearch', 'arbeitnow', 'bundesagentur')
+                 and (annual_min_local + annual_max_local) / 2 / cur_per_eur * usd_per_eur > 400000),
         false)                                                as salary_is_plausible
 from annual
 where cur_per_eur is not null   -- currency the ECB doesn't publish -> can't convert

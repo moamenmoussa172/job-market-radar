@@ -306,3 +306,19 @@ python -m venv .venv; .venv\Scripts\Activate.ps1
 pip install -r tests/requirements.txt
 pytest
 ```
+
+## Testing the website (every feature, in a real browser)
+
+`tests/e2e/test_website.py` opens the site in Chromium and checks every feature: filters and counts
+(compared with counts computed from `data/jobs.json`), search, quick toggles, sorting, job panel and deep
+links, save / applied / Saved tab, report-closed, WhatsApp and copy link, My skills, CV paste and PDF/Word
+upload, "learn next", "new since your last visit", Arabic, all tabs, newsletter, app install files, the
+data-load error message, phone layout and filter sheet, every country page (EN/AR), the filters on the
+country / companies / juniors / salaries pages, the weekly report page, links, sitemap, SEO tags, asset
+versions and the Remote OK followed links. It is skipped in the normal test run.
+
+```powershell
+pip install pytest playwright reportlab python-docx
+python -m playwright install chromium
+$env:SITE_URL="https://radarak.online"; python -m pytest tests/e2e -v
+```

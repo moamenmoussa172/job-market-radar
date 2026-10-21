@@ -100,6 +100,17 @@
     ctx.fillText(s, fx(x), y);
     return ctx.measureText(s).width;
   }
+  // several lines: break at spaces so a long sentence isn't cut off with "…"
+  function wrapText(str, x, y, font, color, maxW, lineH) {
+    ctx.font = font;
+    let line = "";
+    for (const word of String(str).split(" ")) {
+      const next = line ? line + " " + word : word;
+      if (line && ctx.measureText(next).width > maxW) { text(line, x, y, font, color, "start"); y += lineH; line = word; }
+      else line = next;
+    }
+    if (line) text(line, x, y, font, color, "start", maxW);
+  }
   function rrect(x, y, w, h, r, fill) {
     ctx.beginPath(); ctx.roundRect(fx(x, w), y, w, h, r); ctx.fillStyle = fill; ctx.fill();
   }
@@ -132,7 +143,7 @@
     text(`${d.place} · ${d.range}`, PAD, 236, display(40, 700), "#19163A", "start", W - 2 * PAD);
 
     if (!d.enough) {
-      text(t("soon"), PAD, 340, body(30), "#615D80", "start", W - 2 * PAD);
+      wrapText(t("soon"), PAD, 340, body(30), "#615D80", W - 2 * PAD, 44);
       footer(); return d;
     }
     // big number

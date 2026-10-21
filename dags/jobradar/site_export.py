@@ -45,7 +45,14 @@ with jobs as (
     where f.is_active
       and f.job_url is not null
       and f.primary_source <> all(%(excluded)s)
-    order by coalesce(f.posted_at::date, f.first_seen_date) desc, f.job_id
+    -- The site lists at most SITE_MAX_JOBS jobs. The people it serves come first: every remote job and
+    -- every job in the Middle East / North Africa / Africa is listed; the rest of the room goes to
+    -- the newest jobs elsewhere (big markets like the US or Germany would otherwise crowd them out).
+    order by case when f.work_mode = 'Remote'
+                    or exists (select 1 from marts.bridge_job_regions r
+                               where r.job_id = f.job_id and r.region in ('MENA', 'Africa'))
+                  then 0 else 1 end,
+             coalesce(f.posted_at::date, f.first_seen_date) desc, f.job_id
     limit %(limit)s
 ),
 geo as (
