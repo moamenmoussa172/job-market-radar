@@ -19,7 +19,10 @@ finally:
     conn.close()
 if sha:
     owner, _, repo = os.environ.get("SITE_REPO", "").partition("/")
-    print(f"Published (commit {sha[:7]}). Site: https://{owner}.github.io/{repo}/")
+    domain = site_export.clean_domain(os.environ.get("SITE_DOMAIN", ""))
+    site = f"https://{domain}/" if domain else f"https://{owner.lower()}.github.io/{repo}/"
+    print(f"Published (commit {sha[:7]}). Site: {site}")
+    print(f"Custom domain: {domain} (CNAME file included)" if domain else "Custom domain: none (SITE_DOMAIN is empty)")
     print("First time only: GitHub repo Settings -> Pages -> Deploy from branch 'gh-pages', folder '/ (root)'.")
 else:
     print("Not published: set SITE_GITHUB_TOKEN and SITE_REPO in .env, then run `docker compose up -d`.")

@@ -238,3 +238,70 @@ def test_custom_domain_survives_every_publish():
 def test_index_preview_image_uses_the_known_github_pages_url():
     html = site_export.site_files(domain="")["index.html"].decode()
     assert site_export.GITHUB_PAGES_URL + "og.png" in html        # what gets swapped when a domain is set
+
+
+def test_github_server_errors_are_retried(monkeypatch):
+    answers = [FakeResp(502, {"message": "Server Error"}), FakeResp(201, {"sha": "tree9"})]
+    monkeypatch.setattr(site_export.requests, "request", lambda *a, **k: answers.pop(0))
+    monkeypatch.setattr(site_export.time, "sleep", lambda s: None)
+    assert site_export._gh("POST", "/repos/me/repo/git/trees", "tok", {"tree": []}) == {"sha": "tree9"}
+
+
+def test_github_gives_up_after_a_few_retries(monkeypatch):
+    import pytest
+    monkeypatch.setattr(site_export.requests, "request", lambda *a, **k: FakeResp(502, {"message": "Server Error"}))
+    monkeypatch.setattr(site_export.time, "sleep", lambda s: None)
+    with pytest.raises(RuntimeError, match="HTTP 502"):
+        site_export._gh("POST", "/repos/me/repo/git/trees", "tok", {"tree": []})
+
+
+def test_tree_batches_are_capped_even_when_files_are_unchanged(monkeypatch):
+    old = {f"p{i}.html": b"same" + str(i).encode() for i in range(7)}
+    calls = fake_github(monkeypatch, ref_exists=True, existing=old)
+    monkeypatch.setattr(site_export, "TREE_BATCH_ENTRIES", 3)
+    site_export.publish(dict(old), "me/repo", "gh-pages", "tok")
+    trees = [b for m, p, b in calls if p.endswith("/git/trees")]
+    assert [len(t["tree"]) for t in trees] == [3, 3, 1] and all("content" not in e for t in trees for e in t["tree"])
+
+
+def test_tree_batches_are_capped_by_file_count(monkeypatch):
+    calls = fake_github(monkeypatch, ref_exists=True, existing={})
+    monkeypatch.setattr(site_export, "TREE_BATCH_FILES", 2)
+    site_export.publish({f"p{i}.html": b"x" for i in range(5)}, "me/repo", "gh-pages", "tok")
+    trees = [b for m, p, b in calls if p.endswith("/git/trees")]
+    assert [len(t["tree"]) for t in trees] == [2, 2, 1]
+
+
+def test_big_files_go_as_blobs_and_failing_batches_are_split(monkeypatch):
+    calls = []
+    fail_big_trees = {"n": 0}
+
+    def request(method, url, json=None, timeout=None, headers=None):
+        path = url.split("api.github.com")[1]
+        calls.append((method, path, json))
+        if "/git/trees/" in path:
+            return FakeResp(404, {"message": "Not Found"})
+        if path.endswith("/git/blobs"):
+            return FakeResp(201, {"sha": f"blob{len(calls)}"})
+        if path.endswith("/git/trees"):
+            if sum(1 for e in json["tree"] if "content" in e) > 1:      # GitHub chokes on this batch
+                fail_big_trees["n"] += 1
+                return FakeResp(502, {"message": "Server Error"})
+            return FakeResp(201, {"sha": f"tree{len(calls)}"})
+        if path.endswith("/git/commits"):
+            return FakeResp(201, {"sha": "commit1"})
+        if method == "GET":
+            return FakeResp(404, {"message": "Not Found"})
+        return FakeResp(201, {"ref": "refs/heads/gh-pages"})
+    monkeypatch.setattr(site_export.requests, "request", request)
+    monkeypatch.setattr(site_export.time, "sleep", lambda s: None)
+    monkeypatch.setattr(site_export, "INLINE_MAX_BYTES", 10)
+    files = {"a.html": b"aa", "b.html": b"bb", "c.html": b"cc", "data/jobs.json": b"[" + b"1," * 20 + b"1]"}
+    assert site_export.publish(files, "me/repo", "gh-pages", "tok") == "commit1"
+    blobs = [b for m, p, b in calls if p.endswith("/git/blobs")]
+    assert len(blobs) == 1                                               # only the big file is a blob
+    trees = [b for m, p, b in calls if p.endswith("/git/trees")]
+    final_paths = sorted(e["path"] for t in trees if all(e.get("content", "") != "" or "sha" in e for e in t["tree"])
+                         and sum(1 for e in t["tree"] if "content" in e) <= 1 for e in t["tree"])
+    assert {"a.html", "b.html", "c.html", "data/jobs.json"} <= set(final_paths)
+    assert fail_big_trees["n"] >= 1                                      # it did have to split

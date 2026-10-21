@@ -16,6 +16,7 @@ import json
 import logging
 import os
 import re
+import time
 from pathlib import Path
 
 import requests
@@ -298,12 +299,29 @@ def site_files(site_dir: Path = SITE_DIR, analytics_code: str | None = None,
 # --------------------------------------------------------------------------- #
 # Publishing (GitHub Git Data API)
 # --------------------------------------------------------------------------- #
-def _gh(method: str, path: str, token: str, body: dict | None = None, ok=(200, 201)) -> dict | None:
-    resp = requests.request(
-        method, f"{GITHUB_API}{path}", json=body, timeout=120,
-        headers={"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json",
-                 "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "job-market-radar"},
-    )
+GH_RETRIES = 3          # GitHub sometimes answers 502/503/504 to heavy requests: wait and try again
+
+
+def _gh(method: str, path: str, token: str, body: dict | None = None, ok=(200, 201),
+        retries: int | None = None) -> dict | None:
+    retries = GH_RETRIES if retries is None else retries
+    for attempt in range(retries + 1):
+        try:
+            resp = requests.request(
+                method, f"{GITHUB_API}{path}", json=body, timeout=180,
+                headers={"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json",
+                         "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "job-market-radar"},
+            )
+        except (requests.ConnectionError, requests.Timeout):
+            if attempt == retries:
+                raise
+            time.sleep(5 * (attempt + 1))
+            continue
+        if resp.status_code in (502, 503, 504) and attempt < retries:
+            log.warning("GitHub %s %s -> HTTP %s, retrying", method, path, resp.status_code)
+            time.sleep(5 * (attempt + 1))
+            continue
+        break
     if resp.status_code == 404 and method == "GET":
         return None
     if resp.status_code not in ok:
@@ -312,7 +330,10 @@ def _gh(method: str, path: str, token: str, body: dict | None = None, ok=(200, 2
 
 
 TEXT_TYPES = (".html", ".css", ".js", ".json", ".xml", ".txt", ".webmanifest", ".md", ".svg")
-TREE_BATCH_BYTES = 3 * 1024 * 1024   # text sent inline per "create tree" request
+TREE_BATCH_BYTES = 512 * 1024   # text sent inline per "create tree" request (bigger ones time out at GitHub)
+TREE_BATCH_FILES = 150          # inline files per request
+TREE_BATCH_ENTRIES = 800        # all files (reused ones too) per request: GitHub 502s on ~2,700 at once
+INLINE_MAX_BYTES = 400 * 1024   # bigger files (data/jobs.json) are uploaded as blobs, never inline
 
 
 def git_blob_sha(content: bytes) -> str:
@@ -327,6 +348,35 @@ def _existing_blobs(repo: str, branch: str, token: str) -> set[str]:
     except RuntimeError:
         return set()
     return {e["sha"] for e in (tree or {}).get("tree", []) if e.get("type") == "blob"}
+
+
+def _upload_blob(repo: str, token: str, content: bytes) -> str:
+    return _gh("POST", f"/repos/{repo}/git/blobs", token,
+               {"content": base64.b64encode(content).decode("ascii"), "encoding": "base64"})["sha"]
+
+
+def _make_tree(repo: str, token: str, entries: list[dict], base: str | None) -> str:
+    """Create a tree on top of `base`. If GitHub keeps failing (5xx), split the batch in half and try
+    each half; a single inline file that still fails is uploaded as a blob instead."""
+    body = {"tree": entries, **({"base_tree": base} if base else {})}
+    try:
+        return _gh("POST", f"/repos/{repo}/git/trees", token, body, retries=1)["sha"]
+    except RuntimeError as exc:
+        if "HTTP 5" not in str(exc) and "HTTP 422" not in str(exc):
+            raise
+        inline = [e for e in entries if "content" in e]
+        if not inline:
+            raise
+        if len(entries) > 1:
+            half = len(entries) // 2
+            log.warning("publish: tree of %s files failed (%s), splitting", len(entries), str(exc)[:60])
+            return _make_tree(repo, token, entries[half:], _make_tree(repo, token, entries[:half], base))
+        e = entries[0]
+        log.warning("publish: %s failed inline, uploading it as a blob", e["path"])
+        sha = _upload_blob(repo, token, e["content"].encode("utf-8"))
+        return _gh("POST", f"/repos/{repo}/git/trees", token,
+                   {"tree": [{"path": e["path"], "mode": "100644", "type": "blob", "sha": sha}],
+                    **({"base_tree": base} if base else {})})["sha"]
 
 
 def publish(files: dict[str, bytes], repo: str, branch: str, token: str,
@@ -347,24 +397,28 @@ def publish(files: dict[str, bytes], repo: str, branch: str, token: str,
             is_text = path.endswith(TEXT_TYPES) or "." not in path.rsplit("/", 1)[-1] or path.endswith("CNAME")
         except UnicodeDecodeError:
             is_text = False
-        if is_text:
+        if is_text and len(content) <= INLINE_MAX_BYTES:
             inline.append({"path": path, "mode": "100644", "type": "blob", "content": text})
         else:
-            blob = _gh("POST", f"/repos/{repo}/git/blobs", token,
-                       {"content": base64.b64encode(content).decode("ascii"), "encoding": "base64"})
-            binary.append({"path": path, "mode": "100644", "type": "blob", "sha": blob["sha"]})
-    batches, cur, size = [], reused + binary, 0
-    for entry in inline:
-        if cur and size + len(entry["content"]) > TREE_BATCH_BYTES and any("content" in e for e in cur):
+            binary.append({"path": path, "mode": "100644", "type": "blob", "sha": _upload_blob(repo, token, content)})
+    batches, cur, size, n_inline = [], [], 0, 0
+    for entry in reused + binary + inline:
+        text = entry.get("content")
+        full = len(cur) >= TREE_BATCH_ENTRIES or (text is not None and n_inline and (
+            size + len(text) > TREE_BATCH_BYTES or n_inline >= TREE_BATCH_FILES))
+        if cur and full:
             batches.append(cur)
-            cur, size = [], 0
+            cur, size, n_inline = [], 0, 0
         cur.append(entry)
-        size += len(entry["content"])
+        if text is not None:
+            size += len(text)
+            n_inline += 1
     batches.append(cur)
     tree_sha = None
-    for batch in batches:
-        body = {"tree": batch, **({"base_tree": tree_sha} if tree_sha else {})}
-        tree_sha = _gh("POST", f"/repos/{repo}/git/trees", token, body)["sha"]
+    for i, batch in enumerate(batches, 1):
+        log.info("publish: tree batch %s/%s (%s files, %s KB inline)", i, len(batches), len(batch),
+                 sum(len(e.get("content", "")) for e in batch) // 1024)
+        tree_sha = _make_tree(repo, token, batch, tree_sha)
     new_tree = {"sha": tree_sha}
     log.info("publish: %s files (%s unchanged, %s text, %s binary uploaded) in %s tree requests",
              len(files), len(reused), len(inline), len(binary), len(batches))
