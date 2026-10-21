@@ -305,3 +305,34 @@ def test_big_files_go_as_blobs_and_failing_batches_are_split(monkeypatch):
                          and sum(1 for e in t["tree"] if "content" in e) <= 1 for e in t["tree"])
     assert {"a.html", "b.html", "c.html", "data/jobs.json"} <= set(final_paths)
     assert fail_big_trees["n"] >= 1                                      # it did have to split
+
+
+def test_publish_with_git_replaces_the_branch_with_one_commit(tmp_path):
+    import shutil
+    import subprocess
+    import pytest
+    if not shutil.which("git"):
+        pytest.skip("git not installed")
+    remote = tmp_path / "remote.git"
+    subprocess.run(["git", "init", "-q", "--bare", str(remote)], check=True)
+    files = {"index.html": b"<html>v1", "jobs/egypt/index.html": b"<p>eg", "og.png": b"\x89PNG\xff", "CNAME": b"radarak.online\n"}
+    sha1 = site_export.publish_git(files, "me/repo", "gh-pages", "secret-token", "day 1", remote_url=str(remote))
+    sha2 = site_export.publish_git({**files, "index.html": b"<html>v2"}, "me/repo", "gh-pages", "secret-token", "day 2",
+                                   remote_url=str(remote))
+    git = lambda *a: subprocess.run(["git", "-C", str(remote), *a], capture_output=True, text=True, check=True).stdout
+    assert git("rev-parse", "gh-pages").strip() == sha2 != sha1
+    assert git("rev-list", "--count", "gh-pages").strip() == "1"                  # history doesn't grow
+    assert sorted(git("ls-tree", "-r", "--name-only", "gh-pages").split()) == sorted(files)
+    assert git("show", "gh-pages:index.html") == "<html>v2"
+    png = subprocess.run(["git", "-C", str(remote), "show", "gh-pages:og.png"], capture_output=True, check=True).stdout
+    assert png == b"\x89PNG\xff"                                              # binary files survive untouched
+
+
+def test_git_errors_never_show_the_token(tmp_path):
+    import shutil
+    import pytest
+    if not shutil.which("git"):
+        pytest.skip("git not installed")
+    with pytest.raises(RuntimeError) as err:
+        site_export.publish_git({"a.html": b"x"}, "me/repo", "gh-pages", "secret-token", remote_url=str(tmp_path / "missing"))
+    assert "secret-token" not in str(err.value) and "push failed" in str(err.value)

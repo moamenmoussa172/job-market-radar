@@ -433,6 +433,48 @@ def publish(files: dict[str, bytes], repo: str, branch: str, token: str,
     return commit["sha"]
 
 
+def publish_git(files: dict[str, bytes], repo: str, branch: str, token: str, message: str = "Daily site update",
+                remote_url: str | None = None) -> str:
+    """Replace the branch with `files` in one parentless commit, pushed with git (one compressed upload).
+    GitHub's tree API times out on ~2,700 files; git push doesn't care. The token travels in an HTTP header,
+    never in the URL, and is removed from any error message."""
+    import shutil
+    import subprocess
+    import tempfile
+    git = shutil.which("git")
+    if not git:
+        raise RuntimeError("git is not installed in this container")
+    remote = remote_url or f"https://github.com/{repo}.git"
+    auth = base64.b64encode(f"x-access-token:{token}".encode()).decode()
+    env = {**os.environ, "GIT_TERMINAL_PROMPT": "0", "GIT_ASKPASS": "true"}
+
+    def run(*args: str, cwd: str) -> str:
+        cmd = [git, "-c", "user.name=Radarak bot", "-c", "user.email=bot@radarak.online",
+               "-c", "init.defaultBranch=" + branch, "-c", "core.autocrlf=false"]
+        if remote.startswith("https://"):
+            cmd += ["-c", f"http.extraHeader=Authorization: Basic {auth}"]
+        res = subprocess.run(cmd + list(args), cwd=cwd, env=env, capture_output=True, text=True, timeout=900)
+        if res.returncode != 0:
+            err = (res.stderr or res.stdout).replace(token, "***").replace(auth, "***")
+            raise RuntimeError(f"git {args[0]} failed: {err.strip()[-400:]}")
+        return res.stdout.strip()
+
+    with tempfile.TemporaryDirectory(prefix="radarak-site-") as tmp:
+        root = Path(tmp)
+        for path, content in files.items():
+            target = root / path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(content)
+        run("init", "-q", cwd=tmp)
+        run("checkout", "-q", "--orphan", branch, cwd=tmp)
+        run("add", "-A", cwd=tmp)
+        run("commit", "-q", "-m", message, cwd=tmp)
+        sha = run("rev-parse", "HEAD", cwd=tmp)
+        run("push", "-q", "--force", remote, f"HEAD:refs/heads/{branch}", cwd=tmp)
+    log.info("published %s files to %s@%s with git push (%s)", len(files), repo, branch, sha[:7])
+    return sha
+
+
 def publish_from_env(conn) -> str | None:
     """Export + publish using SITE_GITHUB_TOKEN / SITE_REPO / SITE_BRANCH. None if not configured."""
     token = os.environ.get("SITE_GITHUB_TOKEN", "").strip()
@@ -442,5 +484,10 @@ def publish_from_env(conn) -> str | None:
         log.warning("SITE_GITHUB_TOKEN / SITE_REPO not set - website not published")
         return None
     files = all_site_files(conn)
+    import shutil
+    if shutil.which("git"):
+        return publish_git(files, repo, branch, token, message=f"Site update {dt.date.today().isoformat()}")
+    log.warning("git not found in the container: publishing through the GitHub API (slow for many files); "
+                "rebuild the image (docker compose build) to get git")
     return publish(files, repo, branch, token,
                    message=f"Site update {dt.date.today().isoformat()}")

@@ -127,6 +127,9 @@ One-time setup:
    `gh-pages` / `(root)`**. The site appears at https://moamenmoussa172.github.io/job-market-radar/ within a minute or two.
 
 Every successful daily run then replaces the `gh-pages` branch with one fresh commit (no growing history).
+The site is pushed with `git push --force` from inside the Airflow container (git is installed in
+`airflow/Dockerfile`; the token goes in an HTTP header, never in the URL or logs). Without git it falls back to
+the GitHub API, which times out once the site has a few thousand files.
 Edit the site in `site/` (index.html, style.css, app.js); changes go live with the next publish.
 If the token expires, the run still succeeds and logs "website not published".
 

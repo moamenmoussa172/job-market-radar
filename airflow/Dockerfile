@@ -2,6 +2,12 @@ ARG AIRFLOW_VERSION=3.3.2
 FROM apache/airflow:${AIRFLOW_VERSION}
 
 ARG AIRFLOW_VERSION
+
+# git publishes the website (one "git push" instead of thousands of GitHub API calls)
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends git && rm -rf /var/lib/apt/lists/*
+USER airflow
+
 COPY requirements.txt /requirements.txt
 RUN pip install --no-cache-dir "apache-airflow==${AIRFLOW_VERSION}" -r /requirements.txt
 
