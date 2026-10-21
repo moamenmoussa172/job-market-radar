@@ -268,7 +268,7 @@ def _pay_rows(jobs: list[dict]) -> list[tuple[str, int, int, int, int]]:
         by_role.setdefault(j.get("r"), []).append((j["$"][0] + j["$"][1]) / 2)
     rows = []
     for role, vals in by_role.items():
-        if role and len(vals) >= MIN_SALARY_JOBS:
+        if role and role != "Other tech role" and len(vals) >= MIN_SALARY_JOBS:
             q = statistics.quantiles(vals, n=4) if len(vals) >= 2 else [vals[0]] * 3
             rows.append((role, round(statistics.median(vals)), round(q[0]), round(q[2]), len(vals)))
     return sorted(rows, key=lambda r: -r[1])

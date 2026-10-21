@@ -829,7 +829,7 @@
       <button type="button" class="linkbtn learnjump" id="learnJump">${t("learnTitle")} ↓</button>
       <div class="actions">
         ${role ? `<button type="button" class="cvbtn" id="cvRoleBtn">${esc(t("cvShowRole")(role))}</button>` : ""}
-        <button type="button" class="sharebtn" id="cvBestBtn">${t("cvShowBest")}</button>
+        <button type="button" class="ghostbtn" id="cvBestBtn">${t("cvShowBest")}</button>
         <button type="button" class="linkbtn" id="cvClearBtn">${t("cvClear")}</button>
       </div>`;
     if (role) $("cvRoleBtn").addEventListener("click", () => { track("cv-show-role"); $("role").value = "role:" + role; update(); goToJobs(); });
