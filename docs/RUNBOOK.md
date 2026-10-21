@@ -56,6 +56,18 @@ JSearch, Jooble and Adzuna need keys in `.env` (`JSEARCH_API_KEY`, `JOOBLE_API_K
 go in code or git; if a key is exposed, regenerate it. Daily budgets: `JSEARCH_REQUESTS_PER_DAY`
 (default 6, fits the free 200/month), `JOOBLE_REQUESTS_PER_DAY` (default 3) and
 `ADZUNA_REQUESTS_PER_DAY` (default 40). A 401/403/429 answer stops that source for the day.
+`JSEARCH_EXTRA_PER_DAY` / `JOOBLE_EXTRA_PER_DAY` (default 1) take that many of the daily searches for
+`EXTRA_SEARCH_COUNTRIES` in sources.py (North Africa, Iraq, Levant, East Africa, South/Central Asia,
+Caucasus, Balkans), so the total stays inside the free plans.
+
+## Adding a country
+
+1. `dbt/seeds/geo_patterns.csv`: a row `"\m(country|capital|city)\M",Country,Region` (plus an Arabic row
+   for Arab countries). Watch for clashes (e.g. Georgia the US state: use Tbilisi/Batumi only).
+2. `dbt/seeds/country_codes.csv`: its ISO code.
+3. Arabic name in `seo_pages.AR_PLACES` (needed for its page) and `site/report.js`.
+4. Optional: add it to `EXTRA_SEARCH_COUNTRIES` so JSearch/Jooble look for jobs there.
+5. `pytest tests/test_countries.py`, then trigger the DAG (dbt reloads the seeds).
 
 ## Adding companies by hand (head-hunting)
 

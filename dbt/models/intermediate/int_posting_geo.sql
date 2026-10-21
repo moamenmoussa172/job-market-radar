@@ -27,6 +27,10 @@ matched as (
     join {{ ref('geo_patterns') }} g
       on p.geo_text ~* g.pattern
     where p.posting_key not in (select posting_key from worldwide)
+      -- "Tbilisi, Georgia" is the country, not the US state
+      and not (g.country = 'United States'
+               and p.geo_text ~* '\m(tbilisi|batumi|kutaisi)\M'
+               and p.geo_text !~* '\m(usa|u\.s\.a?|united\s+states|atlanta|savannah)\M')
 )
 
 select * from worldwide

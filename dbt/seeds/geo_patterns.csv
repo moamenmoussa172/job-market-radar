@@ -10,9 +10,9 @@ pattern,country,region
 "\m(apac|asia|asia[- ]pacific)\M",,APAC
 "\m(mena|middle\s+east|gcc)\M",,MENA
 "\mafrica\M",,Africa
-"\m(usa|us|u\.s\.a?\.?|united\s+states)\M|san\s+francisco|new\s+york|\mnyc\M|seattle|austin|boston|chicago|los\s+angeles|denver|atlanta|washington,?\s+d\.?c|,\s*(ny|wa|tx|ma|il|nj|ga|nc|or)\s*(,\s*(usa|us))?\s*$",United States,North America
+"\m(usa|us|u\.s\.a?\.?|united\s+states)\M|san\s+francisco|new\s+york|\mnyc\M|seattle|austin|boston|chicago|los\s+angeles|denver|atlanta|washington,?\s+d\.?c|,\s*(ny|wa|tx|ma|il|nj|ga|nc|or|mi|az|pa|oh|mn|fl|va|md|ut|wi|mo|tn|ct|ky|sc|nv|ia|ks|ok|ne|nh|ri|de)\s*(,\s*(usa|us))?\s*$",United States,North America
 "\m(california|texas|florida|massachusetts|illinois|colorado|virginia|north\s+carolina|oregon|arizona|utah|pennsylvania|ohio|michigan|minnesota|new\s+jersey|washington|tennessee|missouri|wisconsin|maryland|indiana|nevada|connecticut)\M|\m(bellevue|mountain\s+view|palo\s+alto|menlo\s+park|sunnyvale|san\s+jose|santa\s+clara|cupertino|redmond|plano|dallas|houston|san\s+diego|portland|miami|philadelphia|pittsburgh|raleigh|salt\s+lake|phoenix|minneapolis|detroit|irvine|nashville|charlotte)\M",United States,North America
-"\m(canada|toronto|vancouver|montr[eé]al|ottawa|calgary)\M",Canada,North America
+"\m(canada|toronto|vancouver|montr[eé]al|ottawa|calgary|mississauga|edmonton|winnipeg|qu[eé]bec|halifax|burnaby|kitchener|waterloo,\s*on|markham|brampton)\M|,\s*on,\s*ca\M",Canada,North America
 "\m(mexico|méxico|cdmx|guadalajara|monterrey)\M",Mexico,LATAM
 "\m(brazil|brasil|s[aã]o\s+paulo|rio\s+de\s+janeiro)\M",Brazil,LATAM
 "\m(argentina|buenos\s+aires)\M",Argentina,LATAM
@@ -40,15 +40,15 @@ pattern,country,region
 "\m(venezuela|caracas)\M",Venezuela,LATAM
 "\m(bolivia)\M",Bolivia,LATAM
 "\m(paraguay)\M",Paraguay,LATAM
-"\m(germany|deutschland|berlin|m[uü]nchen|munich|hamburg|k[oö]ln|cologne|frankfurt|stuttgart|d[uü]sseldorf|karlsruhe|kassel|mainz|offenburg|leipzig|dresden|n[uü]rnberg|nuremberg|hannover|bremen|bonn|essen|dortmund|heidelberg|mannheim|freiburg|baden-w[uü]rttemberg|bavaria|bayern)\M",Germany,Europe
-"\m(france|paris|lyon|lille|montpellier|toulouse|marseille|bordeaux|nantes|nice|strasbourg|rennes)\M",France,Europe
+"\m(germany|deutschland|berlin|m[uü]nchen|munich|hamburg|k[oö]ln|cologne|frankfurt|stuttgart|d[uü]sseldorf|karlsruhe|kassel|mainz|offenburg|leipzig|dresden|n[uü]rnberg|nuremberg|hannover|bremen|bonn|essen|dortmund|heidelberg|mannheim|freiburg|baden-w[uü]rttemberg|bavaria|bayern|frechen|bochum|cottbus|singen|aachen|darmstadt|w[uü]rzburg|lindlar|rottenburg|bielefeld|garching|echterdingen|bamberg|t[uü]bingen|kiel|konstanz|osnabr[uü]ck|deggendorf|hanover|ottobrunn|landau|chemnitz|pliezhausen|augsburg|regensburg|ulm|wiesbaden|potsdam|magdeburg|rostock|erlangen|ingolstadt|wolfsburg|braunschweig|g[oö]ttingen|m[uü]nster|duisburg|wuppertal|saarbr[uü]cken|jena|paderborn|heilbronn|walldorf|sindelfingen|unterf[oö]hring|eschborn|erlenbach\s+am\s+main|bayreuth|memmingen|altenburg|harrislee|halle|north\s+rhine-westphalia|nordrhein-westfalen|hesse|hessen|saxony|sachsen|lower\s+saxony|niedersachsen)\M",Germany,Europe
+"\m(france|paris|lyon|lille|montpellier|toulouse|marseille|bordeaux|nantes|nice|strasbourg|rennes|tourcoing|montrouge|villejuif|grenoble|sophia\s+antipolis|nanterre|boulogne-billancourt|issy-les-moulineaux|courbevoie|la\s+d[eé]fense|levallois|saint-denis|rouen|dijon|angers|reims|clermont-ferrand|aix-en-provence|caen|tours|metz|nancy|guyancourt|v[eé]lizy|massy|saclay|palaiseau|puteaux)\M",France,Europe
 "\m(united\s+kingdom|uk|u\.k\.|gb|great\s+britain|england|scotland|wales|london|manchester|edinburgh|glasgow|bristol|cambridge|oxford|leeds|birmingham|westminster|belfast|cardiff|swansea|newcastle|liverpool|nottingham|sheffield|reading)\M",United Kingdom,Europe
-"\m(netherlands|nederland|holland|amsterdam|rotterdam|utrecht|eindhoven|the\s+hague|den\s+haag)\M",Netherlands,Europe
+"\m(netherlands|nederland|holland|amsterdam|rotterdam|utrecht|eindhoven|the\s+hague|den\s+haag|haarlem|delft|leiden|groningen|nijmegen|arnhem|tilburg|breda|amstelveen|hilversum|enschede|maastricht|zwolle|amersfoort|hoofddorp|schiphol|almere)\M",Netherlands,Europe
 "\m(spain|españa|espana|madrid|barcelona|valencia|sevilla|seville|m[aá]laga|bilbao)\M",Spain,Europe
 "\m(portugal|lisbon|lisboa|porto|braga)\M",Portugal,Europe
 "\m(ireland|dublin|cork|galway)\M",Ireland,Europe
-"\m(switzerland|schweiz|suisse|z[uü]rich|geneva|gen[eè]ve|basel|bern|lausanne|lugano|mendrisio|zug)\M",Switzerland,Europe
-"\m(austria|[oö]sterreich|vienna|wien|graz|linz|salzburg)\M",Austria,Europe
+"\m(switzerland|schweiz|suisse|z[uü]rich|geneva|gen[eè]ve|basel|bern|lausanne|lugano|mendrisio|zug|solothurn|lucerne|luzern|baden(?![-\s]+(w[uü]rttemberg|baden))|birr|baar|lyss|kreuzlingen|aarau|jona|cham|frauenfeld|nyon|schlieren|wallisellen|muttenz|wetzikon|landquart|lenzburg|stallikon|winterthur|st\.?\s*gallen|neuch[aâ]tel|fribourg|thun|biel|rotkreuz|schaffhausen|olten|dietikon|opfikon|risch|allschwil)\M",Switzerland,Europe
+"\m(austria|[oö]sterreich|vienna|wien|graz|linz|salzburg|innsbruck|klagenfurt|villach|st\.?\s*p[oö]lten|wels|dornbirn|leoben|hagenberg)\M",Austria,Europe
 "\m(belgium|belgique|brussels|bruxelles|antwerp|ghent)\M",Belgium,Europe
 "\m(luxembourg)\M",Luxembourg,Europe
 "\m(italy|italia|milan|milano|rome|roma|turin|torino)\M",Italy,Europe
@@ -73,7 +73,7 @@ pattern,country,region
 "\m(turkey|türkiye|turkiye|istanbul|ankara)\M",Turkey,MENA
 "\m(egypt|cairo|alexandria|giza)\M",Egypt,MENA
 "\m(uae|u\.a\.e|united\s+arab\s+emirates|dubai|abu\s+dhabi)\M",United Arab Emirates,MENA
-"\m(saudi|ksa|riyadh|jeddah|dammam)\M",Saudi Arabia,MENA
+"\m(saudi|ksa|riyadh|jeddah|dammam|khobar|dhahran|king\s+abdullah\s+economic\s+city|kaec|neom|jubail|yanbu|mecca|makkah|medina|madinah|tabuk|abha)\M",Saudi Arabia,MENA
 "\m(qatar|doha)\M",Qatar,MENA
 "\m(bahrain|manama)\M",Bahrain,MENA
 "\m(kuwait)\M",Kuwait,MENA
@@ -112,3 +112,63 @@ pattern,country,region
 "(مسقط|سلطنة عمان|سلطنة عُمان)",Oman,MENA
 "(عمّان|الأردن|الاردن)",Jordan,MENA
 "(فلسطين|رام الله|غزة|غزّة|نابلس|بيت لحم|الخليل|جنين|أريحا|طولكرم|قلقيلية|البيرة|الضفة الغربية)",Palestine,MENA
+"\m(algeria|alg[eé]rie|algiers|alger|oran|constantine|annaba|s[eé]tif|blida)\M",Algeria,MENA
+"\m(iraq|baghdad|erbil|basra|sulaymaniyah|kurdistan\s+region)\M",Iraq,MENA
+"\m(libya|benghazi|misrata|tripoli,\s*libya)\M",Libya,MENA
+"\m(sudan|khartoum|omdurman)\M",Sudan,MENA
+"\m(syria|damascus|aleppo|homs|latakia)\M",Syria,MENA
+"\m(yemen|sana'?a|aden)\M",Yemen,MENA
+"\m(mauritania|nouakchott)\M",Mauritania,MENA
+"(الجزائر|وهران|قسنطينة)",Algeria,MENA
+"(العراق|بغداد|أربيل|اربيل|البصرة)",Iraq,MENA
+"(ليبيا|بنغازي|مصراتة)",Libya,MENA
+"(السودان|الخرطوم)",Sudan,MENA
+"(سوريا|سورية|دمشق|حلب)",Syria,MENA
+"(اليمن|صنعاء|عدن)",Yemen,MENA
+"(موريتانيا|نواكشوط)",Mauritania,MENA
+"(لبنان|بيروت)",Lebanon,MENA
+"(المغرب|الدار البيضاء|الرباط|مراكش|طنجة)",Morocco,MENA
+"(تونس|صفاقس|سوسة)",Tunisia,MENA
+"\m(ethiopia|addis\s+ababa)\M",Ethiopia,Africa
+"\m(uganda|kampala)\M",Uganda,Africa
+"\m(tanzania|dar\s+es\s+salaam|dodoma|arusha|zanzibar)\M",Tanzania,Africa
+"\m(rwanda|kigali)\M",Rwanda,Africa
+"\m(senegal|s[eé]n[eé]gal|dakar)\M",Senegal,Africa
+"\m(c[oô]te\s+d'?ivoire|ivory\s+coast|abidjan)\M",Ivory Coast,Africa
+"\m(cameroon|cameroun|douala|yaound[eé])\M",Cameroon,Africa
+"\m(zimbabwe|harare|bulawayo)\M",Zimbabwe,Africa
+"\m(zambia|lusaka)\M",Zambia,Africa
+"\m(madagascar|antananarivo)\M",Madagascar,Africa
+"\m(mauritius|port\s+louis|ebene)\M",Mauritius,Africa
+"\m(botswana|gaborone)\M",Botswana,Africa
+"\m(angola|luanda)\M",Angola,Africa
+"\m(mozambique|maputo)\M",Mozambique,Africa
+"\m(namibia|windhoek)\M",Namibia,Africa
+"\m(malawi|lilongwe|blantyre)\M",Malawi,Africa
+"\m(b[eé]nin(?!\s+city)|cotonou)\M",Benin,Africa
+"\m(togo|lom[eé])\M",Togo,Africa
+"\m(somalia|mogadishu|hargeisa)\M",Somalia,Africa
+"\m(bangladesh|dhaka|chittagong|chattogram)\M",Bangladesh,APAC
+"\m(sri\s+lanka|colombo)\M",Sri Lanka,APAC
+"\m(nepal|kathmandu|lalitpur|pokhara)\M",Nepal,APAC
+"\m(kazakhstan|almaty|astana|nur-sultan)\M",Kazakhstan,APAC
+"\m(uzbekistan|tashkent|samarkand)\M",Uzbekistan,APAC
+"\m(kyrgyzstan|bishkek)\M",Kyrgyzstan,APAC
+"\m(mongolia|ulaanbaatar|ulan\s+bator)\M",Mongolia,APAC
+"\m(cambodia|phnom\s+penh)\M",Cambodia,APAC
+"\m(myanmar|yangon)\M",Myanmar,APAC
+"\m(afghanistan|kabul)\M",Afghanistan,APAC
+"\m(slovakia|slovensko|bratislava|ko[sš]ice|[zž]ilina)\M",Slovakia,Europe
+"\m(slovenia|slovenija|ljubljana|maribor)\M",Slovenia,Europe
+"\m(albania|shqip[eë]ri|tirana|tiran[eë]|durr[eë]s)\M",Albania,Europe
+"\m(bosnia|herzegovina|sarajevo|banja\s+luka|mostar)\M",Bosnia and Herzegovina,Europe
+"\m(north\s+macedonia|macedonia|skopje)\M",North Macedonia,Europe
+"\m(montenegro|podgorica|budva)\M",Montenegro,Europe
+"\m(moldova|chi[sș]in[aă]u|chisinau)\M",Moldova,Europe
+"\m(kosovo|pristina|prishtina|prishtin[eë])\M",Kosovo,Europe
+"\m(iceland|[ií]sland|reykjav[ií]k)\M",Iceland,Europe
+"\m(tbilisi|batumi|kutaisi|georgia\s*\(country\)|sakartvelo)\M",Georgia,Europe
+"\m(armenia|yerevan)\M",Armenia,Europe
+"\m(azerbaijan|baku)\M",Azerbaijan,Europe
+"\m(belarus|minsk)\M",Belarus,Europe
+"\m(russia|russian\s+federation|moscow|saint\s+petersburg|st\.?\s*petersburg,\s*russia|novosibirsk|kazan)\M",Russia,Europe

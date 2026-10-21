@@ -390,7 +390,8 @@ WORKDAY_MAX_PAGES = int(os.environ.get("WORKDAY_MAX_PAGES", "15"))       # per c
 WORKDAY_MAX_DETAILS = int(os.environ.get("WORKDAY_MAX_DETAILS", "80"))   # per board
 WORKDAY_HEADERS = {"Accept": "application/json", "Accept-Language": "en-US", "Content-Type": "application/json"}
 MENA_COUNTRY_NAMES = ("Egypt", "United Arab Emirates", "Saudi Arabia", "Qatar", "Kuwait", "Bahrain", "Oman",
-                      "Jordan", "Palestine", "Morocco", "Lebanon", "Tunisia")
+                      "Jordan", "Palestine", "Morocco", "Lebanon", "Tunisia", "Algeria", "Iraq", "Libya", "Sudan",
+                      "Syria", "Yemen", "Mauritania")
 EUROPE_COUNTRY_NAMES = ("Austria", "Belgium", "Bulgaria", "Croatia", "Cyprus", "Czechia", "Czech Republic",
                         "Denmark", "Estonia", "Finland", "France", "Germany", "Greece", "Hungary", "Ireland",
                         "Italy", "Latvia", "Lithuania", "Luxembourg", "Malta", "Netherlands", "Norway", "Poland",
@@ -446,7 +447,8 @@ def workday_country_facet(facets: list, names: tuple[str, ...]) -> tuple[str | N
 _WORKDAY_CITIES = {
     "mena": ("cairo", "alexandria", "giza", "new cairo", "dubai", "abu dhabi", "sharjah", "riyadh", "jeddah",
              "dammam", "dhahran", "khobar", "doha", "kuwait", "manama", "muscat", "amman", "casablanca", "rabat",
-             "beirut", "tunis", "uae", "ksa"),
+             "beirut", "tunis", "uae", "ksa", "algiers", "oran", "baghdad", "erbil", "basra", "khartoum", "benghazi",
+             "nouakchott", "marrakech", "tangier"),
     "europe": ("london", "manchester", "edinburgh", "berlin", "munich", "hamburg", "frankfurt", "stuttgart",
                "paris", "amsterdam", "eindhoven", "dublin", "cork", "madrid", "barcelona", "warsaw", "krakow",
                "gdansk", "wroclaw", "lisbon", "porto", "milan", "rome", "stockholm", "copenhagen", "prague", "brno",
@@ -920,6 +922,18 @@ SEARCH_COUNTRIES = [  # (ISO code, name used in free-text queries)
     ("eg", "Egypt"), ("ae", "United Arab Emirates"), ("sa", "Saudi Arabia"), ("qa", "Qatar"),
     ("kw", "Kuwait"), ("bh", "Bahrain"), ("om", "Oman"), ("jo", "Jordan"),
 ]
+# More countries people asked for. They get their own small daily share (JSEARCH_EXTRA_PER_DAY /
+# JOOBLE_EXTRA_PER_DAY) so the Gulf and Egypt searches above keep their pace.
+EXTRA_SEARCH_COUNTRIES = [
+    ("ma", "Morocco"), ("tn", "Tunisia"), ("dz", "Algeria"), ("lb", "Lebanon"), ("iq", "Iraq"), ("ps", "Palestine"),
+    ("ly", "Libya"), ("sd", "Sudan"), ("ng", "Nigeria"), ("ke", "Kenya"), ("et", "Ethiopia"), ("gh", "Ghana"),
+    ("rw", "Rwanda"), ("pk", "Pakistan"), ("bd", "Bangladesh"), ("lk", "Sri Lanka"), ("np", "Nepal"),
+    ("kz", "Kazakhstan"), ("uz", "Uzbekistan"), ("ge", "Georgia"), ("am", "Armenia"), ("az", "Azerbaijan"),
+    ("al", "Albania"), ("rs", "Serbia"), ("ba", "Bosnia and Herzegovina"), ("mk", "North Macedonia"),
+    ("sk", "Slovakia"), ("si", "Slovenia"), ("md", "Moldova"), ("tr", "Turkey"),
+]
+EXTRA_SEARCH_ROLES = ["software engineer", "data analyst", "developer", "devops engineer", "cyber security",
+                      "qa engineer", "network engineer", "data engineer"]
 # Countries first, so each day's slice spreads over several countries.
 SEARCH_ROLES = ["software engineer", "data engineer", "data analyst", "developer", "devops engineer",
                 "qa engineer", "cyber security", "network engineer", "sap consultant", "product manager",
@@ -946,17 +960,28 @@ def daily_slice(pairs: list, per_day: int, day: dt.date | None = None) -> list:
 # LinkedIn, Indeed, Glassdoor, Bayt, company sites, ... Free plan: 200 requests/month.
 JSEARCH_URL = "https://api.openwebninja.com/jsearch/search-v2"
 JSEARCH_PER_DAY = int(os.environ.get("JSEARCH_REQUESTS_PER_DAY", "6"))
+JSEARCH_EXTRA_PER_DAY = int(os.environ.get("JSEARCH_EXTRA_PER_DAY", "1"))  # taken out of JSEARCH_PER_DAY
 
 
 def jsearch_pairs() -> list[tuple[str, str, str]]:
     return [(role, code, name) for role in SEARCH_ROLES for code, name in SEARCH_COUNTRIES]
 
 
+def jsearch_extra_pairs() -> list[tuple[str, str, str]]:
+    return [(role, code, name) for role in EXTRA_SEARCH_ROLES for code, name in EXTRA_SEARCH_COUNTRIES]
+
+
+def jsearch_today(day: dt.date | None = None) -> list[tuple[str, str, str]]:
+    """Today's searches: the main rotation plus a share for the extra countries, same total."""
+    extra = min(JSEARCH_EXTRA_PER_DAY, JSEARCH_PER_DAY)
+    return daily_slice(jsearch_pairs(), JSEARCH_PER_DAY - extra, day) + daily_slice(jsearch_extra_pairs(), extra, day)
+
+
 def extract_jsearch(pairs: list | None = None, pause_seconds: float = 1.0) -> ExtractResult:
     key = os.environ.get("JSEARCH_API_KEY", "").strip()
     if not key:
         return ExtractResult("jsearch", [], ["JSEARCH_API_KEY not set - source skipped"])
-    pairs = pairs if pairs is not None else daily_slice(jsearch_pairs(), JSEARCH_PER_DAY)
+    pairs = pairs if pairs is not None else jsearch_today()
     keep: dict[str, dict] = {}
     warnings: list[str] = []
     for role, code, name in pairs:
@@ -987,6 +1012,7 @@ def jsearch_id(record: dict) -> str:
 # Key quota is small (500 requests by default), so only a few searches per day.
 JOOBLE_URL = "https://jooble.org/api/{key}"
 JOOBLE_PER_DAY = int(os.environ.get("JOOBLE_REQUESTS_PER_DAY", "3"))
+JOOBLE_EXTRA_PER_DAY = int(os.environ.get("JOOBLE_EXTRA_PER_DAY", "1"))  # taken out of JOOBLE_PER_DAY
 
 
 def jooble_pairs() -> list[tuple[str, str]]:
@@ -994,11 +1020,20 @@ def jooble_pairs() -> list[tuple[str, str]]:
     return [(role, name) for role in roles for _, name in SEARCH_COUNTRIES]
 
 
+def jooble_extra_pairs() -> list[tuple[str, str]]:
+    return [(role, name) for role in ["software developer", "data", "it"] for _, name in EXTRA_SEARCH_COUNTRIES]
+
+
+def jooble_today(day: dt.date | None = None) -> list[tuple[str, str]]:
+    extra = min(JOOBLE_EXTRA_PER_DAY, JOOBLE_PER_DAY)
+    return daily_slice(jooble_pairs(), JOOBLE_PER_DAY - extra, day) + daily_slice(jooble_extra_pairs(), extra, day)
+
+
 def extract_jooble(pairs: list | None = None, pause_seconds: float = 1.0) -> ExtractResult:
     key = os.environ.get("JOOBLE_API_KEY", "").strip()
     if not key:
         return ExtractResult("jooble", [], ["JOOBLE_API_KEY not set - source skipped"])
-    pairs = pairs if pairs is not None else daily_slice(jooble_pairs(), JOOBLE_PER_DAY)
+    pairs = pairs if pairs is not None else jooble_today()
     keep: dict[str, dict] = {}
     warnings: list[str] = []
     for role, location in pairs:
