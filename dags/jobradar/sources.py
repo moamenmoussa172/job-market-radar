@@ -8,6 +8,7 @@ belongs to the silver layer so we can re-run it over history.
 from __future__ import annotations
 
 import csv
+import contextlib
 import datetime as dt
 import json
 import logging
@@ -39,6 +40,18 @@ class ExtractResult:
 
 
 CONNECT_RETRIES = 2  # extra tries when a server drops the connection or times out
+
+
+@contextlib.contextmanager
+def no_connect_retries():
+    """Board guessing: a guessed board that doesn't exist often fails at the connection level
+    (no such sub-domain); retrying it only wastes time, and probes are rechecked next run anyway."""
+    global CONNECT_RETRIES
+    saved, CONNECT_RETRIES = CONNECT_RETRIES, 0
+    try:
+        yield
+    finally:
+        CONNECT_RETRIES = saved
 
 
 def _get_json(url: str, params: dict | None = None, headers: dict | None = None) -> dict | list:

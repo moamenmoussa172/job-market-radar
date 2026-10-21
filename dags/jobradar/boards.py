@@ -206,7 +206,8 @@ def validate_candidates(conn, limit: int = MAX_VALIDATIONS_PER_RUN) -> dict[str,
         todo = cur.fetchall()
     counts = {"active": 0, "dead": 0, "retry": 0}
     for ats, token in todo:
-        result, data_jobs = validate_board(ats, token)
+        with sources.no_connect_retries():  # a failed check is simply retried next run
+            result, data_jobs = validate_board(ats, token)
         counts[result] += 1
         with conn.cursor() as cur:
             if result == "retry":
@@ -400,7 +401,8 @@ def validate_probes(conn, limit: int = MAX_PROBES_PER_RUN) -> dict[str, int]:
         if company in found:
             counts["skipped"] += 1
             continue
-        status, note = probe_board(ats, token, country)
+        with sources.no_connect_retries():
+            status, note = probe_board(ats, token, country)
         counts[status] += 1
         time.sleep(PROBE_PAUSE_SECONDS)
         with conn.cursor() as cur:

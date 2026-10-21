@@ -129,3 +129,20 @@ def test_new_companies_have_country_keywords():
     rows = csv.DictReader((ROOT / "dbt/seeds/companies.csv").open(encoding="utf-8"))
     countries = {r["country"] for r in rows} - {"Global", "Remote"}
     assert countries <= set(boards.COUNTRY_KEYWORDS), countries - set(boards.COUNTRY_KEYWORDS)
+
+
+def test_board_probes_do_not_retry_connection_errors(monkeypatch):
+    import requests
+    from jobradar import boards
+    calls = []
+
+    def boom(*a, **k):
+        calls.append(1)
+        raise requests.ConnectionError("no such host")
+
+    monkeypatch.setattr(sources.requests, "get", boom)
+    monkeypatch.setattr(sources.time, "sleep", lambda s: (_ for _ in ()).throw(AssertionError("should not wait")))
+    with sources.no_connect_retries():
+        status, _ = boards.probe_board("recruitee", "nosuchcompany", "Iraq")
+    assert status == "retry" and len(calls) == 1
+    assert sources.CONNECT_RETRIES == 2   # restored afterwards
