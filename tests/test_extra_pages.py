@@ -128,3 +128,21 @@ def test_signup_box_appears_only_with_a_valid_newsletter_name():
     assert b"embed-subscribe/radarak" in out["jobs/egypt/index.html"] and b"Radarak Weekly" in out["jobs/egypt/index.html"]
     assert site_export.add_newsletter(dict(files), "") == files
     assert site_export.add_newsletter(dict(files), 'x"><script>') == files
+
+
+def test_job_lists_carry_filters_and_filter_data():
+    f = pages()
+    page = f["juniors/index.html"].decode()
+    assert "data-filters" in page and 'data-f="t" data-mode="text"' in page
+    assert 'data-f="co"' not in page                    # every junior job is in Egypt: a 1-option filter is left out
+    assert 'data-co="Egypt"' in page and 'data-s="Junior"' in page and "data-ftoggle" in page
+    assert 'src="../pages.js"' in page
+    comp = f["companies/index.html"].decode()
+    assert 'data-f="rem"' in comp and 'data-n="4"' in comp and 'data-co="Egypt"' in comp
+    sal = f["salaries/index.html"].decode()
+    assert 'data-list' in sal and 'data-f="t"' in sal and "data-goto" not in sal   # one place only: no switcher
+
+
+def test_pages_script_is_published():
+    files = site_export.site_files()
+    assert "pages.js" in files and b"data-filters" in files["pages.js"]

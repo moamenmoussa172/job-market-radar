@@ -20,7 +20,9 @@ from urllib.parse import quote
 MIN_COUNTRY_JOBS = 5
 MIN_TRACK_JOBS = 5
 MIN_ROLE_JOBS = 5
-JOBS_LISTED = 25
+JOBS_LISTED = 25          # shown at first; "Show more" pages through the rest
+LIST_CAP = 150            # jobs put on a page (the filters work on these); the app has them all
+LEVELS = ["Intern / Student", "Junior", "Mid", "Senior", "Lead / Principal", "Head / Director"]
 REMOTE = "Remote"
 
 AR_PLACES = {
@@ -68,6 +70,12 @@ T = {
         "desc_sk": " Top skills: {skills}.", "inp": " in {p}", "and": "and",
         "credits": "Each job links to the original posting; apply there.",
         "nav_companies": "Companies", "nav_juniors": "Juniors", "nav_salaries": "Salaries", "nav_jobs": "Jobs by country",
+        "f_search": "Search title, company or skill", "f_place": "Country", "f_role": "Role", "f_level": "Level",
+        "f_mode": "Work mode", "f_any": "Any", "f_visa": "Visa / relocation", "f_pay": "Shows salary",
+        "f_toggle": "Filters", "f_sort": "Sort", "sort_new": "Newest", "sort_pay": "Highest pay", "f_clear": "Clear filters",
+        "f_count": "{n} of {t} jobs", "f_more": "Show {n} more", "f_empty": "No jobs match these filters.",
+        "modes": {"Remote": "Remote", "Hybrid": "Hybrid", "Onsite": "Onsite"},
+        "cap_note": "This page lists the {k} newest of {n} jobs. Open the app to filter all of them →",
     },
     "ar": {
         "dir": "rtl", "home": "رادارك", "jobs": "الوظايف", "other": "English",
@@ -96,6 +104,12 @@ T = {
         "desc_sk": " أهم المهارات: {skills}.", "inp": " في {p}", "and": "و",
         "credits": "كل وظيفة ليها لينك للإعلان الأصلي، والتقديم بيكون هناك.",
         "nav_companies": "الشركات", "nav_juniors": "الجونيور", "nav_salaries": "المرتبات", "nav_jobs": "الوظايف حسب البلد",
+        "f_search": "دوّر بالوظيفة أو الشركة أو المهارة", "f_place": "الدولة", "f_role": "الوظيفة", "f_level": "المستوى",
+        "f_mode": "نوع الشغل", "f_any": "الكل", "f_visa": "فيزا / انتقال", "f_pay": "فيها مرتب",
+        "f_toggle": "الفلاتر", "f_sort": "رتّب", "sort_new": "الأحدث", "sort_pay": "الأعلى مرتب", "f_clear": "امسح الفلاتر",
+        "f_count": "{n} من {t} وظيفة", "f_more": "اعرض {n} كمان", "f_empty": "مفيش وظايف بالفلاتر دي.",
+        "modes": {"Remote": "ريموت", "Hybrid": "هايبرد", "Onsite": "من المكتب"},
+        "cap_note": "الصفحة دي فيها أحدث {k} من {n} وظيفة. افتح التطبيق عشان تفلتر كلهم ←",
     },
 }
 
@@ -202,6 +216,21 @@ CSS = """
 .slist .go{font:600 14px/1 var(--font);color:#fff;background:var(--violet);border-radius:99px;padding:9px 14px;text-decoration:none;white-space:nowrap}
 .slist .sk{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:4px;font-size:13px;color:var(--muted)}
 .more2{display:inline-block;margin-top:12px;font-weight:600;color:var(--violet-ink)}
+.fbar{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:end;padding:12px;margin:0 0 10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m)}
+.fbar label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)}
+.fbar .fsearch{flex:1 1 240px}
+.fbar input[type=search],.fbar select{font:500 14px/1.2 var(--font);color:var(--ink);background:var(--paper);border:1px solid var(--line-strong);border-radius:var(--r-s);padding:9px 10px;min-width:0}
+.fbar select{max-width:220px}
+.fbar .fchk{flex-direction:row;align-items:center;gap:6px;font-size:14px;color:var(--ink-2);padding:9px 2px;cursor:pointer}
+.fbar .fchk input{width:16px;height:16px;accent-color:var(--violet)}
+.fmeta{display:flex;align-items:center;gap:12px;margin:0 0 10px;font-size:14px;color:var(--muted)}
+.fmore{margin-top:12px}
+.fempty{padding:16px 0}
+.ftoggle{display:none;font:600 14px/1 var(--font);color:var(--ink-2);background:var(--paper);border:1px solid var(--line-strong);border-radius:var(--r-s);padding:10px 12px;cursor:pointer}
+.ftoggle.on{border-color:var(--violet);color:var(--violet-ink)}
+@media (max-width:600px){.fbar .fsel{flex:1 1 45%}.fbar select{max-width:none;width:100%}
+  .fbar .fsearch{flex:1 1 0}.ftoggle{display:block}
+  .fbar:not(.open) .fsel,.fbar:not(.open) .fchk{display:none}}
 .side{display:flex;flex-direction:column;gap:18px}
 .side .panel{padding:16px 18px}
 .skb{list-style:none;margin:0;padding:0;display:grid;gap:8px}
@@ -250,6 +279,7 @@ def _shell(lang: str, rel: str, title: str, desc: str, canonical: str, alt_en: s
   <link rel="stylesheet" href="{rel}style.css">
   <link rel="stylesheet" href="{rel}seo.css">
   <link rel="stylesheet" href="{rel}extra.css">
+  <script src="{rel}pages.js" defer></script>
   <script type="application/ld+json">{json.dumps(jsonld, ensure_ascii=False)}</script>
 </head>
 <body class="seopage">
@@ -323,11 +353,60 @@ def _job_li(j: dict, rel: str, lang: str, today: dt.date, skills: list[str]) -> 
         meta_bits.append(t["visa"])
     sk = "".join(f"<span>{_e(skills[i])}</span>" for i in j.get("k", [])[:6] if i < len(skills))
     by = f' <span class="m">· {_e(j["by"])}</span>' if j.get("by") else ""
-    return (f'<li><div><h3><a href="{_e(rel)}#job={quote(j["id"])}">{_e(j.get("t"))}</a></h3>'
+    pay = (j["$"][0] + j["$"][1]) / 2 if j.get("$") else ""
+    text = " ".join([j.get("t") or "", j.get("c") or "", j.get("r") or ""] + [skills[i] for i in j.get("k", []) if i < len(skills)])
+    attrs = (f' data-co="{_e("|".join(j.get("co") or []))}" data-r="{_e(j.get("r") or "")}" data-s="{_e(j.get("s") or "")}"'
+             f' data-w="{_e(j.get("w") or "")}" data-v="{1 if (j.get("f") or 0) & 1 else 0}" data-hp="{1 if pay != "" else 0}"'
+             f' data-pay="{pay}" data-p="{_e(j.get("p") or "")}" data-t="{_e(text.lower())}"')
+    return (f'<li{attrs}><div><h3><a href="{_e(rel)}#job={quote(j["id"])}">{_e(j.get("t"))}</a></h3>'
             f'<p><b>{_e(j.get("c") or "")}</b> · {_e(j.get("l") or "")}</p>'
             f'<p class="m">{_e(" · ".join(b for b in meta_bits if b))}{by}</p>'
             + (f'<p class="sk">{sk}</p>' if sk else "")
             + f'</div><a class="go" href="{_e(j.get("u"))}" target="_blank" rel="nofollow noopener">{t["apply"]}</a></li>')
+
+
+def job_list(jobs: list[dict], rel: str, lang: str, today: dt.date, skills: list[str], *, show_place: bool = True,
+             show_role: bool = True, cap: int = LIST_CAP, app: str | None = None, total: int | None = None) -> str:
+    """A job list with the main page's filters: search, country, role, level, work mode, visa, salary, sort."""
+    t = T[lang]
+    listed = jobs[:cap]
+    total = total if total is not None else len(jobs)
+
+    def select(f: str, label: str, options: list[tuple[str, str]]) -> str:
+        if len(options) < 2:
+            return ""
+        opts = "".join(f'<option value="{_e(v)}">{_e(lbl)}</option>' for v, lbl in options)
+        return (f'<label class="fsel"><span>{_e(label)}</span><select data-f="{f}">'
+                f'<option value="">{_e(t["f_any"])}</option>{opts}</select></label>')
+    places = Counter(c for j in listed for c in (j.get("co") or []))
+    roles = Counter(j.get("r") for j in listed if j.get("r"))
+    levels = {j.get("s") for j in listed}
+    modes = {j.get("w") for j in listed}
+    controls = [
+        f'<label class="fsearch"><span class="sr">{_e(t["f_search"])}</span><input type="search" data-f="t" data-mode="text" '
+        f'placeholder="{_e(t["f_search"])}" autocomplete="off"></label>',
+        select("co", t["f_place"], [(p, place_name(p, lang)) for p, _ in places.most_common(30)]) if show_place else "",
+        select("r", t["f_role"], [(r, f"{r} ({k})") for r, k in roles.most_common(40)]) if show_role else "",
+        select("s", t["f_level"], [(v, v) for v in LEVELS if v in levels]),
+        select("w", t["f_mode"], [(m, t["modes"].get(m, m)) for m in ("Remote", "Hybrid", "Onsite") if m in modes]),
+        f'<label class="fchk"><input type="checkbox" data-f="v" data-mode="flag"><span>{_e(t["f_visa"])}</span></label>'
+        if any((j.get("f") or 0) & 1 for j in listed) else "",
+        f'<label class="fchk"><input type="checkbox" data-f="hp" data-mode="flag"><span>{_e(t["f_pay"])}</span></label>'
+        if any(j.get("$") for j in listed) else "",
+        f'<label class="fsel"><span>{_e(t["f_sort"])}</span><select data-sort><option value="p:desc">{_e(t["sort_new"])}</option>'
+        f'<option value="pay:num">{_e(t["sort_pay"])}</option></select></label>',
+    ]
+    note = (f'<a class="more2" href="{_e(app)}">{_e(t["cap_note"].format(k=_num(len(listed)), n=_num(total)))}</a>'
+            if app and total > len(listed) else "")
+    return f"""<div class="fblock" data-filters data-page="{JOBS_LISTED}">
+        <div class="fbar">{controls[0]}<button type="button" class="ftoggle" data-ftoggle aria-expanded="false">{_e(t['f_toggle'])}</button>{''.join(controls[1:])}</div>
+        <div class="fmeta"><span data-count data-tpl="{_e(t['f_count'])}">{_num(len(listed))}</span>
+          <button type="button" class="linkbtn" data-clear hidden>{_e(t['f_clear'])}</button></div>
+        <ol class="slist" data-list>{''.join(_job_li(j, rel, lang, today, skills) for j in listed)}</ol>
+        <p class="note fempty" data-empty hidden>{_e(t['f_empty'])}</p>
+        <button type="button" class="more fmore" data-more data-tpl="{_e(t['f_more'])}" hidden></button>
+        {note}
+      </div>"""
 
 
 def _render(page: _Page, lang: str, pages_by_place: dict, all_pages: list[_Page], meta: dict, base: str,
@@ -398,9 +477,6 @@ def _render(page: _Page, lang: str, pages_by_place: dict, all_pages: list[_Page]
         stats.append((f"${pay}k", t["s_pay"]))
     stats_html = "".join(f'<div class="stat"><b>{v}</b><span>{_e(label)}</span></div>' for v, label in stats)
 
-    listed = uj[:JOBS_LISTED]
-    more = (f'<a class="more2" href="{_e(app)}">{_e(t["list_more"].format(k=len(listed), n=_num(n)))}</a>'
-            if n > len(listed) else "")
     top_max = max([v for _, v in top] or [1])
     skills_html = "".join(f'<li><span>{_e(s)}</span><span><i style="width:{max(3, round(100 * v / top_max))}%"></i></span><b>{v}%</b></li>'
                           for s, v in top)
@@ -436,7 +512,8 @@ def _render(page: _Page, lang: str, pages_by_place: dict, all_pages: list[_Page]
     <div class="stats">{stats_html}</div>
     <p class="summary">{_e(summary)}</p>
     <div class="cols">
-      <section style="margin-top:0"><h2>{_e(t['list'])}</h2><ol class="slist">{''.join(_job_li(j, rel, lang, today, skills) for j in listed)}</ol>{more}</section>
+      <section style="margin-top:0"><h2>{_e(t['list'])}</h2>
+      {job_list(uj, rel, lang, today, skills, show_place=page.place == REMOTE, show_role=page.kind != "role", app=app, total=n)}</section>
       <aside class="side">
         {f'<div class="panel"><h2>{_e(t["skills"])}</h2><ol class="skb">{skills_html}</ol></div>' if top else ''}
         {f'<div class="panel"><h2>{_e(t["companies_h"])}</h2><ol class="complist">{comp_html}</ol></div>' if comp_html else ''}

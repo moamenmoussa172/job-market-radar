@@ -12,7 +12,7 @@ import statistics
 from collections import Counter
 from urllib.parse import quote
 
-from jobradar.seo_pages import (REMOTE, T, _date, _e, _job_li, _median_pay, _num, _shell, _top_skills, _unique,
+from jobradar.seo_pages import (REMOTE, T, _date, _e, _median_pay, _num, _shell, _top_skills, _unique, job_list,
                                 place_name, slug)
 
 MIN_COMPANY_JOBS = 3
@@ -21,6 +21,8 @@ JUNIOR_LEVELS = ("Intern / Student", "Junior")
 MIN_SALARY_JOBS = 5        # a role needs this many jobs with published pay in a place
 MIN_SALARY_PLACE = 15      # a place needs this many jobs with published pay for its own page
 JOBS_LISTED = 25
+COMPANY_CAP = 300          # jobs on one company page
+JUNIORS_CAP = 1000         # junior jobs on the juniors page (all of them, in practice)
 
 E = {
     "en": {
@@ -49,6 +51,11 @@ E = {
         "sal_places": "Salaries by place", "sal_none": "Not enough jobs publish pay here yet.",
         "inp": " in {p}", "remote_inp": " for remote jobs", "all": "All places",
         "nav_companies": "Companies", "nav_juniors": "Juniors", "nav_salaries": "Salaries",
+        "ci_search": "Search companies", "ci_count": "{n} of {t} companies", "ci_track": "Hiring for",
+        "ci_remote": "Hires remote", "ci_visa": "Offers visa / relocation", "sort_most": "Most open jobs", "sort_az": "A–Z",
+        "ci_empty": "No companies match these filters.", "ci_jobs": "{n} open jobs",
+        "sal_search": "Search a role", "sal_track": "Track", "sal_place": "Place", "sal_count": "{n} of {t} roles",
+        "sal_empty": "No roles match.",
     },
     "ar": {
         "c_h": "وظايف التك في {c}", "c_title": "وظايف التك في {c} ({n} متاحة) | رادارك",
@@ -74,6 +81,11 @@ E = {
         "sal_places": "المرتبات حسب المكان", "sal_none": "لسه مفيش وظايف كفاية بتعلن المرتب هنا.",
         "inp": " في {p}", "remote_inp": " للوظايف الريموت", "all": "كل الأماكن",
         "nav_companies": "الشركات", "nav_juniors": "الجونيور", "nav_salaries": "المرتبات",
+        "ci_search": "دوّر على شركة", "ci_count": "{n} من {t} شركة", "ci_track": "بتوظف في",
+        "ci_remote": "بتوظف ريموت", "ci_visa": "بتوفر فيزا / انتقال", "sort_most": "الأكتر وظايف", "sort_az": "أبجدي",
+        "ci_empty": "مفيش شركات بالفلاتر دي.", "ci_jobs": "{n} وظيفة متاحة",
+        "sal_search": "دوّر على وظيفة", "sal_track": "المجال", "sal_place": "المكان", "sal_count": "{n} من {t} وظيفة",
+        "sal_empty": "مفيش وظايف بالبحث ده.",
     },
 }
 
@@ -86,6 +98,13 @@ CSS = """
 .saltable .bar{display:block;height:6px;border-radius:3px;background:var(--line);margin-top:6px;position:relative;min-width:120px}
 .saltable .bar i{position:absolute;top:0;bottom:0;border-radius:3px;background:var(--mint)}
 .note{font-size:14px;color:var(--muted);max-width:860px}
+.clist{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px}
+.clist li{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);padding:12px 14px}
+.clist li a{display:flex;flex-direction:column;gap:2px;min-width:0;color:var(--ink);text-decoration:none}
+.clist li a:hover b{color:var(--violet-ink);text-decoration:underline}
+.clist li b{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.clist .m{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.clist .cnt{font:700 13px/1 var(--font);color:var(--violet-ink);background:var(--violet-soft);border-radius:99px;padding:6px 9px;white-space:nowrap}
 .intro{font-size:16px;line-height:1.7;max-width:860px}
 .seonav{display:flex;gap:4px 14px;flex-wrap:wrap;align-items:center}
 .seonav a.navlink{color:rgba(255,255,255,.85);text-decoration:none;font-weight:600;font-size:14px}
@@ -192,8 +211,8 @@ def _company_page(name: str, cslug: str, jobs: list[dict], lang: str, meta: dict
     <div class="ctarow"><a class="primary" href="{_e(app)}">{_e(x['c_cta'].format(c=name))} →</a><span>{_e(t['cta_hint'])}</span></div>
     {_stats(stats)}
     <div class="cols">
-      <section style="margin-top:0"><h2>{_e(t['list'])}</h2><ol class="slist">{''.join(_job_li(j, rel, lang, today, meta.get('skills', [])) for j in uj[:JOBS_LISTED])}</ol>
-      {f'<a class="more2" href="{_e(app)}">{_e(t["list_more"].format(k=JOBS_LISTED, n=_num(n)))}</a>' if n > JOBS_LISTED else ''}</section>
+      <section style="margin-top:0"><h2>{_e(t['list'])}</h2>
+      {job_list(uj, rel, lang, today, meta.get('skills', []), cap=COMPANY_CAP, app=app, total=n)}</section>
       <aside class="side">
         {_skills_panel(t['skills'], top)}
         <div class="panel"><h2>{_e(x['c_roles'])}</h2>{_chips([(r, None, k) for r, k in roles.most_common(12)])}</div>
@@ -209,12 +228,47 @@ def _companies_index(lang: str, slugs: dict[str, str], by_company: dict[str, lis
     path = ("ar/" if lang == "ar" else "") + "companies/index.html"
     rel = _rel(path)
     items = sorted(slugs.items(), key=lambda kv: (-len(_unique(by_company[kv[0]])), kv[0].lower()))
-    chips = _chips([(name, rel + ("ar/" if lang == "ar" else "") + f"companies/{s}/", len(_unique(by_company[name])))
-                    for name, s in items])
+    all_places, all_tracks = Counter(), Counter()
+    rows = []
+    for name, s in items:
+        uj = _unique(by_company[name])
+        places = Counter(c for j in uj for c in (j.get("co") or []))
+        tracks = Counter(j.get("tr") for j in uj if j.get("tr"))
+        all_places.update(places.keys())
+        all_tracks.update(tracks.keys())
+        remote = any(j.get("w") == "Remote" for j in uj)
+        visa = any((j.get("f") or 0) & 1 for j in uj)
+        where = ", ".join(place_name(p, lang) for p, _ in places.most_common(3)) + (f" · {t['remote']}" if remote else "")
+        rows.append(
+            f'<li data-name="{_e(name.lower())}" data-t="{_e(name.lower())}" data-co="{_e("|".join(places))}" '
+            f'data-tr="{_e("|".join(tracks))}" data-rem="{1 if remote else 0}" data-v="{1 if visa else 0}" data-n="{len(uj)}">'
+            f'<a href="{_e(rel + ("ar/" if lang == "ar" else "") + f"companies/{s}/")}"><b>{_e(name)}</b>'
+            f'<span class="m">{_e(where)}</span></a><span class="cnt">{_e(x["ci_jobs"].format(n=_num(len(uj))))}</span></li>')
+
+    def select(f: str, label: str, options: list[tuple[str, str]]) -> str:
+        opts = "".join(f'<option value="{_e(v)}">{_e(lbl)}</option>' for v, lbl in options)
+        return (f'<label class="fsel"><span>{_e(label)}</span><select data-f="{f}" data-mode="has">'
+                f'<option value="">{_e(t["f_any"])}</option>{opts}</select></label>')
+    bar = (f'<label class="fsearch"><span class="sr">{_e(x["ci_search"])}</span><input type="search" data-f="t" data-mode="text" '
+           f'placeholder="{_e(x["ci_search"])}" autocomplete="off"></label>'
+           f'<button type="button" class="ftoggle" data-ftoggle aria-expanded="false">{_e(t["f_toggle"])}</button>'
+           + select("co", t["f_place"], [(p, place_name(p, lang)) for p, _ in all_places.most_common(40)])
+           + select("tr", x["ci_track"], [(tr, tr) for tr, _ in all_tracks.most_common()])
+           + f'<label class="fchk"><input type="checkbox" data-f="rem" data-mode="flag"><span>{_e(x["ci_remote"])}</span></label>'
+           + f'<label class="fchk"><input type="checkbox" data-f="v" data-mode="flag"><span>{_e(x["ci_visa"])}</span></label>'
+           + f'<label class="fsel"><span>{_e(t["f_sort"])}</span><select data-sort><option value="n:num">{_e(x["sort_most"])}</option>'
+             f'<option value="name:asc">{_e(x["sort_az"])}</option></select></label>')
     d = _date(today, lang)
     body = f"""    <h1>{_e(x['c_idx_h'])}</h1>
     <p class="lead">{_e(x['c_idx_sub'].format(k=_num(len(slugs)), d=d))}</p>
-    {chips}"""
+    <div class="fblock" data-filters data-page="60">
+      <div class="fbar">{bar}</div>
+      <div class="fmeta"><span data-count data-tpl="{_e(x['ci_count'])}">{_num(len(rows))}</span>
+        <button type="button" class="linkbtn" data-clear hidden>{_e(t['f_clear'])}</button></div>
+      <ol class="clist" data-list>{''.join(rows)}</ol>
+      <p class="note fempty" data-empty hidden>{_e(x['ci_empty'])}</p>
+      <button type="button" class="more fmore" data-more data-tpl="{_e(t['f_more'])}" hidden></button>
+    </div>"""
     crumbs = [(t["home"], ""), (x["nav_companies"], None)]
     return path, _page(lang, path, base, x["c_idx_title"], x["c_idx_sub"].format(k=_num(len(slugs)), d=d), body, crumbs)
 
@@ -250,7 +304,8 @@ def _juniors_page(jobs: list[dict], lang: str, meta: dict, base: str, today: dt.
     {_stats(stats)}
     <p class="intro">{_e(x['j_intro'])}</p>
     <div class="cols">
-      <section style="margin-top:0"><h2>{_e(t['list'])}</h2><ol class="slist">{''.join(_job_li(j, rel, lang, today, meta.get('skills', [])) for j in uj[:JOBS_LISTED])}</ol></section>
+      <section style="margin-top:0"><h2>{_e(t['list'])}</h2>
+      {job_list(uj, rel, lang, today, meta.get('skills', []), show_role=True, cap=JUNIORS_CAP, app=rel + "#junior=1", total=n)}</section>
       <aside class="side">{_skills_panel(t['skills'], top)}
         <div class="panel"><h2>{_e(x['j_roles'])}</h2>{_chips([(r, None, k) for r, k in roles.most_common(12)])}</div></aside>
     </div>
@@ -261,6 +316,10 @@ def _juniors_page(jobs: list[dict], lang: str, meta: dict, base: str, today: dt.
 
 
 # ------------------------------------------------------------------------------------------ salaries
+def _role_tracks(jobs: list[dict]) -> dict[str, str]:
+    return {j.get("r"): j.get("tr") for j in jobs if j.get("r") and j.get("tr")}
+
+
 def _pay_rows(jobs: list[dict]) -> list[tuple[str, int, int, int, int]]:
     """(role, median, p25, p75, jobs) for roles with enough published salaries, highest median first."""
     by_role: dict[str, list[float]] = {}
@@ -275,7 +334,8 @@ def _pay_rows(jobs: list[dict]) -> list[tuple[str, int, int, int, int]]:
 
 
 def _salary_page(place: str | None, jobs: list[dict], lang: str, base: str, today: dt.date,
-                 others: list[tuple[str, str, int]]) -> tuple[str, str] | None:
+                 others: list[tuple[str, str, int]], all_places: list[tuple[str, str]] | None = None,
+                 role_track: dict[str, str] | None = None) -> tuple[str, str] | None:
     t, x = T[lang], E[lang]
     sub = "" if place is None else ("remote" if place == REMOTE else slug(place)) + "/"
     path = ("ar/" if lang == "ar" else "") + "salaries/" + sub + "index.html"
@@ -288,11 +348,34 @@ def _salary_page(place: str | None, jobs: list[dict], lang: str, base: str, toda
     table = ("<table class=\"saltable\"><thead><tr>"
              f"<th>{_e(x['sal_role'])}</th><th>{_e(x['sal_med'])}</th><th>{_e(x['sal_range'])}</th><th>{_e(x['sal_n'])}</th>"
              "</tr></thead><tbody>"
-             + "".join(f'<tr><td>{_e(r)}</td><td class="num"><b>${m}k</b></td><td class="num">${lo}k – ${hi}k'
+             + "".join(f'<tr data-t="{_e(r.lower())}" data-tr="{_e((role_track or {}).get(r, ""))}" data-m="{m}" data-name="{_e(r.lower())}">'
+                       f'<td>{_e(r)}</td><td class="num"><b>${m}k</b></td><td class="num">${lo}k – ${hi}k'
                        f'<span class="bar"><i style="inset-inline-start:{round(100 * lo / mx)}%;width:{max(2, round(100 * (hi - lo) / mx))}%"></i></span></td>'
                        f'<td class="num">{k}</td></tr>' for r, m, lo, hi, k in rows)
              + "</tbody></table>") if rows else f'<p class="note">{_e(x["sal_none"])}</p>'
     place_links = _chips([(lbl, rel + ("ar/" if lang == "ar" else "") + href, k) for lbl, href, k in others]) if others else ""
+    pre = rel + ("ar/" if lang == "ar" else "")
+    here = "salaries/" + sub
+    switch = ""
+    if all_places and len(all_places) > 1:
+        opts = "".join(f'<option value="{_e(pre + href)}"{" selected" if href == here else ""}>{_e(lbl)}</option>'
+                       for href, lbl in all_places)
+        switch = f'<label class="fsel"><span>{_e(x["sal_place"])}</span><select data-goto>{opts}</select></label>'
+    tracks = sorted({tr for tr in (role_track or {}).values() if tr and any((role_track or {}).get(r[0]) == tr for r in rows)})
+    track_sel = (f'<label class="fsel"><span>{_e(x["sal_track"])}</span><select data-f="tr"><option value="">{_e(t["f_any"])}</option>'
+                 + "".join(f'<option value="{_e(tr)}">{_e(tr)}</option>' for tr in tracks) + "</select></label>") if len(tracks) > 1 else ""
+    if rows:
+        table = f"""<div class="fblock" data-filters>
+      <div class="fbar">{switch}<label class="fsearch"><span class="sr">{_e(x["sal_search"])}</span><input type="search" data-f="t"
+        data-mode="text" placeholder="{_e(x["sal_search"])}" autocomplete="off"></label>{track_sel}
+        <label class="fsel"><span>{_e(t["f_sort"])}</span><select data-sort><option value="m:num">{_e(x["sal_med"])}</option>
+        <option value="name:asc">{_e(x["sort_az"])}</option></select></label></div>
+      <div class="fmeta"><span data-count data-tpl="{_e(x['sal_count'])}">{len(rows)}</span>
+        <button type="button" class="linkbtn" data-clear hidden>{_e(t['f_clear'])}</button></div>
+      {table.replace("<tbody>", "<tbody data-list>", 1)}
+      <p class="note fempty" data-empty hidden>{_e(x['sal_empty'])}</p></div>"""
+    elif switch:
+        table = f'<div class="fbar">{switch}</div>' + table
     body = f"""    <h1>{_e(x['sal_h'].format(inp=inp))}</h1>
     <p class="lead">{_e(x['sal_sub'].format(n=_num(paid), d=d))}</p>
     {table}
@@ -334,12 +417,14 @@ def extra_files(jobs: list[dict], meta: dict, base: str, today: dt.date,
         out[path] = html.encode()
         others = [(place_name(p, lang) if p != REMOTE else T[lang]["remote"],
                    "salaries/" + ("remote" if p == REMOTE else slug(p)) + "/", paid_by_place[p]) for p in sal_places]
-        path, html = _salary_page(None, jobs, lang, base, today, others)
+        all_places = [("salaries/", E[lang]["all"])] + [(href, lbl) for lbl, href, _ in others]
+        role_track = _role_tracks(jobs)
+        path, html = _salary_page(None, jobs, lang, base, today, others, all_places, role_track)
         out[path] = html.encode()
         for p in sal_places:
             pj = [j for j in jobs if (j.get("w") == "Remote" if p == REMOTE else p in (j.get("co") or []))]
             path, html = _salary_page(p, pj, lang, base, today, [o for o in others if not o[1].endswith(
-                ("remote" if p == REMOTE else slug(p)) + "/")])
+                ("remote" if p == REMOTE else slug(p)) + "/")], all_places, role_track)
             out[path] = html.encode()
     for path in out:
         if path.endswith("index.html") and not path.startswith("ar/"):
