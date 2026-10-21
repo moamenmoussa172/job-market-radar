@@ -33,7 +33,10 @@ GITHUB_API = "https://api.github.com"
 SOURCE_CREDITS = {
     "adzuna": "Jobs by Adzuna", "jooble": "via Jooble", "jsearch": "via Google for Jobs (JSearch)",
     "jobicy": "via Jobicy", "arbeitnow": "via Arbeitnow", "bundesagentur": "via Bundesagentur für Arbeit",
+    "remoteok": "via Remote OK",
 }
+# Sources whose terms ask for a normal (followed) link back: their job links drop rel="nofollow".
+DOFOLLOW_SOURCES = ("remoteok",)
 
 JOBS_SQL = """
 with jobs as (
@@ -110,6 +113,8 @@ def export_site_data(conn, generated_at: dt.datetime | None = None) -> dict[str,
             job["f"] = flags
         if source in SOURCE_CREDITS:
             job["by"] = SOURCE_CREDITS[source]
+        if source in DOFOLLOW_SOURCES:
+            job["df"] = 1
         # the day Radarak first saw the job, for "new since your last visit" (only when it differs from "p")
         if first_seen and first_seen.isoformat() != job["p"]:
             job["fs"] = first_seen.isoformat()
@@ -263,12 +268,29 @@ def site_base_url(domain: str | None = None) -> str:
     return f"https://{domain}/" if domain else GITHUB_PAGES_URL
 
 
+VERSIONED_ASSETS = ("style.css", "seo.css", "extra.css", "pages.js", "app.js", "report.js")
+_ASSET_REF = re.compile(r'((?:href|src)="(?:\.\./)*)(' + "|".join(re.escape(a) for a in VERSIONED_ASSETS) + r')"')
+
+
+def version_assets(files: dict[str, bytes]) -> dict[str, bytes]:
+    """Point every page at style.css?v=<content id> (and the same for the other CSS/JS files), so browsers
+    fetch a changed file right away instead of using the copy they cached before an update."""
+    import hashlib
+    ids = {a: hashlib.sha1(files[a]).hexdigest()[:10] for a in VERSIONED_ASSETS if a in files}
+    for path in [p for p in files if p.endswith(".html")]:
+        html = files[path].decode("utf-8")
+        new = _ASSET_REF.sub(lambda m: f'{m.group(1)}{m.group(2)}?v={ids[m.group(2)]}"' if m.group(2) in ids else m.group(0), html)
+        if new != html:
+            files[path] = new.encode("utf-8")
+    return files
+
+
 def all_site_files(conn) -> dict[str, bytes]:
     """Everything that is published: the app, its data, and the pages for search engines."""
     from jobradar import seo_pages
     data = export_site_data(conn)
     seo = seo_pages.seo_files(json.loads(data["data/jobs.json"]), json.loads(data["data/meta.json"]), site_base_url())
-    return {**site_files(), **data, **add_newsletter(add_analytics(seo))}
+    return version_assets({**site_files(), **data, **add_newsletter(add_analytics(seo))})
 
 
 def site_files(site_dir: Path = SITE_DIR, analytics_code: str | None = None,

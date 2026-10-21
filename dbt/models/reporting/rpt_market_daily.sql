@@ -11,7 +11,7 @@ with daily_listings as (
       on k.posting_key = md5(s.source || ':' || s.source_job_id)
     -- rotating sources search different countries each day, so they'd make
     -- day-to-day numbers jump; trends use the full-feed sources only
-    where s.source not in ('jsearch', 'jooble', 'adzuna', 'bundesagentur')
+    where s.source not in ('jsearch', 'jooble', 'adzuna', 'bundesagentur', 'remoteok')
       and k.role_family <> 'Not a tech role'
 )
 

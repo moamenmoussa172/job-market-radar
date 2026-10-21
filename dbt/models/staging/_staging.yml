@@ -12,6 +12,8 @@ models:
     columns: *stg_cols
   - name: stg_himalayas
     columns: *stg_cols
+  - name: stg_remoteok
+    columns: *stg_cols
   - name: stg_arbeitnow
     columns: *stg_cols
   - name: stg_greenhouse

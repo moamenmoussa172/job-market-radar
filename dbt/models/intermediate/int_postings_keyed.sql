@@ -52,6 +52,7 @@ keyed as (
             when 'successfactors' then 1
             when 'himalayas'  then 2   -- structured eligibility + salary
             when 'jobicy'     then 3
+            when 'remoteok'   then 3
             when 'arbeitnow'  then 4
             when 'jsearch'    then 4   -- full description, original board in tags_text
             when 'jooble'     then 6   -- snippet only

@@ -1,4 +1,4 @@
--- Adzuna search API (UK + EU). Descriptions are ~500-character snippets.
+-- Adzuna search API (UK, EU, India, South Africa, Singapore, Brazil, Mexico, US, Canada, Australia, NZ). Descriptions are ~500-character snippets.
 -- Adzuna fills in *predicted* salaries when a job has none (salary_is_predicted = 1);
 -- only real, published salaries are kept. Currency follows the searched country.
 with base as ({{ source_snapshots('adzuna') }}),
@@ -9,7 +9,10 @@ shaped as (
         nullif(p -> 'location' ->> 'display_name', '')                    as loc,
         coalesce(p ->> 'salary_is_predicted', '0') = '0'                   as real_salary,
         case lower(p ->> 'search_country')
-            when 'gb' then 'GBP' when 'pl' then 'PLN' when 'ch' then 'CHF' else 'EUR'
+            when 'gb' then 'GBP' when 'pl' then 'PLN' when 'ch' then 'CHF'
+            when 'in' then 'INR' when 'za' then 'ZAR' when 'sg' then 'SGD' when 'br' then 'BRL'
+            when 'mx' then 'MXN' when 'us' then 'USD' when 'ca' then 'CAD' when 'au' then 'AUD'
+            when 'nz' then 'NZD' else 'EUR'
         end                                                                as currency,
         cc.country                                                         as country_name
     from base

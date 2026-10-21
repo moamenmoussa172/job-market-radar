@@ -437,7 +437,7 @@ def _job_li(j: dict, rel: str, lang: str, today: dt.date, skills: list[str]) -> 
             f'<p><b>{_e(j.get("c") or "")}</b> · {_e(j.get("l") or "")}</p>'
             f'<p class="m">{_e(" · ".join(b for b in meta_bits if b))}{by}</p>'
             + (f'<p class="sk">{sk}</p>' if sk else "")
-            + f'</div><a class="go" href="{_e(j.get("u"))}" target="_blank" rel="nofollow noopener">{t["apply"]}</a></li>')
+            + f'</div><a class="go" href="{_e(j.get("u"))}" target="_blank" rel="{'noopener' if j.get('df') else 'nofollow noopener'}">{t["apply"]}</a></li>')
 
 
 def job_list(jobs: list[dict], rel: str, lang: str, today: dt.date, skills: list[str], *, show_place: bool = True,

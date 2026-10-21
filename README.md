@@ -60,8 +60,8 @@ Every morning the new jobs are also posted to **Telegram channels** (e.g. Egypt,
 grouped by track with direct links (`dags/jobradar/telegram.py`, each job posted once).
 All filtering happens in the browser on JSON files (`data/jobs.json`, `data/meta.json`, `data/trends.json`) exported
 from the marts; links are shareable (filters live in the URL). Listings from sources that ask not to be
-re-posted (Remotive, Himalayas) count in the statistics but are not listed; Adzuna/Jooble/JSearch/Jobicy
-jobs carry their credit.
+re-posted (Remotive, Himalayas) count in the statistics but are not listed; Adzuna/Jooble/JSearch/Jobicy/Remote OK
+jobs carry their credit (Remote OK links are followed links, as its terms ask).
 
 ### The dashboard
 
@@ -84,7 +84,7 @@ My skills) drive seven tabs, and clicking a bar (a track, role, skill, country, 
 flowchart LR
     subgraph Sources["7 public job APIs"]
         A1[Greenhouse / Lever / Ashby /<br/>SmartRecruiters / Workable<br/>self-expanding company registry]
-        A2[Himalayas / Jobicy / Remotive<br/>remote boards]
+        A2[Himalayas / Jobicy / Remote OK / Remotive<br/>remote boards]
         A3[Arbeitnow<br/>Europe]
         A5[JSearch / Jooble<br/>LinkedIn, Indeed, Bayt...<br/>via licensed APIs]
         A4[ECB<br/>FX rates]
@@ -218,12 +218,13 @@ More detail: [docs/design-decisions.md](docs/design-decisions.md).
 
 | Source | What it adds | Usage notes |
 |---|---|---|
-| Greenhouse (US and EU), Lever, Ashby, SmartRecruiters, Workable, Recruitee, Personio, Breezy, Teamtailor public job boards | Company career pages: full descriptions; Lever/Ashby/SmartRecruiters/Recruitee state work mode and often salary | **Self-expanding registry**: seeds in `dags/jobradar/company_boards.csv`; ~230 companies in Egypt, the Gulf and Europe in `dbt/seeds/companies.csv` whose hiring platform is detected automatically; plus boards discovered from other sources' apply links |
+| Greenhouse (US and EU), Lever, Ashby, SmartRecruiters, Workable, Recruitee, Personio, Breezy, Teamtailor public job boards | Company career pages: full descriptions; Lever/Ashby/SmartRecruiters/Recruitee state work mode and often salary | **Self-expanding registry**: seeds in `dags/jobradar/company_boards.csv`; ~550 companies in Egypt, the Gulf, North Africa, the Levant, Iraq, South and Central Asia, the Caucasus, the Balkans, Africa and Europe in `dbt/seeds/companies.csv` whose hiring platform is detected automatically; plus boards discovered from other sources' apply links |
 | Workday and SAP SuccessFactors career sites | Large corporates and multinationals (banks, telcos, energy, pharma, tech) with offices in Egypt and the Gulf, which don't use the startup job boards above; Workday through its careers-site JSON API (only jobs in MENA and Europe are requested), SuccessFactors through its RSS job feed | Seeds with display names in `company_boards.csv`; more Workday boards are discovered automatically from apply links in other sources (`*.myworkdayjobs.com`) |
-| Adzuna | UK and EU job search (10 countries, 12 roles), short snippets; only real (not Adzuna-predicted) salaries are kept | API id + key; 80 rotating searches/day. Jobs by Adzuna |
+| Adzuna | Job search in all 19 Adzuna countries (UK, EU, India, South Africa, Singapore, Brazil, Mexico, US, Canada, Australia, NZ; 20 roles), short snippets; only real (not Adzuna-predicted) salaries are kept | API id + key; 80 rotating searches/day. Jobs by Adzuna |
 | Bundesagentur für Arbeit | Germany's federal job agency (official public API): IT jobs across Germany; no descriptions, so no skills | Public key; 18 searches × up to 2 pages a day |
 | Himalayas | Remote jobs with country and timezone restrictions | Links back to Himalayas kept; no re-posting |
 | Jobicy | Remote jobs with eligibility, level and salary | Polled once a day; source URL kept |
+| Remote OK | Public feed of the newest ~100 remote jobs | One request per run; each job links to its Remote OK page with a followed link and says "via Remote OK" (their terms); no logo |
 | Arbeitnow | European jobs, onsite and remote | Newest pages each day |
 | Remotive | Remote jobs (now a small sample feed) | Optional source |
 | JSearch (OpenWeb Ninja) | Google for Jobs data: postings first published on LinkedIn, Indeed, Glassdoor, Bayt and company sites, searched across the Middle East (Egypt, UAE, Saudi Arabia, Qatar, Kuwait, Bahrain, Oman, Jordan) for 12 tech roles | API key; free plan 200 requests/month, so 6 rotating searches/day |

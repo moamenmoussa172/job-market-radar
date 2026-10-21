@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import csv
 import datetime as dt
+import json
 import logging
 import os
 import re
@@ -966,11 +967,53 @@ def daily_slice(pairs: list, per_day: int, day: dt.date | None = None) -> list:
     return [pairs[(start + i) % len(pairs)] for i in range(min(per_day, len(pairs)))]
 
 
+# Paid-quota APIs: count requests per day and month in a small file, so re-running the DAG
+# on the same day doesn't spend the free quota again. The file sits in logs/ (kept between runs).
+BUDGET_FILE = Path(os.environ.get("API_BUDGET_FILE", "/opt/airflow/logs/api_budget.json"))
+
+
+def _budget_load() -> dict:
+    try:
+        return json.loads(BUDGET_FILE.read_text())
+    except (OSError, ValueError):
+        return {}
+
+
+def budget_left(source: str, per_day: int, per_month: int, today: dt.date | None = None) -> int:
+    """How many requests `source` may still make today."""
+    today = today or dt.date.today()
+    rec = _budget_load().get(source, {})
+    day_used = rec.get("day_used", 0) if rec.get("day") == today.isoformat() else 0
+    month_used = rec.get("month_used", 0) if rec.get("month") == today.strftime("%Y-%m") else 0
+    return max(0, min(per_day - day_used, per_month - month_used))
+
+
+def budget_spend(source: str, n: int, today: dt.date | None = None) -> None:
+    if n <= 0:
+        return
+    today = today or dt.date.today()
+    data = _budget_load()
+    rec = data.get(source, {})
+    if rec.get("day") != today.isoformat():
+        rec.update(day=today.isoformat(), day_used=0)
+    if rec.get("month") != today.strftime("%Y-%m"):
+        rec.update(month=today.strftime("%Y-%m"), month_used=0)
+    rec["day_used"] += n
+    rec["month_used"] += n
+    data[source] = rec
+    try:
+        BUDGET_FILE.parent.mkdir(parents=True, exist_ok=True)
+        BUDGET_FILE.write_text(json.dumps(data, indent=1))
+    except OSError as exc:
+        log.warning("could not save API budget: %s", exc)
+
+
 # JSearch (OpenWeb Ninja): Google for Jobs data - postings originally published on
 # LinkedIn, Indeed, Glassdoor, Bayt, company sites, ... Free plan: 200 requests/month.
 JSEARCH_URL = "https://api.openwebninja.com/jsearch/search-v2"
 JSEARCH_PER_DAY = int(os.environ.get("JSEARCH_REQUESTS_PER_DAY", "6"))
 JSEARCH_EXTRA_PER_DAY = int(os.environ.get("JSEARCH_EXTRA_PER_DAY", "1"))  # taken out of JSEARCH_PER_DAY
+JSEARCH_PER_MONTH = int(os.environ.get("JSEARCH_REQUESTS_PER_MONTH", "190"))  # free plan: 200
 
 
 def jsearch_pairs() -> list[tuple[str, str, str]]:
@@ -991,10 +1034,15 @@ def extract_jsearch(pairs: list | None = None, pause_seconds: float = 1.0) -> Ex
     key = os.environ.get("JSEARCH_API_KEY", "").strip()
     if not key:
         return ExtractResult("jsearch", [], ["JSEARCH_API_KEY not set - source skipped"])
-    pairs = pairs if pairs is not None else jsearch_today()
-    keep: dict[str, dict] = {}
     warnings: list[str] = []
+    if pairs is None:
+        left = budget_left("jsearch", JSEARCH_PER_DAY, JSEARCH_PER_MONTH)
+        if left <= 0:
+            return ExtractResult("jsearch", [], ["jsearch: today's/this month's request budget already used - skipped"])
+        pairs = jsearch_today()[:left]
+    keep: dict[str, dict] = {}
     for role, code, name in pairs:
+        budget_spend("jsearch", 1)
         try:
             payload = _get_json(JSEARCH_URL, headers={"x-api-key": key},
                                 params={"query": f"{role} jobs in {name}", "country": code, "language": "en"})
@@ -1023,6 +1071,7 @@ def jsearch_id(record: dict) -> str:
 JOOBLE_URL = "https://jooble.org/api/{key}"
 JOOBLE_PER_DAY = int(os.environ.get("JOOBLE_REQUESTS_PER_DAY", "3"))
 JOOBLE_EXTRA_PER_DAY = int(os.environ.get("JOOBLE_EXTRA_PER_DAY", "1"))  # taken out of JOOBLE_PER_DAY
+JOOBLE_PER_MONTH = int(os.environ.get("JOOBLE_REQUESTS_PER_MONTH", "100"))
 
 
 def jooble_pairs() -> list[tuple[str, str]]:
@@ -1043,10 +1092,15 @@ def extract_jooble(pairs: list | None = None, pause_seconds: float = 1.0) -> Ext
     key = os.environ.get("JOOBLE_API_KEY", "").strip()
     if not key:
         return ExtractResult("jooble", [], ["JOOBLE_API_KEY not set - source skipped"])
-    pairs = pairs if pairs is not None else jooble_today()
-    keep: dict[str, dict] = {}
     warnings: list[str] = []
+    if pairs is None:
+        left = budget_left("jooble", JOOBLE_PER_DAY, JOOBLE_PER_MONTH)
+        if left <= 0:
+            return ExtractResult("jooble", [], ["jooble: today's/this month's request budget already used - skipped"])
+        pairs = jooble_today()[:left]
+    keep: dict[str, dict] = {}
     for role, location in pairs:
+        budget_spend("jooble", 1)
         try:
             payload = _post_json(JOOBLE_URL.format(key=key),
                                  {"keywords": role, "location": location, "page": "1"})
@@ -1069,13 +1123,15 @@ def jooble_id(record: dict) -> str:
     return str(record.get("id") or record.get("link"))
 
 
-# Adzuna: job search API for the UK and most of the EU (Egypt / Gulf not covered).
+# Adzuna: job search API for the UK, most of the EU, and India, South Africa, Singapore,
+# Brazil, Mexico, the US, Canada, Australia and New Zealand (Egypt / Gulf not covered).
 # Needs ADZUNA_APP_ID + ADZUNA_APP_KEY. Free plan limits are per day/week/month,
 # so a fixed daily budget walks through (role, country) pairs. Attribution
 # ("Jobs by Adzuna") is required wherever the data is shown.
 ADZUNA_URL = "https://api.adzuna.com/v1/api/jobs/{country}/search/1"
 ADZUNA_PER_DAY = int(os.environ.get("ADZUNA_REQUESTS_PER_DAY", "80"))  # free plan: ~2,500 a month
-ADZUNA_COUNTRIES = ["gb", "de", "nl", "fr", "es", "it", "pl", "at", "be", "ch"]
+ADZUNA_COUNTRIES = ["gb", "de", "nl", "fr", "es", "it", "pl", "at", "be", "ch",
+                    "in", "za", "sg", "br", "mx", "us", "ca", "au", "nz"]  # every country Adzuna covers
 
 
 def adzuna_pairs() -> list[tuple[str, str]]:
@@ -1159,6 +1215,26 @@ def bundesagentur_id(record: dict) -> str:
     return str(record["refnr"])
 
 
+# Remote OK: public feed of the newest ~100 remote jobs (no search, no paging). Terms (the
+# "legal" field of the feed): link back to the job's Remote OK page with a normal followed link
+# (no nofollow) and name Remote OK as the source; don't use their logo. The site does both
+# (site_export.SOURCE_CREDITS + DOFOLLOW_SOURCES). One request per run.
+REMOTEOK_URL = "https://remoteok.com/api"
+
+
+def extract_remoteok() -> ExtractResult:
+    payload = _get_json(REMOTEOK_URL)
+    jobs = [j for j in (payload if isinstance(payload, list) else [])
+            if isinstance(j, dict) and j.get("id") and j.get("position")]  # item 0 is the legal notice
+    keep = {str(j["id"]): j for j in jobs if is_tech_role(j.get("position")) and j.get("url")}
+    log.info("remoteok: %s jobs in feed, %s tech jobs", len(jobs), len(keep))
+    return ExtractResult("remoteok", list(keep.values()))
+
+
+def remoteok_id(record: dict) -> str:
+    return str(record["id"])
+
+
 # --------------------------------------------------------------------------- #
 @dataclass(frozen=True)
 class SourceSpec:
@@ -1171,6 +1247,7 @@ class SourceSpec:
 SOURCES: dict[str, SourceSpec] = {
     "remotive": SourceSpec(extract_remotive, remotive_id, required=False),  # small sample feed
     "jobicy": SourceSpec(extract_jobicy, jobicy_id),
+    "remoteok": SourceSpec(extract_remoteok, remoteok_id, required=False),
     "himalayas": SourceSpec(extract_himalayas, himalayas_id),
     "arbeitnow": SourceSpec(extract_arbeitnow, arbeitnow_id),
     "greenhouse": SourceSpec(extract_greenhouse, greenhouse_id, board_ats="greenhouse"),

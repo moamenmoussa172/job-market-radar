@@ -211,7 +211,7 @@
       <h2>Salaries</h2>
       <p>Only jobs that publish pay are counted. Salaries in any currency and period are turned into a yearly amount in US dollars.</p>
       <h2>Sources</h2>
-      <p>Company career boards (Greenhouse, Lever, Ashby, SmartRecruiters, Workable, Recruitee, Personio, and the Workday and SuccessFactors career sites of large employers) and job APIs. Every job links to its original posting, where you apply. Some jobs carry their source's credit (for example, Jobs by Adzuna).</p>
+      <p>Company career boards (Greenhouse, Lever, Ashby, SmartRecruiters, Workable, Recruitee, Personio, and the Workday and SuccessFactors career sites of large employers) and job APIs. Every job links to its original posting, where you apply. Some jobs carry their source's credit (for example, Jobs by Adzuna or via Remote OK).</p>
       <p>The data is collected automatically and can miss jobs or contain mistakes. Saved jobs and your skills stay in your browser. The site counts visits and clicks anonymously (GoatCounter, no cookies, nothing that identifies you) to know how many people it helps. The project is open source.</p>`,
     ar: `
       <h2>ده إيه</h2>
@@ -255,6 +255,8 @@
   const shortDate = (iso) => new Date(iso + "T12:00:00Z").toLocaleDateString(lang === "ar" ? "ar-EG" : "en-GB", { day: "numeric", month: "short" });
   const openLocs = new Set();
   const t = (k) => T[lang][k] ?? T.en[k] ?? k;
+  // Remote OK's terms ask for a normal (followed) link back; every other job link is nofollow.
+  const linkRel = (j) => (j && j.df ? "noopener" : "noopener nofollow");
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const num = (n) => Number(n).toLocaleString("en-US");
   // anonymous usage counts (GoatCounter: no cookies, no personal data). Does nothing if analytics isn't set up.
@@ -463,13 +465,13 @@
     return `<li class="job" style="${tc(j.tr)}" data-jid="${esc(j.id)}">
       <span class="avatar" aria-hidden="true">${esc(initial)}</span>
       <div class="jmain">
-        <h3><a href="${esc(j.u)}" target="_blank" rel="noopener nofollow">${esc(j.t)}</a></h3>
+        <h3><a href="${esc(j.u)}" target="_blank" rel="${linkRel(j)}">${esc(j.t)}</a></h3>
         <p class="where"><b>${esc(j.c || "")}</b><span>${esc(j.l || "")}</span>${others > 0
           ? `<button type="button" class="locbtn" data-key="${esc(g.key)}" aria-expanded="${locsOpen}">${locsOpen ? t("hideLocs") : t("moreLocs")(others)}</button>` : ""}</p>
         <div class="facts">${facts}</div>
         ${j.k.length ? `<div class="skills">${skills}</div>` : ""}
         ${j.by ? `<p class="credit">${esc(j.by)}</p>` : ""}
-        ${locsOpen ? `<ul class="locs">${g.all.slice(1).map((x) => `<li><a href="${esc(x.u)}" target="_blank" rel="noopener nofollow">${esc(x.l || x.t)}</a></li>`).join("")}</ul>` : ""}
+        ${locsOpen ? `<ul class="locs">${g.all.slice(1).map((x) => `<li><a href="${esc(x.u)}" target="_blank" rel="${linkRel(x)}">${esc(x.l || x.t)}</a></li>`).join("")}</ul>` : ""}
       </div>
       <div class="jside">
         ${mine.size && j.k.length ? matchRing(g.have, j.k.length) : ""}
@@ -521,7 +523,7 @@
       if (j) { const row = jobRow({ key: "saved:" + id, job: j, all: [j], pay: j.$ || null, flags: j.f || 0, have: 0, match: -1 }), at = row.lastIndexOf("</li>");
         return row.slice(0, at) + status + row.slice(at); }
       return `<li class="job closed"><span class="avatar" aria-hidden="true">${esc((s.c || s.t || "?").charAt(0).toUpperCase())}</span>
-        <div class="jmain"><h3>${s.u ? `<a class="closedlink" href="${esc(s.u)}" target="_blank" rel="noopener nofollow">${esc(s.t)}</a>` : esc(s.t)}</h3>
+        <div class="jmain"><h3>${s.u ? `<a class="closedlink" href="${esc(s.u)}" target="_blank" rel="${linkRel(s)}">${esc(s.t)}</a>` : esc(s.t)}</h3>
           <p class="where"><b>${esc(s.c || "")}</b><span>${esc(s.l || "")}</span></p><div class="facts"><span class="fact">${t("closedTag")}</span></div></div>
         <div class="jside"><button type="button" class="linkbtn" data-unsave="${esc(id)}">${t("removeSaved")}</button></div>${status}</li>`;
     }).join("");
@@ -531,12 +533,12 @@
   function toggleSaved(id) {
     const j = jobs.find((x) => x.id === id);
     if (savedJobs[id]) delete savedJobs[id];
-    else if (j) { savedJobs[id] = { t: j.t, c: j.c, l: j.l, u: j.u, sv: today() }; track("save-job"); }
+    else if (j) { savedJobs[id] = { t: j.t, c: j.c, l: j.l, u: j.u, df: j.df, sv: today() }; track("save-job"); }
     store.set("saved", savedJobs);
   }
   function toggleApplied(id) {
     const j = jobs.find((x) => x.id === id);
-    if (!savedJobs[id]) { if (!j) return; savedJobs[id] = { t: j.t, c: j.c, l: j.l, u: j.u, sv: today() }; }
+    if (!savedJobs[id]) { if (!j) return; savedJobs[id] = { t: j.t, c: j.c, l: j.l, u: j.u, df: j.df, sv: today() }; }
     if (savedJobs[id].a) delete savedJobs[id].a; else { savedJobs[id].a = today(); track("applied"); }
     store.set("saved", savedJobs);
   }
@@ -973,7 +975,7 @@
           <div class="facts">${g.pay ? `<span class="fact pay">${payText(g.pay)}</span>` : ""}<span class="fact role">${esc(j.r)}</span>${tags}</div></div>
       </header>
       <div class="dactions">
-        <a class="apply" href="${esc(j.u)}" target="_blank" rel="noopener nofollow">${t("applyOn")}
+        <a class="apply" href="${esc(j.u)}" target="_blank" rel="${linkRel(j)}">${t("applyOn")}
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></a>
         <button type="button" class="save" data-id="${esc(j.id)}" aria-pressed="${!!savedJobs[j.id]}">${BOOKMARK}<span>${savedJobs[j.id] ? t("saved") : t("save")}</span></button>
         <button type="button" class="applybtn" data-applied="${esc(j.id)}" aria-pressed="${!!(savedJobs[j.id] && savedJobs[j.id].a)}">${CHECK}<span>${savedJobs[j.id] && savedJobs[j.id].a ? t("applied") : t("markApplied")}</span></button>
@@ -994,7 +996,7 @@
         ${fact(t("fSource"), j.by ? esc(j.by) : "")}
       </dl>
       ${g.all.length > 1 ? `<section class="dsection"><h3>${t("alsoIn")}</h3><ul class="dlocs">${g.all.filter((x) => x.id !== j.id).map((x) =>
-        `<li><a href="${esc(x.u)}" target="_blank" rel="noopener nofollow">${esc(x.l || x.t)}</a></li>`).join("")}</ul></section>` : ""}
+        `<li><a href="${esc(x.u)}" target="_blank" rel="${linkRel(x)}">${esc(x.l || x.t)}</a></li>`).join("")}</ul></section>` : ""}
       <p class="dreport"><button type="button" class="linkbtn" id="reportJob">⚑ ${t("reportClosed")}</button></p>
       ${similar.length ? `<section class="dsection"><h3>${t("similarTitle")}</h3><ul class="similar">${similar.map((x) =>
         `<li style="${tc(x.tr)}"><button type="button" data-open="${esc(x.id)}"><span class="avatar sm" aria-hidden="true">${esc((x.c || "?").charAt(0).toUpperCase())}</span>

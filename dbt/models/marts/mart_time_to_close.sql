@@ -2,7 +2,7 @@
 -- last day it was listed, for jobs that have closed. Only sources we read every day count
 -- (a rotating search can't tell when a job closed), and jobs whose start we don't know
 -- (already open when we started and no posting date) are left out.
-{% set rotating_sources = ['jsearch', 'jooble', 'adzuna', 'bundesagentur'] %}
+{% set rotating_sources = ['jsearch', 'jooble', 'adzuna', 'bundesagentur', 'remoteok'] %}
 with f as (
     select * from {{ ref('fct_job_postings') }}
     where coalesce(track, '') <> 'Not tech'

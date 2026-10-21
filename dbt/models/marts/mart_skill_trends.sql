@@ -3,7 +3,7 @@
 -- A job was open on day d if we first saw it on/before d and last saw it on/after d
 -- (rotating search sources revisit a search only every few weeks, so for them "last seen
 -- within 21 days" counts as still open - the same rule as is_active).
-{% set rotating_sources = ['jsearch', 'jooble', 'adzuna', 'bundesagentur'] %}
+{% set rotating_sources = ['jsearch', 'jooble', 'adzuna', 'bundesagentur', 'remoteok'] %}
 with f as (
     select job_id, work_mode, first_seen_date,
            last_seen_date + case when primary_source in ('{{ rotating_sources | join("', '") }}')

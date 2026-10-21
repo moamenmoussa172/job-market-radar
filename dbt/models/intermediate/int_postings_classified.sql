@@ -246,7 +246,7 @@ select
         when location_text ~* 'hybrid|hybride' or job_title ~* 'hybrid'
             then 'Hybrid'
         when is_remote_flag
-          or source in ('remotive', 'jobicy', 'himalayas')
+          or source in ('remotive', 'jobicy', 'himalayas', 'remoteok')
           or location_text ~* 'remote|home\s*office|anywhere|worldwide|télétravail|teletrabajo|fully\s+distributed'
             then 'Remote'
         else 'Onsite'
