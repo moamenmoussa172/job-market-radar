@@ -354,7 +354,7 @@ body[data-tab="saved"] .layout, body[data-tab="about"] .layout { grid-template-c
 .fact.visa { background: var(--visa-bg); color: var(--visa-ink); border-color: transparent; font-weight: 600; }
 .fact.nat { background: var(--nat-bg); color: var(--nat-ink); border-color: transparent; }
 .fact.ar { background: var(--ar-bg); color: var(--ar-ink); border-color: transparent; }
-.fact.role { color: color-mix(in srgb, var(--tc) 70%, var(--ink)); border-color: color-mix(in srgb, var(--tc) 30%, transparent); background: transparent; font-weight: 600; }
+.fact.role { color: color-mix(in srgb, var(--tc) 55%, var(--ink)); border-color: color-mix(in srgb, var(--tc) 30%, transparent); background: transparent; font-weight: 600; }
 .skills { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 10px; font-size: 13px; color: var(--muted); }
 .sk.have { color: var(--mint-ink); font-weight: 600; }
 .sk.have::before { content: "✓ "; }

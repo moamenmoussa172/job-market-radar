@@ -311,9 +311,11 @@
   function applyLanguage() {
     document.documentElement.lang = lang;
     document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
-    document.querySelectorAll("[data-i18n]").forEach((el) => { el.textContent = t(el.dataset.i18n); });
-    document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => { el.placeholder = t(el.dataset.i18nPlaceholder); });
-    document.querySelectorAll("[data-i18n-aria]").forEach((el) => el.setAttribute("aria-label", t(el.dataset.i18nAria)));
+    // only touch text that changes: re-writing the same heading makes the browser paint it again,
+    // which counts as a late "largest paint" once the job data arrives
+    document.querySelectorAll("[data-i18n]").forEach((el) => { const v = t(el.dataset.i18n); if (el.textContent !== v) el.textContent = v; });
+    document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => { const v = t(el.dataset.i18nPlaceholder); if (el.placeholder !== v) el.placeholder = v; });
+    document.querySelectorAll("[data-i18n-aria]").forEach((el) => { const v = t(el.dataset.i18nAria); if (el.getAttribute("aria-label") !== v) el.setAttribute("aria-label", v); });
     const btn = $("lang");
     btn.textContent = lang === "ar" ? "English" : "العربية";
     btn.lang = lang === "ar" ? "en" : "ar";
@@ -1324,14 +1326,20 @@
     applyLanguage();
     setupInstall();
     setupNewsletter();
+    // let the page paint first (the headline is the biggest thing on screen), then fetch the big job list,
+    // so the first paint never waits for, or competes with, a multi-megabyte download
+    await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0)));
+    // trends are optional and only needed on the Trends tab: load them in the background
+    fetch("data/trends.json").then((r) => (r.ok ? r.json() : null)).catch(() => null).then((tr) => {
+      trends = tr;
+      if (meta && !$("trends").hidden) renderTrends();
+    });
     try {
       const [m, j] = await Promise.all([
         fetch("data/meta.json").then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }),
         fetch("data/jobs.json").then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }),
       ]);
       meta = m; jobs = j;
-      // trends are optional: the site works without them (e.g. before the first pipeline run with trend marts)
-      trends = await fetch("data/trends.json").then((r) => (r.ok ? r.json() : null)).catch(() => null);
     } catch {
       $("count").textContent = "–";
       $("jobList").innerHTML = "";
