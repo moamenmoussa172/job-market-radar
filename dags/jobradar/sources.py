@@ -37,9 +37,19 @@ class ExtractResult:
     board_status: dict[str, int | None] = field(default_factory=dict)
 
 
+CONNECT_RETRIES = 2  # extra tries when a server drops the connection or times out
+
+
 def _get_json(url: str, params: dict | None = None, headers: dict | None = None) -> dict | list:
-    resp = requests.get(url, params=params, timeout=TIMEOUT,
-                        headers={"User-Agent": USER_AGENT, **(headers or {})})
+    for attempt in range(CONNECT_RETRIES + 1):
+        try:
+            resp = requests.get(url, params=params, timeout=TIMEOUT,
+                                headers={"User-Agent": USER_AGENT, **(headers or {})})
+            break
+        except (requests.ConnectionError, requests.Timeout):
+            if attempt == CONNECT_RETRIES:
+                raise
+            time.sleep(5 * (attempt + 1))
     resp.raise_for_status()
     return resp.json()
 
@@ -219,7 +229,7 @@ def _fetch_greenhouse(token: str) -> list[dict]:
     for url in GREENHOUSE_URLS:
         try:
             payload = _get_json(url.format(token=token), params={"content": "true"})
-        except requests.HTTPError as exc:
+        except requests.RequestException as exc:
             last_exc = exc
             continue
         return [j for j in payload.get("jobs", []) if is_tech_role(j.get("title"))]
@@ -279,7 +289,7 @@ def _fetch_lever(token: str) -> list[dict]:
         for url in LEVER_URLS:
             try:
                 postings = _get_json(url.format(token=name), params={"mode": "json"})
-            except requests.HTTPError as exc:
+            except requests.RequestException as exc:
                 last_exc = exc
                 continue
             if isinstance(postings, list):
@@ -318,7 +328,7 @@ def _fetch_smartrecruiters(token: str, max_pages: int = 20) -> list[dict]:
     for item in data_items:
         try:
             detailed.append(_get_json(f"{url}/{item['id']}"))
-        except requests.HTTPError:
+        except requests.RequestException:
             detailed.append(item)  # keep the summary if details fail
     return detailed
 
@@ -832,7 +842,7 @@ def extract_jobicy(industries: list[str] | None = None, pause_seconds: float = 2
     for tag in tags:
         try:
             payload = _get_json(JOBICY_URL, params={"count": 200, "tag": tag})
-        except requests.HTTPError as exc:
+        except requests.RequestException as exc:
             warnings.append(f"jobicy tag '{tag}' failed: {exc}")
             continue
         jobs = payload.get("jobs") or []
@@ -897,7 +907,7 @@ def extract_himalayas(queries: list[str] | None = None, max_pages: int = 5,
         for page in range(1, max_pages + 1):
             try:
                 jobs = _himalayas_page(query, page)
-            except requests.HTTPError as exc:
+            except requests.RequestException as exc:
                 warnings.append(f"himalayas q='{query}' page={page} failed: {exc}")
                 break
             for j in jobs:
@@ -988,7 +998,7 @@ def extract_jsearch(pairs: list | None = None, pause_seconds: float = 1.0) -> Ex
         try:
             payload = _get_json(JSEARCH_URL, headers={"x-api-key": key},
                                 params={"query": f"{role} jobs in {name}", "country": code, "language": "en"})
-        except requests.HTTPError as exc:
+        except requests.RequestException as exc:
             warnings.append(f"jsearch '{role}' in {code} failed: {exc}")
             if exc.response is not None and exc.response.status_code in (401, 403, 429):
                 break  # bad key or quota used up: don't burn more requests today
@@ -1040,7 +1050,7 @@ def extract_jooble(pairs: list | None = None, pause_seconds: float = 1.0) -> Ext
         try:
             payload = _post_json(JOOBLE_URL.format(key=key),
                                  {"keywords": role, "location": location, "page": "1"})
-        except requests.HTTPError as exc:
+        except requests.RequestException as exc:
             warnings.append(f"jooble '{role}' in {location} failed: HTTP "
                             f"{exc.response.status_code if exc.response is not None else '?'}")
             if exc.response is not None and exc.response.status_code in (401, 403, 429):
@@ -1085,7 +1095,7 @@ def extract_adzuna(pairs: list | None = None, pause_seconds: float = 2.5) -> Ext
             payload = _get_json(ADZUNA_URL.format(country=country), params={
                 "app_id": app_id, "app_key": app_key, "what": role,
                 "results_per_page": 50, "max_days_old": 30, "content-type": "application/json"})
-        except requests.HTTPError as exc:
+        except requests.RequestException as exc:
             code = exc.response.status_code if exc.response is not None else "?"
             warnings.append(f"adzuna '{role}' in {country} failed: HTTP {code}")
             if code in (401, 403, 429):
@@ -1129,6 +1139,9 @@ def extract_bundesagentur(queries: list | None = None, pages: int | None = None,
             except requests.HTTPError as exc:
                 code = exc.response.status_code if exc.response is not None else "?"
                 warnings.append(f"bundesagentur '{query}' page {page} failed: HTTP {code}")
+                break
+            except requests.RequestException as exc:  # connection dropped / timed out even after retries
+                warnings.append(f"bundesagentur '{query}' page {page} failed: {type(exc).__name__}")
                 break
             items = payload.get("stellenangebote") or []
             for job in items:

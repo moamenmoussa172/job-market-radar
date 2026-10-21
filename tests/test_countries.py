@@ -58,3 +58,18 @@ def test_extra_countries_share_the_same_budget():
     # consecutive days visit different extra countries
     seen = {sources.jsearch_today(day + dt.timedelta(d))[-1][1] for d in range(10)}
     assert len(seen) == 10
+
+
+def test_dropped_connection_is_retried_then_skipped(monkeypatch):
+    import requests
+    calls = []
+
+    def boom(*a, **k):
+        calls.append(1)
+        raise requests.ConnectionError("Remote end closed connection without response")
+
+    monkeypatch.setattr(sources.requests, "get", boom)
+    monkeypatch.setattr(sources.time, "sleep", lambda s: None)
+    res = sources.extract_bundesagentur(queries=["Data Engineer"], pages=1)
+    assert res.records == [] and "ConnectionError" in res.warnings[0]
+    assert len(calls) == sources.CONNECT_RETRIES + 1
