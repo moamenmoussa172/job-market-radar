@@ -87,3 +87,43 @@ def test_company_name_searches_share_the_daily_budget():
     assert len(jo) == sources.JOOBLE_PER_DAY and sum(1 for q, _ in jo if q in companies) == 1
     seen = {next(q for q, _, _ in sources.jsearch_today(day + dt.timedelta(d)) if q in companies) for d in range(20)}
     assert {"AMAN Holding", "Raya", "e& Egypt", "Telecom Egypt", "_VOIS"} <= seen    # every company within 20 days
+
+
+# --------------------------------------------------------------------------- Oracle Recruiting Cloud
+def _oracle_answer(reqs, total):
+    return {"items": [{"TotalJobsCount": total, "requisitionList": reqs}], "count": 1}
+
+
+def test_oracle_reads_jobs_pages_and_builds_links(monkeypatch):
+    calls = []
+
+    def get(url, params=None, headers=None):
+        calls.append((url, params))
+        offset = int(params["finder"].split("offset=")[1].split(",")[0])
+        reqs = [{"Id": str(offset + i), "Title": "Data Engineer" if i % 2 == 0 else "Teller",
+                 "PrimaryLocation": "Abu Dhabi, United Arab Emirates", "PrimaryLocationCountry": "AE",
+                 "PostedDate": "2026-10-20"} for i in range(sources.ORACLE_PAGE)] if offset < 150 else []
+        return _oracle_answer(reqs, 150)
+    monkeypatch.setattr(sources, "_get_json", get)
+    jobs = sources._fetch_oracle("ehjd.fa.em2.oraclecloud.com/fabCareers")
+    assert len(jobs) == 100                                          # 200 read, tech roles kept
+    assert jobs[0]["job_url"] == "https://ehjd.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/fabCareers/job/0"
+    url, params = calls[0]
+    assert url == "https://ehjd.fa.em2.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions"
+    assert "siteNumber=fabCareers" in params["finder"] and "offset=0" in params["finder"]
+    assert sources.oracle_id({**jobs[0], "board_token": "x/CX_1"}) == "x/CX_1:0"
+
+
+def test_oracle_rejects_non_job_answers(monkeypatch):
+    monkeypatch.setattr(sources, "_get_json", lambda *a, **k: {"error": "no"})
+    with pytest.raises(ValueError):
+        sources._fetch_oracle("example.oraclecloud.com/CX_1")
+
+
+def test_oracle_board_ids():
+    n = sources.normalize_board_token
+    assert n("oracle", "https://ehjd.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/fabCareers") == \
+        "ehjd.fa.em2.oraclecloud.com/fabCareers"
+    assert n("oracle", "emhm.fa.em2.oraclecloud.com/hcmUI/CandidateExperience") == "emhm.fa.em2.oraclecloud.com/CX_1"
+    assert len(sources.load_board_tokens("oracle")) >= 14
+    assert "jobs.adnoc.ae/us/en" in sources.load_board_tokens("phenom")

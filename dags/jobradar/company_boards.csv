@@ -132,6 +132,43 @@ successfactors,jobs.deere.com,John Deere
 successfactors,opportunities.vodafone.com,Vodafone
 # Phenom career sites: "<host>/<country>/<lang>?<Country to request first>"
 phenom,orange.jobs/gb/en?Egypt,Orange,Egypt
+phenom,jobs.adnoc.ae/us/en,ADNOC,United Arab Emirates
+phenom,careers.majidalfuttaim.com/global/en,Majid Al Futtaim,United Arab Emirates
+phenom,careers.maaden.com/gb/en,Ma'aden,Saudi Arabia
+# Big Gulf employers (source: Labeeb "GCC Employer ATS Index", Sept 2026)
+successfactors,jobs.sabic.com,SABIC
+successfactors,careers.stc.com.sa,stc
+successfactors,careers.saudia.com,Saudia
+successfactors,careers.oq.com,OQ
+smartrecruiters,EtihadAirways5,Etihad Airways,United Arab Emirates
+smartrecruiters,masdar,Masdar,United Arab Emirates
+lever,aldar,Aldar Properties,United Arab Emirates
+teamtailor,chalhoubgroup,Chalhoub Group,United Arab Emirates
+workday,ccf.wd1/ClevelandClinicCareers,Cleveland Clinic
+# Global employers with Middle East offices (Workday: only their Middle East / Europe jobs are read)
+workday,cisco.wd5/Cisco_Careers,Cisco
+workday,hpe.wd5/ACJobSite,Hewlett Packard Enterprise
+workday,iqvia.wd1/IQVIA,IQVIA
+workday,medtronic.wd1/MedtronicCareers,Medtronic
+workday,boeing.wd1/external_subsidiary,Boeing
+workday,cae.wd3/career,CAE
+workday,vanderlande.wd3/careers,Vanderlande
+workday,unhcr.wd3/External,UNHCR
+# Oracle Recruiting Cloud: "<host>/<site number>" (CX_1 when the careers URL shows no site)
+oracle,ehjd.fa.em2.oraclecloud.com/fabCareers,First Abu Dhabi Bank,United Arab Emirates
+oracle,fa-evlo-saasfaprod1.fa.ocs.oraclecloud.com/CX_1,Emirates NBD,United Arab Emirates
+oracle,iaayey.fa.ocs.oraclecloud26.com/CX_1,e&,United Arab Emirates
+oracle,emhm.fa.em2.oraclecloud.com/CX_1,Emaar,United Arab Emirates
+oracle,ehpv.fa.em2.oraclecloud.com/CX_1,DP World,United Arab Emirates
+oracle,hcrg.fa.em2.oraclecloud.com/CX_1,Dubai Airports,United Arab Emirates
+oracle,fa-ewzx-saasfaprod1.fa.ocs.oraclecloud.com/CX_1,AD Ports Group,United Arab Emirates
+oracle,fa-eutv-saasfaprod1.fa.ocs.oraclecloud.com/CX_6007,PureHealth,United Arab Emirates
+oracle,fa-eutv-saasfaprod1.fa.ocs.oraclecloud.com/CX_1,SEHA,United Arab Emirates
+oracle,eiby.fa.em2.oraclecloud.com/CX_1,NMC Healthcare,United Arab Emirates
+oracle,careers.mobily.com.sa/opportunities,Mobily,Saudi Arabia
+oracle,fa-epph-saasfaprod1.fa.ocs.oraclecloud.com/CX_1,ROSHN,Saudi Arabia
+oracle,fa-epod-saasfaprod1.fa.ocs.oraclecloud.com/CX_1,Ma'aden,Saudi Arabia
+oracle,iadygs.fa.ocs.oraclecloud.com/CX_1,Bapco Energies,Bahrain
 # ---- Middle East tech employers found on their hiring platforms (Oct 2026) ----
 # Egypt
 workable,robusta,Robusta,Egypt

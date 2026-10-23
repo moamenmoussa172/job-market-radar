@@ -179,7 +179,7 @@ PROBE_ATS = ("greenhouse", "lever", "ashby", "smartrecruiters", "workable", "rec
              "breezy", "teamtailor")
 # + enterprise platforms (big corporates, banks, telcos, oil & gas): their board ids can't be guessed,
 # they come from company_boards.csv or from job links that point to them (harvest).
-BOARD_ATS = PROBE_ATS + ("workday", "successfactors", "phenom")
+BOARD_ATS = PROBE_ATS + ("workday", "successfactors", "phenom", "oracle")
 # SmartRecruiters company identifiers are case-sensitive (e.g. "BoschGroup"); so are Workday site names.
 CASE_SENSITIVE_ATS = ("smartrecruiters", "workday", "lever")   # Lever: jobs.lever.co/Bosta, /Yassir
 
@@ -188,6 +188,8 @@ _WORKDAY_RE = re.compile(
     r"^(?:https?://)?([a-z0-9-]+)\.(wd[0-9]+)(?:\.myworkdayjobs\.com)?/(?:[a-z]{2}-[A-Z]{2}/)?([A-Za-z0-9_-]+)",
     re.IGNORECASE)
 _WORKDAY_NOT_SITES = {"wday", "job", "jobs", "details", "login", "en-us"}
+_ORACLE_RE = re.compile(r"^(?:https?://)?([a-z0-9.-]+\.[a-z]{2,})(?:/hcmUI/CandidateExperience(?:/[a-z]{2})?(?:/sites)?)?/?([A-Za-z0-9_]+)?/?$",
+                        re.IGNORECASE)
 _PHENOM_RE = re.compile(r"^(?:https?://)?([a-z0-9.-]+\.[a-z]{2,})/([a-z]{2,6})/([a-z]{2,6})/?(?:\?([A-Za-z][A-Za-z .'-]+))?$",
                         re.IGNORECASE)
 
@@ -201,6 +203,9 @@ def normalize_board_token(ats: str, token: str) -> str:
         return f"{m.group(1).lower()}.{m.group(2).lower()}/{m.group(3)}"
     if ats == "successfactors":  # career site host, e.g. jobs.sap.com
         return re.sub(r"^https?://", "", token.lower()).split("/")[0]
+    if ats == "oracle":          # Oracle Recruiting Cloud: "<host>/<site>", e.g. ehjd.fa.em2.oraclecloud.com/fabCareers
+        m = _ORACLE_RE.match(token)
+        return f"{m.group(1).lower()}/{m.group(2) or 'CX_1'}" if m else ""
     if ats == "phenom":          # "<host>/<country>/<lang>[?<Country to keep>]", e.g. orange.jobs/gb/en?Egypt
         m = _PHENOM_RE.match(token)
         return f"{m.group(1).lower()}/{m.group(2).lower()}/{m.group(3).lower()}" + (f"?{m.group(4)}" if m.group(4) else "") if m else ""
@@ -739,6 +744,41 @@ def _fetch_phenom(token: str) -> list[dict]:
     return []
 
 
+# Oracle Recruiting Cloud (Oracle Fusion HCM "Candidate Experience"): used by many Gulf banks, telcos and
+# government-owned companies. The career site reads its jobs from a public REST resource; board id =
+# "<host>/<site number>" (the site is in the careers URL: .../CandidateExperience/en/sites/<site>).
+ORACLE_PAGE = 100
+ORACLE_MAX_PAGES = int(os.environ.get("ORACLE_MAX_PAGES", "20"))
+
+
+def _oracle_page(host: str, site: str, offset: int) -> dict:
+    finder = (f"findReqs;siteNumber={site},facetsList=LOCATIONS,limit={ORACLE_PAGE},offset={offset},"
+              "sortBy=POSTING_DATES_DESC")
+    data = _get_json(f"https://{host}/hcmRestApi/resources/latest/recruitingCEJobRequisitions",
+                     params={"onlyData": "true", "expand": "requisitionList.secondaryLocations", "finder": finder})
+    items = (data or {}).get("items") if isinstance(data, dict) else None
+    if not isinstance(items, list):
+        raise ValueError(f"oracle '{host}/{site}' did not answer a job search")
+    return items[0] if items else {"requisitionList": [], "TotalJobsCount": 0}
+
+
+def _fetch_oracle(token: str) -> list[dict]:
+    host, site = token.split("/", 1)
+    jobs, seen, offset = [], set(), 0
+    for _ in range(ORACLE_MAX_PAGES):
+        page = _oracle_page(host, site, offset)
+        reqs = [r for r in page.get("requisitionList") or [] if r.get("Id") not in seen]
+        if not reqs:
+            break
+        for r in reqs:
+            seen.add(r.get("Id"))
+            jobs.append({**r, "job_url": f"https://{host}/hcmUI/CandidateExperience/en/sites/{site}/job/{r.get('Id')}"})
+        offset += len(page.get("requisitionList") or [])
+        if offset >= int(page.get("TotalJobsCount") or 0):
+            break
+    return [j for j in jobs if is_tech_role(j.get("Title"))]
+
+
 ATS_FETCHERS: dict[str, Callable[[str], list[dict]]] = {
     "greenhouse": _fetch_greenhouse,
     "lever": _fetch_lever,
@@ -752,6 +792,7 @@ ATS_FETCHERS: dict[str, Callable[[str], list[dict]]] = {
     "breezy": _fetch_breezy,
     "teamtailor": _fetch_teamtailor,
     "phenom": _fetch_phenom,
+    "oracle": _fetch_oracle,
 }
 
 
@@ -853,6 +894,15 @@ def extract_successfactors(tokens: list[str] | None = None, pause_seconds: float
 def extract_phenom(tokens: list[str] | None = None, pause_seconds: float = 1.0,
                    meta: dict[str, dict] | None = None) -> ExtractResult:
     return extract_company_boards("phenom", tokens, pause_seconds, meta)
+
+
+def extract_oracle(tokens: list[str] | None = None, pause_seconds: float = 1.0,
+                   meta: dict[str, dict] | None = None) -> ExtractResult:
+    return extract_company_boards("oracle", tokens, pause_seconds, meta)
+
+
+def oracle_id(record: dict) -> str:
+    return f"{record.get('board_token', '')}:{record.get('Id') or record['job_url']}"
 
 
 def phenom_id(record: dict) -> str:
@@ -1366,6 +1416,7 @@ SOURCES: dict[str, SourceSpec] = {
     "personio": SourceSpec(extract_personio, personio_id, required=False, board_ats="personio"),
     "workday": SourceSpec(extract_workday, workday_id, required=False, board_ats="workday"),
     "phenom": SourceSpec(extract_phenom, phenom_id, required=False, board_ats="phenom"),
+    "oracle": SourceSpec(extract_oracle, oracle_id, required=False, board_ats="oracle"),
     "breezy": SourceSpec(extract_breezy, breezy_id, required=False, board_ats="breezy"),
     "teamtailor": SourceSpec(extract_teamtailor, teamtailor_id, required=False, board_ats="teamtailor"),
     "successfactors": SourceSpec(extract_successfactors, successfactors_id, required=False,

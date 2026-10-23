@@ -272,6 +272,7 @@ COUNTRY_KEYWORDS = {
     "Sri Lanka": ["sri lanka", "colombo"],
     "Nepal": ["nepal", "kathmandu", "lalitpur"],
     "Iceland": ["iceland", "reykjavik", "reykjavík"],
+    "Turkey": ["turkey", "türkiye", "turkiye", "istanbul", "ankara", "izmir"],
     # remote-first employers: accept the board if its tech jobs are remote
     "Remote": ["remote", "anywhere", "worldwide", "work from home", "distributed"],
     "Netherlands": ["netherlands", "amsterdam", "rotterdam", "utrecht", "eindhoven", "the hague"],

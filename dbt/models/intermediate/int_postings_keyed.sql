@@ -51,6 +51,7 @@ keyed as (
             when 'breezy'     then 5   -- no description
             when 'successfactors' then 1
             when 'phenom'     then 2   -- company site, teaser only
+            when 'oracle'     then 2   -- company site, short description
             when 'himalayas'  then 2   -- structured eligibility + salary
             when 'jobicy'     then 3
             when 'remoteok'   then 3
