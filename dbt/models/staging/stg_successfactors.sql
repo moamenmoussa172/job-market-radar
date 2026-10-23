@@ -17,9 +17,11 @@ select
     'successfactors'::text                                  as source,
     source_job_id,
     nullif(trim(p ->> 'title'), '')                         as job_title,
-    coalesce(nullif(p ->> 'board_company', ''), (select case when length(t) <= 3 then upper(t) else initcap(t) end
+    case when p ->> 'board_token' = 'opportunities.vodafone.com' and p ->> 'title' ~* '\m_?vois\M'
+         then '_VOIS'                                       -- Vodafone Intelligent Solutions posts on Vodafone's site
+         else coalesce(nullif(p ->> 'board_company', ''), (select case when length(t) <= 3 then upper(t) else initcap(t) end
                                                                       from (select split_part(p ->> 'board_token', '.', 2) as t) x))
-                                                            as company_name,
+    end                                                     as company_name,
     nullif(concat_ws(', ', loc_raw, cc.country), '')        as location_text,
     case when loc_raw ~* '\mremote\M' then true end         as is_remote_flag,
     case when loc_raw ~* '\mremote\M' then 'remote' end     as workplace_type,

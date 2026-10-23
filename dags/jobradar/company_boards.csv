@@ -128,6 +128,10 @@ successfactors,jobs.babcockinternational.com,Babcock International
 successfactors,jobs.bombardier.com,Bombardier
 successfactors,jobs.hensoldt.net,Hensoldt
 successfactors,jobs.deere.com,John Deere
+# Egypt telecoms (Oct 2026): Vodafone's SuccessFactors site also lists Vodafone Egypt and _VOIS jobs
+successfactors,opportunities.vodafone.com,Vodafone
+# Phenom career sites: "<host>/<country>/<lang>?<Country to request first>"
+phenom,orange.jobs/gb/en?Egypt,Orange,Egypt
 # ---- Middle East tech employers found on their hiring platforms (Oct 2026) ----
 # Egypt
 workable,robusta,Robusta,Egypt

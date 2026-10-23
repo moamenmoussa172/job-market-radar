@@ -56,7 +56,8 @@ def test_extra_countries_share_the_same_budget():
     assert sum(1 for _, code, _ in js if code in extra) == sources.JSEARCH_EXTRA_PER_DAY
     assert len(sources.jooble_today(day)) == sources.JOOBLE_PER_DAY
     # consecutive days visit different extra countries
-    seen = {sources.jsearch_today(day + dt.timedelta(d))[-1][1] for d in range(10)}
+    extra_codes = {c for c, _ in sources.EXTRA_SEARCH_COUNTRIES}
+    seen = {next(c for _, c, _ in sources.jsearch_today(day + dt.timedelta(d)) if c in extra_codes) for d in range(10)}
     assert len(seen) == 10
 
 

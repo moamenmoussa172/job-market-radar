@@ -14,6 +14,8 @@ models:
     columns: *stg_cols
   - name: stg_remoteok
     columns: *stg_cols
+  - name: stg_phenom
+    columns: *stg_cols
   - name: stg_arbeitnow
     columns: *stg_cols
   - name: stg_greenhouse

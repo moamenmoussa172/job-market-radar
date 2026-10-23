@@ -125,13 +125,13 @@ def test_all_sources_registered():
     assert set(sources.SOURCES) == {"remotive", "jobicy", "himalayas", "arbeitnow", "greenhouse", "lever",
                                     "ashby", "jsearch", "jooble", "smartrecruiters", "workable",
                                     "recruitee", "personio", "adzuna", "bundesagentur", "workday", "successfactors",
-                                    "breezy", "teamtailor", "remoteok"}
+                                    "breezy", "teamtailor", "remoteok", "phenom"}
 
 
 def test_optional_sources():
     assert {s for s, spec in sources.SOURCES.items() if not spec.required} == {
         "remotive", "jsearch", "jooble", "smartrecruiters", "workable", "recruitee", "personio", "adzuna",
-        "bundesagentur", "workday", "successfactors", "breezy", "teamtailor", "remoteok"}
+        "bundesagentur", "workday", "successfactors", "breezy", "teamtailor", "remoteok", "phenom"}
 
 
 def test_daily_slice_rotates_through_every_pair():

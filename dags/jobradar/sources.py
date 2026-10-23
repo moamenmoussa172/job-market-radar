@@ -179,7 +179,7 @@ PROBE_ATS = ("greenhouse", "lever", "ashby", "smartrecruiters", "workable", "rec
              "breezy", "teamtailor")
 # + enterprise platforms (big corporates, banks, telcos, oil & gas): their board ids can't be guessed,
 # they come from company_boards.csv or from job links that point to them (harvest).
-BOARD_ATS = PROBE_ATS + ("workday", "successfactors")
+BOARD_ATS = PROBE_ATS + ("workday", "successfactors", "phenom")
 # SmartRecruiters company identifiers are case-sensitive (e.g. "BoschGroup"); so are Workday site names.
 CASE_SENSITIVE_ATS = ("smartrecruiters", "workday", "lever")   # Lever: jobs.lever.co/Bosta, /Yassir
 
@@ -188,6 +188,8 @@ _WORKDAY_RE = re.compile(
     r"^(?:https?://)?([a-z0-9-]+)\.(wd[0-9]+)(?:\.myworkdayjobs\.com)?/(?:[a-z]{2}-[A-Z]{2}/)?([A-Za-z0-9_-]+)",
     re.IGNORECASE)
 _WORKDAY_NOT_SITES = {"wday", "job", "jobs", "details", "login", "en-us"}
+_PHENOM_RE = re.compile(r"^(?:https?://)?([a-z0-9.-]+\.[a-z]{2,})/([a-z]{2,6})/([a-z]{2,6})/?(?:\?([A-Za-z][A-Za-z .'-]+))?$",
+                        re.IGNORECASE)
 
 
 def normalize_board_token(ats: str, token: str) -> str:
@@ -199,6 +201,9 @@ def normalize_board_token(ats: str, token: str) -> str:
         return f"{m.group(1).lower()}.{m.group(2).lower()}/{m.group(3)}"
     if ats == "successfactors":  # career site host, e.g. jobs.sap.com
         return re.sub(r"^https?://", "", token.lower()).split("/")[0]
+    if ats == "phenom":          # "<host>/<country>/<lang>[?<Country to keep>]", e.g. orange.jobs/gb/en?Egypt
+        m = _PHENOM_RE.match(token)
+        return f"{m.group(1).lower()}/{m.group(2).lower()}/{m.group(3).lower()}" + (f"?{m.group(4)}" if m.group(4) else "") if m else ""
     return token if ats in CASE_SENSITIVE_ATS else token.lower()
 
 
@@ -680,6 +685,60 @@ def _fetch_successfactors(token: str) -> list[dict]:
     raise last_exc or ValueError(f"successfactors '{token}' failed")
 
 
+# Phenom career sites (e.g. orange.jobs): the public search page reads its jobs from POST /widgets
+# ("refineSearch"), like Workday's careers-site API. Board id = "<host>/<country>/<lang>[?<Country>]";
+# with a country, only jobs located there are requested (tried first; the whole site if the filter finds none).
+PHENOM_PAGE = 100
+PHENOM_MAX_PAGES = int(os.environ.get("PHENOM_MAX_PAGES", "20"))
+
+
+def phenom_parts(token: str) -> tuple[str, str, str, str | None]:
+    m = _PHENOM_RE.match(token)
+    if not m:
+        raise ValueError(f"not a phenom board id: {token!r}")
+    return m.group(1).lower(), m.group(2).lower(), m.group(3).lower(), m.group(4)
+
+
+def _phenom_page(host: str, country: str, lang: str, offset: int, place: str | None) -> dict:
+    body = {"lang": f"{lang}_{country}", "deviceType": "desktop", "country": country, "pageName": "search-results",
+            "ddoKey": "refineSearch", "sortBy": "", "subsearch": "", "from": offset, "jobs": True, "counts": True,
+            "all_fields": ["category", "country", "city", "type"], "size": PHENOM_PAGE, "clearAll": False,
+            "jdsource": "facets", "isSliderEnable": False, "keywords": "", "global": True,
+            "selected_fields": {"country": [place]} if place else {}, "locationData": {}}
+    resp = requests.post(f"https://{host}/widgets", json=body, timeout=TIMEOUT,
+                         headers={"User-Agent": USER_AGENT, "Content-Type": "application/json"})
+    resp.raise_for_status()
+    data = (resp.json() or {}).get("refineSearch") or {}
+    if not isinstance(data, dict) or "data" not in data:
+        raise ValueError(f"phenom '{host}' did not answer a job search")
+    return data
+
+
+def _fetch_phenom(token: str) -> list[dict]:
+    host, country, lang, place = phenom_parts(token)
+    for wanted in ([place, None] if place else [None]):
+        jobs, seen, offset = [], set(), 0
+        for _ in range(PHENOM_MAX_PAGES):
+            data = _phenom_page(host, country, lang, offset, wanted)
+            page = (data.get("data") or {}).get("jobs") or []
+            fresh = [j for j in page if (j.get("jobId") or j.get("jobSeqNo")) not in seen]
+            if not fresh:
+                break
+            for j in fresh:
+                seen.add(j.get("jobId") or j.get("jobSeqNo"))
+                jid = j.get("jobId") or j.get("jobSeqNo")
+                jobs.append({**j, "job_url": f"https://{host}/{country}/{lang}/job/{jid}"})
+            offset += len(page)
+            if offset >= int(data.get("totalHits") or data.get("hits") or 0):
+                break
+        if jobs or wanted is None:
+            if wanted and place:   # a filtered search: keep only that country even if the site mixes others in
+                jobs = [j for j in jobs if place.lower() in json.dumps([j.get("country"), j.get("location"),
+                                                                         j.get("multi_location")]).lower()] or jobs
+            return [j for j in jobs if is_tech_role(j.get("title"))]
+    return []
+
+
 ATS_FETCHERS: dict[str, Callable[[str], list[dict]]] = {
     "greenhouse": _fetch_greenhouse,
     "lever": _fetch_lever,
@@ -692,6 +751,7 @@ ATS_FETCHERS: dict[str, Callable[[str], list[dict]]] = {
     "successfactors": _fetch_successfactors,
     "breezy": _fetch_breezy,
     "teamtailor": _fetch_teamtailor,
+    "phenom": _fetch_phenom,
 }
 
 
@@ -788,6 +848,15 @@ def extract_workday(tokens: list[str] | None = None, pause_seconds: float = 1.0,
 def extract_successfactors(tokens: list[str] | None = None, pause_seconds: float = 1.0,
                            meta: dict[str, dict] | None = None) -> ExtractResult:
     return extract_company_boards("successfactors", tokens, pause_seconds, meta)
+
+
+def extract_phenom(tokens: list[str] | None = None, pause_seconds: float = 1.0,
+                   meta: dict[str, dict] | None = None) -> ExtractResult:
+    return extract_company_boards("phenom", tokens, pause_seconds, meta)
+
+
+def phenom_id(record: dict) -> str:
+    return f"{record.get('board_token', '')}:{record.get('jobId') or record.get('jobSeqNo') or record['job_url']}"
 
 
 def workday_id(record: dict) -> str:
@@ -956,6 +1025,18 @@ EXTRA_SEARCH_COUNTRIES = [
     ("al", "Albania"), ("rs", "Serbia"), ("ba", "Bosnia and Herzegovina"), ("mk", "North Macedonia"),
     ("sk", "Slovakia"), ("si", "Slovenia"), ("md", "Moldova"), ("tr", "Turkey"),
 ]
+# Big Egyptian employers that post mostly on Wuzzuf / LinkedIn (no public career API we can read).
+# JSearch (Google for Jobs) and Jooble index those listings, so they are searched by company name:
+# one company a day each (JSEARCH_EMPLOYER_PER_DAY / JOOBLE_EMPLOYER_PER_DAY, part of the same budget).
+EMPLOYER_SEARCHES = [  # (ISO code, country, company name as people search it)
+    ("eg", "Egypt", "AMAN Holding"), ("eg", "Egypt", "Raya"), ("eg", "Egypt", "e& Egypt"),
+    ("eg", "Egypt", "Telecom Egypt"), ("eg", "Egypt", "Vodafone Egypt"), ("eg", "Egypt", "Orange Egypt"),
+    ("eg", "Egypt", "_VOIS"), ("eg", "Egypt", "Fawry"), ("eg", "Egypt", "Banque Misr"),
+    ("eg", "Egypt", "National Bank of Egypt"), ("eg", "Egypt", "CIB Egypt"), ("eg", "Egypt", "Valu"),
+    ("eg", "Egypt", "Paymob"), ("eg", "Egypt", "Instabug"), ("eg", "Egypt", "Sumerge"),
+    ("eg", "Egypt", "IBM Egypt"), ("eg", "Egypt", "Microsoft Egypt"), ("eg", "Egypt", "Valeo Egypt"),
+    ("eg", "Egypt", "Siemens Egypt"), ("eg", "Egypt", "Dell Technologies Egypt"),
+]
 EXTRA_SEARCH_ROLES = ["software engineer", "data analyst", "developer", "devops engineer", "cyber security",
                       "qa engineer", "network engineer", "data engineer"]
 # Countries first, so each day's slice spreads over several countries.
@@ -1026,6 +1107,7 @@ def budget_spend(source: str, n: int, today: dt.date | None = None) -> None:
 JSEARCH_URL = "https://api.openwebninja.com/jsearch/search-v2"
 JSEARCH_PER_DAY = int(os.environ.get("JSEARCH_REQUESTS_PER_DAY", "6"))
 JSEARCH_EXTRA_PER_DAY = int(os.environ.get("JSEARCH_EXTRA_PER_DAY", "1"))  # taken out of JSEARCH_PER_DAY
+JSEARCH_EMPLOYER_PER_DAY = int(os.environ.get("JSEARCH_EMPLOYER_PER_DAY", "1"))  # taken out of JSEARCH_PER_DAY
 JSEARCH_PER_MONTH = int(os.environ.get("JSEARCH_REQUESTS_PER_MONTH", "190"))  # free plan: 200
 
 
@@ -1037,10 +1119,17 @@ def jsearch_extra_pairs() -> list[tuple[str, str, str]]:
     return [(role, code, name) for role in EXTRA_SEARCH_ROLES for code, name in EXTRA_SEARCH_COUNTRIES]
 
 
+def jsearch_employer_pairs() -> list[tuple[str, str, str]]:
+    # (query, ISO code, country); the query is the whole search ("<company> jobs in <country>")
+    return [(f"{company}", code, name) for code, name, company in EMPLOYER_SEARCHES]
+
+
 def jsearch_today(day: dt.date | None = None) -> list[tuple[str, str, str]]:
-    """Today's searches: the main rotation plus a share for the extra countries, same total."""
+    """Today's searches: the main rotation plus shares for the extra countries and the big employers, same total."""
     extra = min(JSEARCH_EXTRA_PER_DAY, JSEARCH_PER_DAY)
-    return daily_slice(jsearch_pairs(), JSEARCH_PER_DAY - extra, day) + daily_slice(jsearch_extra_pairs(), extra, day)
+    employer = min(JSEARCH_EMPLOYER_PER_DAY, JSEARCH_PER_DAY - extra)
+    return (daily_slice(jsearch_pairs(), JSEARCH_PER_DAY - extra - employer, day)
+            + daily_slice(jsearch_extra_pairs(), extra, day) + daily_slice(jsearch_employer_pairs(), employer, day))
 
 
 def extract_jsearch(pairs: list | None = None, pause_seconds: float = 1.0) -> ExtractResult:
@@ -1084,6 +1173,7 @@ def jsearch_id(record: dict) -> str:
 JOOBLE_URL = "https://jooble.org/api/{key}"
 JOOBLE_PER_DAY = int(os.environ.get("JOOBLE_REQUESTS_PER_DAY", "3"))
 JOOBLE_EXTRA_PER_DAY = int(os.environ.get("JOOBLE_EXTRA_PER_DAY", "1"))  # taken out of JOOBLE_PER_DAY
+JOOBLE_EMPLOYER_PER_DAY = int(os.environ.get("JOOBLE_EMPLOYER_PER_DAY", "1"))  # taken out of JOOBLE_PER_DAY
 JOOBLE_PER_MONTH = int(os.environ.get("JOOBLE_REQUESTS_PER_MONTH", "100"))
 
 
@@ -1098,7 +1188,10 @@ def jooble_extra_pairs() -> list[tuple[str, str]]:
 
 def jooble_today(day: dt.date | None = None) -> list[tuple[str, str]]:
     extra = min(JOOBLE_EXTRA_PER_DAY, JOOBLE_PER_DAY)
-    return daily_slice(jooble_pairs(), JOOBLE_PER_DAY - extra, day) + daily_slice(jooble_extra_pairs(), extra, day)
+    employer = min(JOOBLE_EMPLOYER_PER_DAY, JOOBLE_PER_DAY - extra)
+    employers = [(company, name) for _, name, company in EMPLOYER_SEARCHES]   # keywords = company name
+    return (daily_slice(jooble_pairs(), JOOBLE_PER_DAY - extra - employer, day)
+            + daily_slice(jooble_extra_pairs(), extra, day) + daily_slice(employers, employer, day))
 
 
 def extract_jooble(pairs: list | None = None, pause_seconds: float = 1.0) -> ExtractResult:
@@ -1272,6 +1365,7 @@ SOURCES: dict[str, SourceSpec] = {
     "recruitee": SourceSpec(extract_recruitee, recruitee_id, required=False, board_ats="recruitee"),
     "personio": SourceSpec(extract_personio, personio_id, required=False, board_ats="personio"),
     "workday": SourceSpec(extract_workday, workday_id, required=False, board_ats="workday"),
+    "phenom": SourceSpec(extract_phenom, phenom_id, required=False, board_ats="phenom"),
     "breezy": SourceSpec(extract_breezy, breezy_id, required=False, board_ats="breezy"),
     "teamtailor": SourceSpec(extract_teamtailor, teamtailor_id, required=False, board_ats="teamtailor"),
     "successfactors": SourceSpec(extract_successfactors, successfactors_id, required=False,

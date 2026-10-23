@@ -4,7 +4,7 @@
 -- backlog, not new hiring, and are left out (otherwise adding a source looks like a boom).
 -- scope = 'All' | 'Remote' | a country (office and hybrid jobs located there).
 {% set board_sources = ['greenhouse', 'lever', 'ashby', 'smartrecruiters', 'workable', 'recruitee',
-                        'personio', 'breezy', 'teamtailor', 'workday', 'successfactors'] %}
+                        'personio', 'breezy', 'teamtailor', 'workday', 'successfactors', 'phenom'] %}
 with f as (
     select * from {{ ref('fct_job_postings') }}
     where coalesce(track, '') <> 'Not tech'
