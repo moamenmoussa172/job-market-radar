@@ -75,6 +75,8 @@ def exists(base: str, path: str) -> bool:
 @pytest.fixture(scope="session")
 def data(base):
     jobs = json.loads(fetch(base, "data/jobs.json"))
+    if exists(base, "data/jobs-more.json"):          # the rest of the list (outside the Middle East / Africa)
+        jobs += json.loads(fetch(base, "data/jobs-more.json"))
     meta = json.loads(fetch(base, "data/meta.json"))
     region = {c["name"]: c["region"] for c in meta["countries"]}
     return {"jobs": jobs, "meta": meta, "region": region}
@@ -140,7 +142,8 @@ class Page:
         self.p.goto(self.base + "/" + path)
         if wait_jobs:
             self.p.wait_for_function("document.querySelector('#count') && /\\d/.test(document.querySelector('#count').textContent)"
-                                     " && !document.querySelector('#jobList[aria-busy]')", timeout=30000)
+                                     " && !document.querySelector('#jobList[aria-busy]')"
+                                     " && !/…/.test(document.querySelector('#countLabel').textContent)", timeout=30000)
         return self.p
 
     def count(self) -> int:
@@ -778,3 +781,86 @@ def test_remote_ok_links_on_static_pages(base, data):
             assert "nofollow" not in m.group(2)
         else:
             assert "nofollow" in m.group(2)
+
+
+# =========================================================================== 5. the two job files
+def _more_exists(base):
+    if not exists(base, "data/jobs-more.json"):
+        pytest.skip("site not split into two job files yet")
+
+
+def test_split_files_cover_every_listed_job(base, data):
+    _more_exists(base)
+    core = json.loads(fetch(base, "data/jobs.json"))
+    meta = data["meta"]
+    assert len(data["jobs"]) == meta["listed_jobs"] and meta["more_jobs"] == len(data["jobs"]) - len(core)
+    core_regions = set(meta["core_regions"])
+    for j in core:
+        assert j["w"] == "Remote" or any(data["region"].get(c) in core_regions for c in j["co"]) \
+            or core_regions & set(j["rg"]), j["id"]
+
+
+def test_core_country_never_downloads_the_rest(page, base, data):
+    _more_exists(base)
+    pg = page()
+    asked = []
+    pg.p.on("request", lambda r: asked.append(r.url) if "jobs-more" in r.url else None)
+    p = pg.open("#country=Egypt")
+    p.wait_for_timeout(1500)
+    assert not asked, "Egypt visitors should only download the first file"
+    assert pg.count() == expected(data, country="Egypt")
+    no_errors(pg)
+
+
+@pytest.mark.parametrize("country", ["", "Germany", "United States"])
+def test_other_countries_load_the_rest(page, base, data, country):
+    _more_exists(base)
+    pg = page()
+    p = pg.open(f"#country={country.replace(' ', '+')}" if country else "")
+    p.wait_for_function("!/…/.test(document.querySelector('#countLabel').textContent)", timeout=30000)
+    assert pg.count() == expected(data, country=country)
+    no_errors(pg)
+
+
+def test_switching_to_a_far_country_loads_the_rest(page, base, data):
+    _more_exists(base)
+    pg = page()
+    p = pg.open("#country=Egypt")
+    p.select_option("#country", "Germany")
+    p.wait_for_function("!/…/.test(document.querySelector('#countLabel').textContent)", timeout=30000)
+    p.wait_for_timeout(300)
+    assert pg.count() == expected(data, country="Germany") > 0
+    no_errors(pg)
+
+
+def test_shared_link_to_a_job_in_the_second_file(page, base, data):
+    _more_exists(base)
+    other = json.loads(fetch(base, "data/jobs-more.json"))[0]
+    pg = page()
+    p = pg.open(f"#country=Egypt&job={other['id']}")
+    p.wait_for_selector("#jobDrawer:not([hidden])", timeout=30000)
+    assert other["t"] in p.locator("#drawerBody").inner_text()
+    no_errors(pg)
+
+
+def test_saved_job_from_the_second_file_is_not_called_closed(page, base, data):
+    _more_exists(base)
+    other = json.loads(fetch(base, "data/jobs-more.json"))[0]
+    saved = {other["id"]: {"t": other["t"], "c": other["c"], "l": other["l"], "u": other["u"], "sv": "2026-10-20"}}
+    pg = page(storage={"jr_saved": saved, "jr_country": "Egypt"})
+    p = pg.open()
+    p.click("#tab-saved")
+    p.wait_for_selector(f"#savedList li.job[data-jid='{other['id']}']", timeout=30000)
+    assert p.locator("#savedList li.job.closed").count() == 0
+    no_errors(pg)
+
+
+def test_report_page_uses_both_files(page, base):
+    _more_exists(base)
+    pg = page()
+    asked = []
+    pg.p.on("request", lambda r: asked.append(r.url) if "jobs-more" in r.url else None)
+    pg.open("report.html", wait_jobs=False)
+    pg.p.wait_for_timeout(2000)
+    assert asked
+    no_errors(pg)

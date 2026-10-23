@@ -1,5 +1,5 @@
 /* Radarak weekly report: a shareable 1080x1350 image + post text, drawn in the browser
-   from data/trends.json (trend marts) and data/jobs.json. Nothing is uploaded anywhere. */
+   from data/trends.json (trend marts) and data/jobs.json + data/jobs-more.json. Nothing is uploaded anywhere. */
 (() => {
   "use strict";
   const $ = (id) => document.getElementById(id);
@@ -248,8 +248,12 @@
   async function start() {
     applyLang();
     try {
-      [meta, trends, jobs] = await Promise.all(["meta", "trends", "jobs"].map((f) =>
-        fetch(`data/${f}.json`).then((r) => { if (!r.ok) throw new Error(f); return r.json(); })));
+      let extra;
+      [meta, trends, jobs, extra] = await Promise.all([
+        ...["meta", "trends", "jobs"].map((f) => fetch(`data/${f}.json`).then((r) => { if (!r.ok) throw new Error(f); return r.json(); })),
+        // the rest of the job list (outside the Middle East / Africa); older sites don't have it
+        fetch("data/jobs-more.json").then((r) => (r.ok ? r.json() : [])).catch(() => [])]);
+      jobs = jobs.concat(extra);
     } catch {
       $("rStatus").textContent = T[lang].soon; return;
     }

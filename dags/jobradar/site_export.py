@@ -1,7 +1,7 @@
 """Public website: export the warehouse to small JSON files and publish them,
 together with the static site in /site, to a GitHub Pages branch.
 
-* export_site_data(conn) -> {"data/jobs.json": bytes, "data/meta.json": bytes}
+* export_site_data(conn) -> {"data/jobs.json": bytes, "data/jobs-more.json": bytes, "data/meta.json": bytes, ...}
   Only active jobs from sources whose terms allow showing their listings on another
   site are listed (see PUBLIC_LIST_EXCLUDED); every job keeps a link to its source.
 * publish(files, repo, branch, token) pushes everything as ONE commit through the
@@ -26,7 +26,11 @@ log = logging.getLogger(__name__)
 # Remotive and Himalayas ask not to re-post their listings on other job sites.
 # Their jobs still count in the warehouse/dashboard, but are not listed publicly.
 PUBLIC_LIST_EXCLUDED = ("remotive", "himalayas")
-MAX_PUBLIC_JOBS = int(os.environ.get("SITE_MAX_JOBS", "15000"))
+MAX_PUBLIC_JOBS = int(os.environ.get("SITE_MAX_JOBS", "40000"))
+# The job list is split in two files so phones load fast. data/jobs.json holds what most visitors need
+# (every remote job and every job in these regions); data/jobs-more.json holds the rest and is only
+# downloaded when someone looks beyond them (any country, or a country outside these regions).
+CORE_REGIONS = ("MENA", "Africa")
 STALE_POSTING_DAYS = 45  # posted more than this long before we first saw it = long-open listing
 SITE_DIR = Path(os.environ.get("SITE_DIR") or Path(__file__).resolve().parents[2] / "site")
 GITHUB_API = "https://api.github.com"
@@ -158,10 +162,34 @@ def export_site_data(conn, generated_at: dt.datetime | None = None) -> dict[str,
         # (case-insensitive JavaScript regexes, aligned with "skills")
         "skill_patterns": [pg_regex_to_js(patterns.get(s, "")) for s in skills],
     }
+    core, more = split_jobs(jobs, {c: r for c, r in countries})
+    meta["core_regions"] = list(CORE_REGIONS)
+    meta["more_jobs"] = len(more)
     dump = lambda obj: json.dumps(obj, ensure_ascii=False, separators=(",", ":")).encode("utf-8")  # noqa: E731
-    log.info("site export: %s of %s active jobs listed, %s skills", len(jobs), total_active, len(skills))
-    return {"data/jobs.json": dump(jobs), "data/meta.json": dump(meta),
+    log.info("site export: %s of %s active jobs listed (%s first, %s on demand), %s skills",
+             len(jobs), total_active, len(core), len(more), len(skills))
+    return {"data/jobs.json": dump(core), "data/jobs-more.json": dump(more), "data/meta.json": dump(meta),
             "data/trends.json": dump(export_trends(conn, generated_at))}
+
+
+def is_core_job(job: dict, region_of: dict[str, str]) -> bool:
+    """Remote, or located in a CORE_REGIONS country, or open to a whole core region (e.g. "EMEA")."""
+    return (job["w"] == "Remote"
+            or any(region_of.get(c) in CORE_REGIONS for c in job["co"])
+            or any(r in CORE_REGIONS for r in job["rg"]))
+
+
+def split_jobs(jobs: list[dict], region_of: dict[str, str]) -> tuple[list[dict], list[dict]]:
+    """(core, more): see CORE_REGIONS. Order inside each file stays the same (newest first)."""
+    core, more = [], []
+    for j in jobs:
+        (core if is_core_job(j, region_of) else more).append(j)
+    return core, more
+
+
+def all_jobs(data: dict[str, bytes]) -> list[dict]:
+    """Both job files of an export, as one list (for the search pages, newsletter, ...)."""
+    return json.loads(data["data/jobs.json"]) + json.loads(data.get("data/jobs-more.json", b"[]"))
 
 
 TREND_WEEKS = 12
@@ -296,7 +324,7 @@ def all_site_files(conn) -> dict[str, bytes]:
     """Everything that is published: the app, its data, and the pages for search engines."""
     from jobradar import seo_pages
     data = export_site_data(conn)
-    seo = seo_pages.seo_files(json.loads(data["data/jobs.json"]), json.loads(data["data/meta.json"]), site_base_url())
+    seo = seo_pages.seo_files(all_jobs(data), json.loads(data["data/meta.json"]), site_base_url())
     return version_assets({**site_files(), **data, **add_newsletter(add_analytics(seo))})
 
 

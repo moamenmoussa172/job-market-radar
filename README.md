@@ -58,8 +58,9 @@ the **weekly report** page (`report.html`) turns last week into a shareable 1080
 LinkedIn post, in Arabic or English, drawn in the browser.
 Every morning the new jobs are also posted to **Telegram channels** (e.g. Egypt, the Gulf, Remote),
 grouped by track with direct links (`dags/jobradar/telegram.py`, each job posted once).
-All filtering happens in the browser on JSON files (`data/jobs.json`, `data/meta.json`, `data/trends.json`) exported
-from the marts; links are shareable (filters live in the URL). Listings from sources that ask not to be
+All filtering happens in the browser on JSON files exported from the marts (`data/meta.json`, `data/trends.json`, and the
+job list in two parts: `data/jobs.json` with every remote job and every job in the Middle East and Africa, loaded first so phones
+stay fast, and `data/jobs-more.json` with the rest, loaded only when a visitor looks beyond those regions); links are shareable (filters live in the URL). Listings from sources that ask not to be
 re-posted (Remotive, Himalayas) count in the statistics but are not listed; Adzuna/Jooble/JSearch/Jobicy/Remote OK
 jobs carry their credit (Remote OK links are followed links, as its terms ask).
 

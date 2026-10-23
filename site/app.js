@@ -1,4 +1,4 @@
-/* Radarak - static site. Data: data/meta.json + data/jobs.json (refreshed daily by the pipeline). */
+/* Radarak - static site. Data: data/meta.json + data/jobs.json (+ data/jobs-more.json on demand), refreshed daily by the pipeline. */
 (() => {
   "use strict";
 
@@ -73,6 +73,7 @@
       statPayNone: "no published pay yet", tooFew: "Not enough data for these filters yet.",
       listedOf: (a, b) => `${a} of ${b} tracked jobs are listed here.`,
       loadError: "The job list couldn't be loaded. Check your connection and refresh the page.",
+      loadingMore: "loading more jobs…",
       cvUpload: "Upload your CV", cvPaste: "or paste its text", cvPrivacy: "Read on your device. Your CV is never uploaded or stored.",
       cvPasteLabel: "Your CV text", cvPastePh: "Paste the text of your CV here", cvRead: "Find my skills",
       cvReading: (f) => `Reading ${f}…`, cvTooBig: "That file is over 10 MB. Try a smaller PDF or Word file.",
@@ -164,6 +165,7 @@
       statPayNone: "مفيش مرتبات معلنة لسه", tooFew: "مفيش بيانات كفاية للفلاتر دي لسه.",
       listedOf: (a, b) => `${a} من ${b} وظيفة بنتابعها معروضة هنا.`,
       loadError: "مقدرناش نحمّل الوظايف. اتأكد من النت واعمل تحديث للصفحة.",
+      loadingMore: "بنحمّل باقي الوظايف…",
       cvUpload: "ارفع الـ CV بتاعك", cvPaste: "أو الصق النص", cvPrivacy: "بيتقري على جهازك. الـ CV مش بيترفع ولا بيتحفظ في أي مكان.",
       cvPasteLabel: "نص الـ CV", cvPastePh: "الصق نص الـ CV هنا", cvRead: "طلّع مهاراتي",
       cvReading: (f) => `بنقرا ${f}…`, cvTooBig: "الملف أكبر من 10 ميجا. جرّب PDF أو Word أصغر.",
@@ -243,6 +245,10 @@
   let lang = store.get("lang", (navigator.language || "").startsWith("ar") ? "ar" : "en");
   let trends = null;
   let meta = null, jobs = [], regionOf = {}, shown = PAGE, groups = [], current = [];
+  // The job list comes in two files: data/jobs.json (remote + Middle East & Africa, what most visitors need)
+  // and data/jobs-more.json (everything else), fetched only when the visitor looks beyond those regions.
+  let more = "none";                                    // none | loading | done | failed
+  let morePromise = null;
   let mySkills = new Set(store.get("mySkills", []));
   let savedJobs = store.get("saved", {});               // id -> {t, c, l, u, sv: saved day, a: applied day}
   let savedView = "all";                                // Saved tab: all | todo | done
@@ -506,7 +512,8 @@
     const open = new Map(jobs.map((j) => [j.id, j]));
     const ids = Object.keys(savedJobs);
     // saved jobs that closed are dropped, unless you applied: those stay as your application history
-    const keep = ids.filter((id) => open.has(id) || savedJobs[id].a);
+    const known = more === "done" || !(meta && meta.more_jobs);       // until then, a missing job may just be in the other file
+    const keep = ids.filter((id) => open.has(id) || (known && savedJobs[id].a));
     const todo = keep.filter((id) => !savedJobs[id].a && open.has(id)), done = keep.filter((id) => savedJobs[id].a);
     $("savedCount").hidden = !todo.length;
     $("savedCount").textContent = todo.length;
@@ -1008,8 +1015,9 @@
     if (g && j) { const top = $("drawerBody").scrollTop; renderDrawer(g, j); $("drawerBody").scrollTop = top; }
   }
   function openJob(id, opener, write = true) {
+    currentJobWanted = id;
     const g = groupFor(id), j = jobs.find((x) => x.id === id);
-    if (!g || !j) return;
+    if (!g || !j) { if (more === "none" && meta && meta.more_jobs) loadMore(); return; }
     if (!currentJob) drawerReturn = opener || document.activeElement;
     currentJob = id;
     renderDrawer(g, j);
@@ -1021,6 +1029,7 @@
     if (write) writeHash();
   }
   function closeJob(write = true) {
+    currentJobWanted = null;
     if (!currentJob) return;
     currentJob = null;
     $("jobDrawer").hidden = true; $("drawerScrim").hidden = true;
@@ -1091,7 +1100,8 @@
     if (!keepPage) shown = PAGE;
     sizeHero();
     $("count").textContent = num(groups.length);
-    $("countLabel").textContent = $("country").value ? t("countLabel") : t("countAll");
+    $("countLabel").textContent = ($("country").value ? t("countLabel") : t("countAll"))
+      + (more === "loading" && !isCoreCountry($("country").value) ? " · " + t("loadingMore") : "");
     const extra = ["seniority", "workMode", "industry", "skill", "arabic"].filter((f) => $(f).value).length
       + Object.entries(quick).filter(([k, v]) => v !== (k === "hideNat") && k !== "fresh").length;
     $("filterSummary").textContent = extra ? t("filtersN")(extra) : t("filters");
@@ -1122,7 +1132,7 @@
     if (!meta) return;
     if (id === "insights") renderInsights();
     if (id === "trends") renderTrends();
-    if (id === "saved") renderSaved();
+    if (id === "saved") { renderSaved(); maybeLoadMore(); }
     if (write) writeHash();
   }
 
@@ -1188,7 +1198,7 @@
     $("lang").addEventListener("click", () => {
       lang = lang === "ar" ? "en" : "ar"; store.set("lang", lang); track("language-" + lang); applyLanguage(); readHash(); update(true);
     });
-    $("country").addEventListener("change", () => { store.set("country", $("country").value); track("country/" + ($("country").value || "any")); });
+    $("country").addEventListener("change", () => { store.set("country", $("country").value); track("country/" + ($("country").value || "any")); maybeLoadMore(); });
     $("mySkillInput").addEventListener("change", (e) => { if (addSkill(e.target.value)) e.target.value = ""; });
     $("cvBtn").addEventListener("click", () => $("cvFile").click());
     $("cvFile").addEventListener("change", (e) => readCvFile(e.target.files[0]));
@@ -1285,7 +1295,7 @@
     // the compact search in the sticky bar mirrors the main keywords box
     $("qMini").addEventListener("input", () => { $("q").value = $("qMini").value; update(); });
     $("qMini").addEventListener("keydown", (e) => { if (e.key === "Enter") { selectTab("jobs"); $("results").scrollIntoView({ behavior: "smooth" }); } });
-    window.addEventListener("hashchange", () => { readHash(); update(); });
+    window.addEventListener("hashchange", () => { readHash(); update(); maybeLoadMore(); });
     window.addEventListener("resize", sizeHero);
   }
 
@@ -1324,6 +1334,34 @@
     $("iosHintClose").addEventListener("click", () => { $("iosHint").hidden = true; });
   }
 
+  const prepJob = (j) => { j._text = [j.t, j.c, j.r, ...j.k.map((k) => meta.skills[k])].join(" ").toLowerCase(); };
+  const isCoreCountry = (c) => !!c && (meta.core_regions || []).includes(regionOf[c]);
+  function needMore() {
+    if (more !== "none" || !meta || !meta.more_jobs) return false;
+    if (!isCoreCountry($("country").value)) return true;                    // any country, or one outside the regions
+    const ids = new Set(jobs.map((j) => j.id));
+    if (currentJobWanted && !ids.has(currentJobWanted)) return true;       // a shared link to one of the other jobs
+    return !$("saved").hidden && Object.keys(savedJobs).some((id) => !ids.has(id));   // Saved tab: a job may be in the other file
+  }
+  let currentJobWanted = null;
+  function loadMore() {
+    if (morePromise) return morePromise;
+    more = "loading"; update(true);
+    morePromise = fetch("data/jobs-more.json").then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then((extra) => {
+        extra.forEach(prepJob);
+        jobs = jobs.concat(extra);
+        more = "done";
+      })
+      .catch(() => { more = "failed"; })
+      .then(() => {
+        update(true);
+        if (currentJobWanted && !currentJob) openJob(currentJobWanted, null, false);
+      });
+    return morePromise;
+  }
+  const maybeLoadMore = () => { if (needMore()) loadMore(); };
+
   async function start() {
     applyLanguage();
     setupInstall();
@@ -1352,7 +1390,7 @@
     meta.countries.forEach((c) => { regionOf[c.name] = c.region; });
     initVisit();
     meta.tracks.forEach((tr) => tr.roles.forEach((r) => { trackOfRole[r] = tr.name; }));
-    jobs.forEach((j) => { j._text = [j.t, j.c, j.r, ...j.k.map((k) => meta.skills[k])].join(" ").toLowerCase(); });
+    jobs.forEach(prepJob);
     applyLanguage();
     const saved = store.get("country", "");
     if (saved && !location.hash) $("country").value = saved;
@@ -1360,6 +1398,7 @@
     bind();
     if (document.fonts) document.fonts.ready.then(sizeHero);
     update(true);
+    maybeLoadMore();
   }
 
   start();

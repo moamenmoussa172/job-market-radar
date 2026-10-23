@@ -97,7 +97,7 @@ def job_radar_ingest():
             if not os.environ.get("BUTTONDOWN_API_KEY", "").strip():
                 return {"skipped": "BUTTONDOWN_API_KEY not set"}
             data = site_export.export_site_data(conn)
-            return newsletter.send_from_env(conn, _json.loads(data["data/jobs.json"]), _json.loads(data["data/meta.json"]),
+            return newsletter.send_from_env(conn, site_export.all_jobs(data), _json.loads(data["data/meta.json"]),
                                             site_export.site_base_url(), _dt.date.today())
         except Exception as exc:  # noqa: BLE001 - the newsletter never fails the data run
             log.warning("newsletter not created: %s", exc)
