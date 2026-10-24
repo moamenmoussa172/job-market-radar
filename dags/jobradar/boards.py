@@ -43,6 +43,10 @@ HARVEST_DAYS = 7
 MAX_PROBES_PER_RUN = int(os.environ.get("BOARD_PROBES_PER_RUN", "800"))
 PROBE_RECHECK_DAYS = 30
 PROBE_PAUSE_SECONDS = 0.3   # a company with no tech jobs today is tried again a month later
+# Some platforms limit how fast one address may ask: those guesses go slower, and when a platform
+# answers 429 ("too many requests") it gets no more guesses this run, so the daily collection
+# of its real boards isn't blocked too.
+PROBE_MIN_INTERVAL = {"workable": 4.0, "smartrecruiters": 1.5, "recruitee": 1.0, "personio": 1.0}
 COMPANIES_FILE = Path(os.environ.get("DBT_PROJECT_DIR") or Path(__file__).resolve().parents[2] / "dbt") \
     / "seeds" / "companies.csv"
 
@@ -396,14 +400,26 @@ def validate_probes(conn, limit: int = MAX_PROBES_PER_RUN) -> dict[str, int]:
             (PROBE_RECHECK_DAYS, limit),
         )
         todo = cur.fetchall()
-    counts = {"active": 0, "dead": 0, "candidate": 0, "retry": 0, "skipped": 0}
+    counts = {"active": 0, "dead": 0, "candidate": 0, "retry": 0, "skipped": 0, "rate_limited": 0}
     found: set[str] = set()
+    blocked: set[str] = set()          # platforms that said "too many requests" this run
+    last_ask: dict[str, float] = {}
     for ats, token, country, company in todo:
         if company in found:
             counts["skipped"] += 1
             continue
+        if ats in blocked:
+            counts["rate_limited"] += 1   # left as is: tried again next run
+            continue
+        wait = PROBE_MIN_INTERVAL.get(ats, 0) - (time.monotonic() - last_ask.get(ats, -1e9))
+        if wait > 0:
+            time.sleep(wait)
+        last_ask[ats] = time.monotonic()
         with sources.no_connect_retries():
             status, note = probe_board(ats, token, country)
+        if note == "HTTP 429":
+            blocked.add(ats)
+            log.warning("probe: %s says too many requests - no more %s guesses this run", ats, ats)
         counts[status] += 1
         time.sleep(PROBE_PAUSE_SECONDS)
         with conn.cursor() as cur:

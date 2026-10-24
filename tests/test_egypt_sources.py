@@ -127,3 +127,67 @@ def test_oracle_board_ids():
     assert n("oracle", "emhm.fa.em2.oraclecloud.com/hcmUI/CandidateExperience") == "emhm.fa.em2.oraclecloud.com/CX_1"
     assert len(sources.load_board_tokens("oracle")) >= 14
     assert "jobs.adnoc.ae/us/en" in sources.load_board_tokens("phenom")
+
+
+# --------------------------------------------------------------------------- "too many requests" (429)
+def _http_error(code, retry_after=None):
+    import requests
+    r = requests.Response()
+    r.status_code = code
+    if retry_after is not None:
+        r.headers["Retry-After"] = str(retry_after)
+    return requests.HTTPError(f"{code}", response=r)
+
+
+def test_rate_limited_platform_warns_instead_of_failing_the_run(monkeypatch):
+    calls = []
+
+    def get(url, params=None):
+        calls.append(url)
+        raise _http_error(429, 0)
+    monkeypatch.setattr(sources, "_get_json", get)
+    monkeypatch.setattr(sources.time, "sleep", lambda s: None)
+    res = sources.extract_workable(tokens=[f"co{i}" for i in range(20)], pause_seconds=0)
+    assert res.records == []
+    assert len(calls) == sources.RATE_LIMIT_STOP                       # stops asking after 3 refusals
+    assert any("too many requests" in w for w in res.warnings)
+
+
+def test_rate_limit_streak_resets_after_a_good_board(monkeypatch):
+    answers = iter([_http_error(429, 0), _http_error(429, 0), {"name": "A", "jobs": []},
+                    _http_error(429, 0), _http_error(429, 0), {"name": "B", "jobs": []}])
+
+    def get(url, params=None):
+        a = next(answers)
+        if isinstance(a, Exception):
+            raise a
+        return a
+    monkeypatch.setattr(sources, "_get_json", get)
+    monkeypatch.setattr(sources.time, "sleep", lambda s: None)
+    res = sources.extract_workable(tokens=[f"co{i}" for i in range(6)], pause_seconds=0)
+    assert sum(v is not None for v in res.board_status.values()) == 2
+
+
+def test_probing_stops_on_a_platform_that_says_too_many_requests(monkeypatch):
+    from jobradar import boards
+    asked = []
+
+    def fake_probe(ats, token, country):
+        asked.append((ats, token))
+        return ("retry", "HTTP 429") if ats == "workable" else ("dead", "not found")
+    monkeypatch.setattr(boards, "probe_board", fake_probe)
+    monkeypatch.setattr(boards.time, "sleep", lambda s: None)
+    todo = [("workable", "a", "Egypt", "A"), ("lever", "a", "Egypt", "A"), ("workable", "b", "Egypt", "B"),
+            ("workable", "c", "Egypt", "C"), ("greenhouse", "c", "Egypt", "C")]
+
+    class Cur:
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+        def execute(self, *a): pass
+        def fetchall(self): return todo
+
+    class Conn:
+        def cursor(self): return Cur()
+        def commit(self): pass
+    counts = boards.validate_probes(Conn())
+    assert [a for a, _ in asked].count("workable") == 1 and counts["rate_limited"] == 2

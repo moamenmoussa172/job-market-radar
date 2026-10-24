@@ -40,6 +40,7 @@ class ExtractResult:
 
 
 CONNECT_RETRIES = 2  # extra tries when a server drops the connection or times out
+RATE_LIMIT_STOP = 3  # a job-board platform answering 429 this many times in a row: stop asking it today
 
 
 @contextlib.contextmanager
@@ -806,13 +807,27 @@ def extract_company_boards(ats: str, tokens: list[str] | None = None,
     keep: list[dict] = []
     warnings: list[str] = []
     status: dict[str, int | None] = {}
-    for token in tokens:
+    limited = limited_total = 0
+    for i, token in enumerate(tokens):
+        if limited >= RATE_LIMIT_STOP:
+            # the platform keeps refusing: stop asking (it only makes the block longer), try tomorrow
+            warnings.append(f"{ats}: too many requests - {len(tokens) - i} boards skipped today")
+            for t in tokens[i:]:
+                status[t] = None
+            break
         try:
             jobs = fetch(token)
         except (requests.RequestException, ValueError, ET.ParseError) as exc:  # any network/feed problem
+            code = getattr(getattr(exc, "response", None), "status_code", None)
+            if code == 429:
+                limited += 1
+                limited_total += 1
+                retry_after = getattr(exc.response, "headers", {}).get("Retry-After", "")
+                time.sleep(min(int(retry_after) if str(retry_after).isdigit() else 10, 60))
             warnings.append(f"{ats} board '{token}' failed: {exc}")
             status[token] = None
             continue
+        limited = 0
         status[token] = len(jobs)
         extra = {"board_token": token}
         if meta.get(token):
@@ -822,7 +837,8 @@ def extract_company_boards(ats: str, tokens: list[str] | None = None,
     ok_boards = sum(1 for v in status.values() if v is not None)
     # Every board failing means the network (or the platform) is down - but only with several boards:
     # one or two broken boards must not stop the daily run (they are reported as warnings).
-    if len(tokens) >= 3 and ok_boards == 0:
+    # A platform refusing too many requests (429) only warns: the run goes on and tries again tomorrow.
+    if len(tokens) >= 3 and ok_boards == 0 and not limited_total:
         raise RuntimeError(f"All {ats} boards failed - check network or board tokens")
     log.info("%s: %s/%s boards ok, %s data-related jobs", ats, ok_boards, len(tokens), len(keep))
     return ExtractResult(ats, keep, warnings, status)
