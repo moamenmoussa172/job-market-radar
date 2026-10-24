@@ -864,3 +864,50 @@ def test_report_page_uses_both_files(page, base):
     pg.p.wait_for_timeout(2000)
     assert asked
     no_errors(pg)
+
+
+# --------------------------------------------------------------------------- alerts + job pages (update 62)
+def test_telegram_row_follows_the_country(page, data):
+    chans = data["meta"].get("telegram") or []
+    if not chans:
+        pytest.skip("no public Telegram channels configured")
+    pg = page()
+    for ch in chans:
+        place = next((x for x in ch["pl"] if x != "Remote"), None)
+        if not place:
+            continue
+        p = pg.open(f"#country={place}")
+        row = p.locator("#alertRow")
+        assert row.is_visible() and row.locator("a.tg").get_attribute("href") == ch["u"]
+        break
+    assert p.locator("#footTg").is_visible() and p.locator("#footTg a").count() == len(chans)
+    row.locator("[data-hide]").click()
+    assert not row.is_visible()
+    p.reload()
+    p.wait_for_timeout(800)
+    assert not p.locator("#alertRow").is_visible()               # stays hidden
+
+
+def test_job_pages_have_jobposting_markup(base):
+    if not exists(base, "sitemap-jobs.xml"):
+        pytest.skip("no job pages published yet")
+    locs = re.findall(r"<loc>([^<]+)</loc>", fetch(base, "sitemap-jobs.xml").decode())
+    assert locs
+    for u in locs[:: max(1, len(locs) // 15)][:15]:
+        html = fetch(base, urlparse(u).path.lstrip("/")).decode()
+        blocks = re.findall(r'<script type="application/ld\+json">(.*?)</script>', html, re.S)
+        posting = json.loads(blocks[0].replace("<\\/", "</"))[0]
+        assert posting["@type"] == "JobPosting" and posting["title"] and posting["hiringOrganization"]["name"]
+        assert len(re.sub("<[^>]*>", "", posting["description"])) >= 400 and posting["datePosted"]
+        assert posting.get("jobLocation") or posting.get("applicantLocationRequirements")
+        assert f'<link rel="canonical" href="{u}">' in html and "data-apply" in html
+
+
+def test_rss_feeds_parse(base, data):
+    feeds = data["meta"].get("feeds") or {}
+    if not feeds:
+        pytest.skip("no feeds published yet")
+    import xml.etree.ElementTree as ET
+    for path in list(feeds.values())[:10]:
+        root = ET.fromstring(fetch(base, path))
+        assert root.find("./channel/title").text and root.findall("./channel/item")

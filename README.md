@@ -45,6 +45,9 @@ and **install the site as an app** (web manifest + a service worker that keeps t
 For search engines, every publish also writes **static pages per country, track and role** in English and Arabic
 (`/jobs/egypt/data-engineer/`, `/ar/jobs/...`: `dags/jobradar/seo_pages.py`) with that day's jobs, top skills,
 companies and pay, plus `sitemap.xml` and `robots.txt`. Thin pages are skipped (a role needs 5+ jobs in a place).
+Jobs from company career sites also get **their own page with `JobPosting` structured data**, so they can show up
+in Google's job search (`sitemap-jobs.xml`), and every country / track page has an **RSS feed** and a
+"Join on Telegram" button for its channel.
 Publishing reuses unchanged files by their git id and sends changed pages inline in a few batched requests, so
 ~2,000 files go up in about a dozen GitHub API calls.
 It also writes **company pages** (`/companies/<name>/`, 3+ open jobs), a **juniors corner** (`/juniors/`) and a

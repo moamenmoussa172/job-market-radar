@@ -201,6 +201,31 @@ to the original posting, plus a link back to the website. A job is posted to a c
 4. `docker compose up -d` (reloads `.env`), then trigger the DAG. Check what was posted:
    `select chat, count(*), max(posted_at) from raw.telegram_posts group by 1;`
 
+### Job pages for Google's job search
+
+Every job from a company career site (Greenhouse, Lever, Workday, SuccessFactors, Phenom, Oracle, ...)
+that has a real description (400+ characters) gets its own page, `job/<title>-at-<company>-<id>/`, with
+`JobPosting` structured data, so it can appear in the job box Google shows for searches like
+"data engineer jobs Cairo". Jobs from other job boards (Adzuna, Jooble, JSearch, Remote OK, ...) don't
+get a page: they are those boards' listings. The pages are listed in `sitemap-jobs.xml` (linked from
+`robots.txt`), and the job titles on the country / role pages link to them.
+
+* `JOB_PAGES_MAX` (default 12000, `0` = off) limits how many; remote and Middle East / Africa jobs first.
+* A page only changes when its job changes, so the daily push stays small. When a job closes, its page
+  is gone the next morning (404) and Google drops it, as its guidelines ask.
+* One-time: in Google Search Console -> Sitemaps, add `sitemap-jobs.xml`. Then check
+  Search Console -> "Job postings" (under Enhancements) after a few days for errors and warnings.
+* Test one page: https://search.google.com/test/rich-results with a job page URL.
+
+### Getting new jobs without coming back: Telegram and RSS
+
+* The app shows "New Egypt jobs every morning on Telegram · Join" above the job list for the visitor's
+  country (or the Remote channel), and all channels in the footer. Every public `@channel` in
+  `TELEGRAM_CHANNELS` is shown, but only when `TELEGRAM_BOT_TOKEN` is set (so the site never links to a
+  channel nothing posts to). Visitors can hide the row. Clicks count in GoatCounter as `telegram-join/<channel>`.
+* Every country and track page has an RSS feed (`feeds/egypt.xml`, `feeds/egypt/data-and-analytics.xml`,
+  `feeds/remote.xml`, the 40 newest jobs) and the same Telegram button.
+
 ### Visitor analytics (optional)
 
 The site can count visits and clicks anonymously with [GoatCounter](https://www.goatcounter.com)

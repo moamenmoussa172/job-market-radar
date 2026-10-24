@@ -319,6 +319,17 @@ CSS = """
 .seo section{margin-top:28px}
 .complist{margin:0;padding-inline-start:20px;font-size:15px}.complist li{margin:4px 0}
 .seofoot{max-width:var(--wrap);margin:0 auto;padding:22px 20px 40px;color:var(--muted);font-size:14px;border-top:1px solid var(--line)}
+.alerts{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:0 0 22px;padding:12px 14px;border-radius:var(--r-m);background:var(--surface);border:1px solid var(--line)}
+.alerts p{margin:0;flex:1 1 220px;font-size:15px;color:var(--ink-2)}
+.alerts .primary{text-decoration:none;display:inline-flex;padding:10px 16px}
+.alerts .tg{background:#229ED9}.alerts .rss{font-weight:600;font-size:14px;color:var(--violet-ink)}
+.jobpage .m{color:var(--muted);font-size:15px;margin:0 0 12px}
+.jobpage .sk{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 18px}
+.jobpage .sk span{font-size:13px;background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:5px 10px}
+.jobpage .ghostbtn{text-decoration:none}
+.jobpage .jd{max-width:820px;font-size:16px;line-height:1.7;margin-top:8px}
+.jobpage .jd ul{padding-inline-start:22px}.jobpage .jd li{margin:4px 0}
+.jobpage .note{color:var(--muted);font-size:14px;max-width:820px}
 @media (max-width:860px){.seo .cols{grid-template-columns:1fr}}
 @media (max-width:600px){.slist li{grid-template-columns:1fr}.slist .go{justify-self:start}.skb li{grid-template-columns:96px 1fr 36px}}
 """
@@ -329,8 +340,15 @@ BRAND_SVG = ('<svg viewBox="0 0 32 32" aria-hidden="true"><circle class="disc" c
 
 
 def _shell(lang: str, rel: str, title: str, desc: str, canonical: str, alt_en: str, alt_ar: str, other_href: str,
-           body: str, jsonld: dict, og_image: str) -> str:
+           body: str, jsonld: dict | list, og_image: str, head_extra: str = "") -> str:
+    """alt_en / alt_ar None: a page in one language only (no hreflang links, no language switch)."""
     t = T[lang]
+    alternates = "" if alt_en is None else (
+        f'<link rel="alternate" hreflang="en" href="{_e(alt_en)}">\n'
+        f'  <link rel="alternate" hreflang="ar" href="{_e(alt_ar)}">\n'
+        f'  <link rel="alternate" hreflang="x-default" href="{_e(alt_en)}">')
+    other = "" if other_href is None else (
+        f'<a class="langbtn" href="{_e(other_href)}" lang="{"en" if lang == "ar" else "ar"}">{t["other"]}</a>')
     return f"""<!doctype html>
 <html lang="{lang}" dir="{t['dir']}">
 <head>
@@ -339,9 +357,7 @@ def _shell(lang: str, rel: str, title: str, desc: str, canonical: str, alt_en: s
   <title>{_e(title)}</title>
   <meta name="description" content="{_e(desc)}">
   <link rel="canonical" href="{_e(canonical)}">
-  <link rel="alternate" hreflang="en" href="{_e(alt_en)}">
-  <link rel="alternate" hreflang="ar" href="{_e(alt_ar)}">
-  <link rel="alternate" hreflang="x-default" href="{_e(alt_en)}">
+  {alternates}{head_extra}
   <meta name="theme-color" content="#5B3FE0">
   <meta property="og:type" content="website">
   <meta property="og:title" content="{_e(title)}">
@@ -355,7 +371,7 @@ def _shell(lang: str, rel: str, title: str, desc: str, canonical: str, alt_en: s
   <link rel="stylesheet" href="{rel}seo.css">
   <link rel="stylesheet" href="{rel}extra.css">
   <script src="{rel}pages.js" defer></script>
-  <script type="application/ld+json">{json.dumps(jsonld, ensure_ascii=False)}</script>
+  <script type="application/ld+json">{json.dumps(jsonld, ensure_ascii=False).replace("</", "<\\/")}</script>
 </head>
 <body class="seopage">
   <header class="topbar"><div class="topbar-in">
@@ -363,7 +379,7 @@ def _shell(lang: str, rel: str, title: str, desc: str, canonical: str, alt_en: s
     <nav class="topnav seonav">{''.join(f'<a class="navlink" href="{rel}{"ar/" if lang == "ar" else ""}{h}/">{_e(t[k])}</a>'
                                          for h, k in (("jobs", "nav_jobs"), ("companies", "nav_companies"),
                                                       ("juniors", "nav_juniors"), ("salaries", "nav_salaries")))}
-      <a class="langbtn" href="{_e(other_href)}" lang="{'en' if lang == 'ar' else 'ar'}">{t['other']}</a></nav>
+      {other}</nav>
   </div></header>
 {body}
   <footer class="seofoot"><!--newsletter:{lang}--><p>{_e(t['about'])}</p><p>{_e(t['credits'])}</p></footer>
@@ -433,7 +449,9 @@ def _job_li(j: dict, rel: str, lang: str, today: dt.date, skills: list[str]) -> 
     attrs = (f' data-co="{_e("|".join(j.get("co") or []))}" data-r="{_e(j.get("r") or "")}" data-s="{_e(j.get("s") or "")}"'
              f' data-w="{_e(j.get("w") or "")}" data-v="{1 if (j.get("f") or 0) & 1 else 0}" data-hp="{1 if pay != "" else 0}"'
              f' data-pay="{pay}" data-p="{_e(j.get("p") or "")}" data-t="{_e(text.lower())}"')
-    return (f'<li{attrs}><div><h3><a href="{_e(rel)}#job={quote(j["id"])}">{_e(j.get("t"))}</a></h3>'
+    # the title opens the job's own page when it has one (job_pages), otherwise the job in the app
+    href = rel + j["pg"] if j.get("pg") else f'{rel}#job={quote(j["id"])}'
+    return (f'<li{attrs}><div><h3><a href="{_e(href)}">{_e(j.get("t"))}</a></h3>'
             f'<p><b>{_e(j.get("c") or "")}</b> · {_e(j.get("l") or "")}</p>'
             f'<p class="m">{_e(" · ".join(b for b in meta_bits if b))}{by}</p>'
             + (f'<p class="sk">{sk}</p>' if sk else "")
@@ -537,6 +555,12 @@ def _render(page: _Page, lang: str, pages_by_place: dict, all_pages: list[_Page]
         {"@type": "ListItem", "position": i + 1, "name": x, "item": u} for i, (x, _, u) in enumerate(crumbs)]}
 
     app = rel + _app_hash(page)
+    from jobradar import alerts
+    feed_x = page.x_slug if page.kind == "track" else None
+    alerts_html = alerts.alerts_block(page.place, meta, rel, lang, feed_x)
+    feed = (meta.get("feeds") or {}).get(f"{page.place}|{feed_x}" if feed_x else page.place)
+    rss_head = (f'\n  <link rel="alternate" type="application/rss+xml" title="{_e(h1)}" href="{_e(base + feed)}">'
+                if feed else "")
     hint = t["cta_hint"]
     if page.place != REMOTE:
         region = next((c.get("region") for c in meta.get("countries", []) if c.get("name") == page.place), None)
@@ -584,6 +608,7 @@ def _render(page: _Page, lang: str, pages_by_place: dict, all_pages: list[_Page]
     <h1>{_e(h1)}</h1>
     <p class="lead">{_e(t['sub'].format(n=_num(n), jobs=jobsw, c=_num(c), companies=compw, d=d))}</p>
     <div class="ctarow"><a class="primary" href="{_e(app)}">{_e(t['cta'])} →</a><span>{_e(hint)}</span></div>
+    {alerts_html}
     <div class="stats">{stats_html}</div>
     <p class="summary">{_e(summary)}</p>
     <div class="cols">
@@ -598,7 +623,8 @@ def _render(page: _Page, lang: str, pages_by_place: dict, all_pages: list[_Page]
     {f'<section><h2>{_e(t["roles_h"].format(p=place))}</h2><div class="links">{role_links}</div></section>' if role_links else ''}
     {elsewhere}{countries}
   </main>"""
-    return _shell(lang, rel, title, desc, canonical, url_en, url_ar, other_href, body, jsonld, base + "og.png")
+    return _shell(lang, rel, title, desc, canonical, url_en, url_ar, other_href, body, jsonld, base + "og.png",
+                  head_extra=rss_head)
 
 
 def _render_index(lang: str, pages_by_place: dict, meta: dict, base: str, today: dt.date, total: int) -> str:
@@ -634,12 +660,14 @@ def seo_files(jobs: list[dict], meta: dict, base_url: str, today: dt.date | None
     today = today or dt.date.today()
     base = base_url.rstrip("/") + "/"
     pages = build_pages(jobs, meta)
+    from jobradar import alerts, job_pages
+    feeds, meta["feeds"] = alerts.rss_files(pages, base, today, meta.get("skills", []))   # meta.json gets the list too
     from jobradar.extra_pages import company_slugs
     meta = {**meta, "_company_slugs": company_slugs(jobs)}
     by_place: dict[str, list[_Page]] = {}
     for p in pages:
         by_place.setdefault(p.place, []).append(p)
-    out: dict[str, bytes] = {"seo.css": CSS.strip().encode()}
+    out: dict[str, bytes] = {"seo.css": CSS.strip().encode(), **feeds}
     remote_jobs = [j for j in jobs if j.get("w") == "Remote"]
     remote_pool: dict[str, list[dict]] = {"*": remote_jobs}     # remote jobs by track / role, for "plus N remote jobs"
     for j in remote_jobs:
@@ -664,5 +692,16 @@ def seo_files(jobs: list[dict], meta: dict, base_url: str, today: dt.date | None
                           + "".join(f"  <url><loc>{_e(u)}</loc><lastmod>{lastmod}</lastmod><changefreq>daily</changefreq>"
                                     f"<priority>{pr}</priority></url>\n" for u, pr in urls)
                           + "</urlset>\n").encode()
-    out["robots.txt"] = f"User-agent: *\nAllow: /\n\nSitemap: {base}sitemap.xml\n".encode()
+    # one page per job (jobs from company career sites that have a description), for Google's job search
+    place_pages: dict[str, dict[str, str]] = {}
+    for p in pages:
+        key = "" if p.kind == "country" else f"{p.kind}:{p.label}"
+        place_pages.setdefault(p.place, {})[key] = p.url_path("en")
+    jp, jp_urls = job_pages.job_page_files(jobs, meta, base, place_pages)
+    out.update(jp)
+    sitemaps = ["sitemap.xml"]
+    if jp_urls:
+        out["sitemap-jobs.xml"] = job_pages.sitemap(jp_urls)
+        sitemaps.append("sitemap-jobs.xml")
+    out["robots.txt"] = ("User-agent: *\nAllow: /\n\n" + "".join(f"Sitemap: {base}{s}\n" for s in sitemaps)).encode()
     return out

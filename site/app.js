@@ -90,6 +90,7 @@
       reportClosed: "Job closed or wrong? Tell us", reported: "Thanks! We hid this job for you and will check it.",
       nlTitle: "Radarak Weekly", nlText: "Every Sunday: the week's new tech jobs in Egypt, the Gulf and remote, in one short email.",
       nlEmail: "Your email", nlEmailPh: "you@example.com", nlBtn: "Subscribe", nlThanks: "Check your inbox to confirm.",
+      tgPlace: (p) => `New ${p} jobs every morning on Telegram`, tgJoin: "Join on Telegram", tgFoot: "New jobs every day on Telegram:", hideTip: "Hide",
       learnTitle: "What to learn next", learnNow: (m) => `You match <b>${m}</b> jobs right now.`,
       learnHint: "Each step counts the extra jobs you'd match (60%+ of their skills) after learning it and the ones above it.",
       learnJobs: (n) => `+${n} jobs`, learnTotal: (a, b) => `Learn all ${a === 1 ? "of it" : "three"}: <b>${b}</b> jobs you match`,
@@ -182,6 +183,7 @@
       reportClosed: "الوظيفة اتقفلت أو فيها غلط؟ قولنا", reported: "شكرًا! خبّينا الوظيفة دي عندك وهنراجعها.",
       nlTitle: "نشرة رادارك الأسبوعية", nlText: "كل يوم حد: وظايف التك الجديدة في مصر والخليج والريموت، في إيميل واحد قصير.",
       nlEmail: "الإيميل بتاعك", nlEmailPh: "you@example.com", nlBtn: "اشترك", nlThanks: "شوف الإيميل بتاعك عشان تأكد الاشتراك.",
+      tgPlace: (p) => `وظايف ${p} الجديدة كل صبح على تيليجرام`, tgJoin: "اشترك على تيليجرام", tgFoot: "وظايف جديدة كل يوم على تيليجرام:", hideTip: "إخفاء",
       learnTitle: "تتعلم إيه بعد كده", learnNow: (m) => `إنت مناسب لـ <b>${m}</b> وظيفة دلوقتي.`,
       learnHint: "كل خطوة بتحسب الوظايف الزيادة اللي هتبقى مناسب لها (60%+ من مهاراتها) لو اتعلمت المهارة دي واللي فوقها.",
       learnJobs: (n) => `+${n} وظيفة`, learnTotal: (a, b) => `لو اتعلمتهم ${a === 1 ? "" : "التلاتة"}: <b>${b}</b> وظيفة مناسبة ليك`,
@@ -1113,6 +1115,7 @@
     renderSkills();
     renderLearn();
     renderNewBanner();
+    renderAlerts();
     renderJobs();
     if (currentJob) { const g = groupFor(currentJob), j = jobs.find((x) => x.id === currentJob); if (g && j) renderDrawer(g, j); }
     renderSaved();
@@ -1313,6 +1316,45 @@
     $("nlForm").addEventListener("submit", () => { track("newsletter-subscribe"); setTimeout(() => toast(t("nlThanks")), 300); });
   }
 
+  // Telegram channels (meta.telegram, from TELEGRAM_CHANNELS) and RSS feeds (meta.feeds): new jobs without coming back
+  const tgName = (ch) => ch.pl.includes("Remote") ? t("remote")
+    : ch.pl.length === 1 ? ch.pl[0]
+    : ch.u.split("/").pop().replace(/^radarak_?/i, "").replace(/_/g, " ").replace(/\b\w/g, (m) => m.toUpperCase()) || ch.pl[0];
+  function pickChannel() {
+    const chans = (meta && meta.telegram) || [], c = $("country").value;
+    const remote = chans.find((x) => x.pl.includes("Remote"));
+    if (quick.remote || $("workMode").value === "Remote") return remote || null;
+    if (!c) return chans[0] || null;
+    return chans.find((x) => x.pl.includes(c)) || remote || null;
+  }
+  function renderAlerts() {
+    const row = $("alertRow"), ch = pickChannel();
+    renderFootTg();
+    if (!ch || store.get("alertsHidden", "") === "1") { row.hidden = true; return; }
+    const c = $("country").value, isRemote = ch.pl.includes("Remote");
+    const label = isRemote ? t("remote") : ch.pl.includes(c) && ch.pl.length > 1 ? c : tgName(ch);
+    const feeds = meta.feeds || {}, feed = isRemote ? feeds.Remote : feeds[c] || (ch.pl.length === 1 ? feeds[ch.pl[0]] : "");
+    const html = `<p>📣 ${esc(t("tgPlace")(label))}</p><a class="tg" href="${esc(ch.u)}" target="_blank" rel="noopener" data-tg>${esc(t("tgJoin"))}</a>`
+      + (feed ? `<a class="rss" href="${esc(feed)}" type="application/rss+xml">RSS</a>` : "")
+      + `<button class="x" type="button" data-hide aria-label="${esc(t("hideTip"))}" title="${esc(t("hideTip"))}">×</button>`;
+    if (row.innerHTML !== html) row.innerHTML = html;
+    row.hidden = false;
+  }
+  function setupTelegram() {
+    const chans = meta.telegram || [];
+    $("alertRow").addEventListener("click", (e) => {
+      if (e.target.closest("[data-tg]")) track("telegram-join/" + e.target.closest("[data-tg]").href.split("/").pop());
+      if (e.target.closest("[data-hide]")) { store.set("alertsHidden", "1"); $("alertRow").hidden = true; track("telegram-hide"); }
+    });
+  }
+  function renderFootTg() {             // the footer line, again after a language switch
+    const chans = (meta && meta.telegram) || [], foot = $("footTg");
+    if (!chans.length) return;
+    const html = esc(t("tgFoot")) + chans.map((ch) => ` <a href="${esc(ch.u)}" target="_blank" rel="noopener">${esc(tgName(ch))}</a>`).join(" ·");
+    if (foot.innerHTML !== html) foot.innerHTML = html;
+    foot.hidden = false;
+  }
+
   // ------------------------------------------------------------------ install as an app (PWA)
   let installEvt = null;
   const standalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
@@ -1392,6 +1434,7 @@
     meta.tracks.forEach((tr) => tr.roles.forEach((r) => { trackOfRole[r] = tr.name; }));
     jobs.forEach(prepJob);
     applyLanguage();
+    setupTelegram();
     const saved = store.get("country", "");
     if (saved && !location.hash) $("country").value = saved;
     readHash();

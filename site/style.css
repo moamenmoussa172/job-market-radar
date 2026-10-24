@@ -688,3 +688,13 @@ button.bar:hover .name { color: var(--violet-ink); }
 .posttext textarea { font: 400 14px/1.5 var(--font); color: var(--ink); background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--r-s); padding: 12px; width: 100%; resize: vertical; }
 .report-page .topbar .navlink { color: rgba(255, 255, 255, .85); }
 @media (max-width: 860px) { .rgrid { grid-template-columns: 1fr; } }
+
+/* "Get new jobs on Telegram" row above the job list, and the channel links in the footer */
+.alertrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 12px; padding: 10px 12px 10px 14px; border-radius: var(--r-m);
+  background: color-mix(in srgb, #229ED9 9%, var(--surface)); border: 1px solid color-mix(in srgb, #229ED9 35%, transparent); }
+.alertrow p { margin: 0; flex: 1 1 200px; font-size: 15px; color: var(--ink-2); }
+.alertrow .tg { background: #229ED9; color: #fff; text-decoration: none; font: 600 14px/1 var(--font); border-radius: 99px; padding: 10px 14px; white-space: nowrap; }
+.alertrow .rss { font-weight: 600; font-size: 14px; color: var(--violet-ink); }
+.alertrow .x { background: none; border: 0; color: var(--muted); font-size: 18px; line-height: 1; padding: 6px; cursor: pointer; }
+.foottg { margin: 0 0 12px; font-size: 15px; color: var(--ink-2); }
+.foottg a { font-weight: 600; color: var(--violet-ink); margin-inline-start: 6px; }

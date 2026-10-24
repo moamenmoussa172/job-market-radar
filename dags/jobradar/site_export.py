@@ -322,9 +322,14 @@ def version_assets(files: dict[str, bytes]) -> dict[str, bytes]:
 
 def all_site_files(conn) -> dict[str, bytes]:
     """Everything that is published: the app, its data, and the pages for search engines."""
-    from jobradar import seo_pages
+    from jobradar import alerts, job_pages, seo_pages
     data = export_site_data(conn)
-    seo = seo_pages.seo_files(all_jobs(data), json.loads(data["data/meta.json"]), site_base_url())
+    meta = json.loads(data["data/meta.json"])
+    meta["telegram"] = alerts.telegram_links()            # public channels, for "Get new jobs on Telegram"
+    jobs = all_jobs(data)
+    job_pages.attach_details(conn, jobs, meta)                # which jobs get their own page (Google for Jobs)
+    seo = seo_pages.seo_files(jobs, meta, site_base_url())  # also fills meta["feeds"]
+    data["data/meta.json"] = json.dumps(meta, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     return version_assets({**site_files(), **data, **add_newsletter(add_analytics(seo))})
 
 
