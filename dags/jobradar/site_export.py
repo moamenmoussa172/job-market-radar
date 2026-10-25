@@ -90,6 +90,24 @@ order by posted desc, j.job_id
 """
 
 
+_KEEP_UPPER = {"UAE", "USA", "UK", "US", "KSA", "EU", "EMEA", "APAC", "MENA", "LATAM", "GCC", "NYC", "DC"}
+
+
+def tidy_location(text: str | None) -> str | None:
+    """'HELIOPOLIS,EGYPT' -> 'Heliopolis, Egypt'; 'Cairo, Cairo, Egypt' -> 'Cairo, Egypt'.
+    Only shouting text is re-cased; normal text keeps its own casing."""
+    if not text:
+        return text
+    parts = [p.strip() for p in re.split(r"\s*,\s*", text.strip()) if p.strip()]
+    out: list[str] = []
+    for p in parts:
+        if p.isupper() and len(p) > 3 and p not in _KEEP_UPPER:
+            p = " ".join(w if w in _KEEP_UPPER else w.capitalize() for w in p.split())
+        if not out or out[-1].lower() != p.lower():
+            out.append(p)
+    return ", ".join(out)
+
+
 def pg_regex_to_js(pattern: str) -> str:
     """Postgres ARE word boundaries -> JavaScript: \\m = start of a word, \\M = end of a word."""
     return pattern.replace("\\m", "(?<!\\w)(?=\\w)").replace("\\M", "(?<=\\w)(?!\\w)")
@@ -114,7 +132,7 @@ def export_site_data(conn, generated_at: dt.datetime | None = None) -> dict[str,
          first_seen) in rows:
         flags = (1 if visa else 0) | (2 if nationals else 0) | (4 if arabic else 0) | (8 if long_open else 0)
         job = {"id": job_id[:12], "t": title, "c": company, "tr": track, "r": role, "s": seniority,
-               "w": work_mode, "i": industry, "l": loc, "co": list(countries), "rg": list(regions),
+               "w": work_mode, "i": industry, "l": tidy_location(loc), "co": list(countries), "rg": list(regions),
                "p": posted.isoformat(), "u": url, "k": [skill_idx[s] for s in job_skills]}
         if worldwide:
             job["ww"] = 1
@@ -495,11 +513,22 @@ def publish(files: dict[str, bytes], repo: str, branch: str, token: str,
     return commit["sha"]
 
 
+PUSH_CHUNK_FILES = int(os.environ.get("SITE_PUSH_CHUNK", "2500"))  # files per upload step
+PUSH_RETRY_WAITS = (20, 60)        # seconds to wait before the 2nd and 3rd try of a push that failed on GitHub's side
+_TRANSIENT = re.compile(r"RPC failed|HTTP 5\d\d|returned error: 5\d\d|hung up|timed out|Connection reset|"
+                        r"early EOF|Could not resolve host", re.I)
+
+
 def publish_git(files: dict[str, bytes], repo: str, branch: str, token: str, message: str = "Daily site update",
                 remote_url: str | None = None) -> str:
-    """Replace the branch with `files` in one parentless commit, pushed with git (one compressed upload).
-    GitHub's tree API times out on ~2,700 files; git push doesn't care. The token travels in an HTTP header,
-    never in the URL, and is removed from any error message."""
+    """Replace the branch with `files` in one parentless commit, pushed with git.
+    GitHub's tree API times out on ~2,700 files; git push doesn't care - but one push of thousands of new files
+    (the first day of the job pages) can fail with "HTTP 500". So the files go up in steps first: commits of
+    PUSH_CHUNK_FILES files each are pushed to a temporary branch (<branch>-upload); each push only sends what
+    GitHub doesn't have yet, so on a normal day these are tiny. Then the branch itself gets one parentless commit
+    with everything (its files are already on GitHub, so that push is small) and the temporary branch is deleted.
+    A push that fails on GitHub's side (HTTP 5xx, connection dropped) is tried again.
+    The token travels in an HTTP header, never in the URL, and is removed from any error message."""
     import shutil
     import subprocess
     import tempfile
@@ -509,17 +538,31 @@ def publish_git(files: dict[str, bytes], repo: str, branch: str, token: str, mes
     remote = remote_url or f"https://github.com/{repo}.git"
     auth = base64.b64encode(f"x-access-token:{token}".encode()).decode()
     env = {**os.environ, "GIT_TERMINAL_PROMPT": "0", "GIT_ASKPASS": "true"}
+    upload = f"{branch}-upload"
 
-    def run(*args: str, cwd: str) -> str:
+    def run(*args: str, cwd: str, stdin: str | None = None) -> str:
         cmd = [git, "-c", "user.name=Radarak bot", "-c", "user.email=bot@radarak.online",
-               "-c", "init.defaultBranch=" + branch, "-c", "core.autocrlf=false"]
+               "-c", "init.defaultBranch=" + branch, "-c", "core.autocrlf=false", "-c", "http.postBuffer=524288000"]
         if remote.startswith("https://"):
             cmd += ["-c", f"http.extraHeader=Authorization: Basic {auth}"]
-        res = subprocess.run(cmd + list(args), cwd=cwd, env=env, capture_output=True, text=True, timeout=900)
+        res = subprocess.run(cmd + list(args), cwd=cwd, env=env, capture_output=True, text=True, timeout=1800,
+                             input=stdin)
         if res.returncode != 0:
             err = (res.stderr or res.stdout).replace(token, "***").replace(auth, "***")
             raise RuntimeError(f"git {args[0]} failed: {err.strip()[-400:]}")
         return res.stdout.strip()
+
+    def push(*refspec: str, cwd: str) -> None:
+        for attempt, wait in enumerate((0,) + PUSH_RETRY_WAITS):
+            if wait:
+                log.warning("publish: push failed on GitHub's side, trying again in %ss", wait)
+                time.sleep(wait)
+            try:
+                run("push", "-q", "--force", remote, *refspec, cwd=cwd)
+                return
+            except RuntimeError as exc:
+                if attempt == len(PUSH_RETRY_WAITS) or not _TRANSIENT.search(str(exc)):
+                    raise
 
     with tempfile.TemporaryDirectory(prefix="radarak-site-") as tmp:
         root = Path(tmp)
@@ -528,11 +571,25 @@ def publish_git(files: dict[str, bytes], repo: str, branch: str, token: str, mes
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(content)
         run("init", "-q", cwd=tmp)
-        run("checkout", "-q", "--orphan", branch, cwd=tmp)
+        paths = sorted(files)
+        chunk = max(1, PUSH_CHUNK_FILES)
+        if len(paths) > chunk:
+            run("checkout", "-q", "--orphan", upload, cwd=tmp)
+            for i in range(0, len(paths), chunk):
+                run("add", "--pathspec-from-file=-", cwd=tmp, stdin="\n".join(paths[i:i + chunk]) + "\n")
+                run("commit", "-q", "-m", f"upload {i // chunk + 1}", cwd=tmp)
+                push(f"HEAD:refs/heads/{upload}", cwd=tmp)
+                log.info("publish: uploaded files %s-%s of %s", i + 1, min(i + chunk, len(paths)), len(paths))
+        run("checkout", "-q", "--orphan", branch, cwd=tmp)     # keeps everything staged, starts a new history
         run("add", "-A", cwd=tmp)
         run("commit", "-q", "-m", message, cwd=tmp)
         sha = run("rev-parse", "HEAD", cwd=tmp)
-        run("push", "-q", "--force", remote, f"HEAD:refs/heads/{branch}", cwd=tmp)
+        push(f"HEAD:refs/heads/{branch}", cwd=tmp)
+        if len(paths) > chunk:
+            try:
+                run("push", "-q", remote, f":refs/heads/{upload}", cwd=tmp)
+            except RuntimeError as exc:   # harmless: it is replaced next time
+                log.warning("publish: could not delete %s: %s", upload, exc)
     log.info("published %s files to %s@%s with git push (%s)", len(files), repo, branch, sha[:7])
     return sha
 

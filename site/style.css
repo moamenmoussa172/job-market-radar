@@ -694,7 +694,28 @@ button.bar:hover .name { color: var(--violet-ink); }
   background: color-mix(in srgb, #229ED9 9%, var(--surface)); border: 1px solid color-mix(in srgb, #229ED9 35%, transparent); }
 .alertrow p { margin: 0; flex: 1 1 200px; font-size: 15px; color: var(--ink-2); }
 .alertrow .tg { background: #229ED9; color: #fff; text-decoration: none; font: 600 14px/1 var(--font); border-radius: 99px; padding: 10px 14px; white-space: nowrap; }
-.alertrow .rss { font-weight: 600; font-size: 14px; color: var(--violet-ink); }
 .alertrow .x { background: none; border: 0; color: var(--muted); font-size: 18px; line-height: 1; padding: 6px; cursor: pointer; }
 .foottg { margin: 0 0 12px; font-size: 15px; color: var(--ink-2); }
 .foottg a { font-weight: 600; color: var(--violet-ink); margin-inline-start: 6px; }
+
+/* job cards: the source credit sits next to the date on phones (it is under the skills on wide screens) */
+.age .by { display: none; font-style: normal; }
+.handbtn { display: none; }
+@media (max-width: 720px) {
+  .job { padding: 14px 14px 12px; }
+  .job h3 { font-size: 16px; }
+  .where { font-size: 14px; }
+  .facts { margin-top: 8px; gap: 5px; }
+  .skills { margin-top: 7px; }
+  .jmain .credit { display: none; }
+  .age .by { display: inline; }
+  .jside { margin-top: 8px; }
+  .age { white-space: normal; overflow: hidden; text-overflow: ellipsis; }
+  /* the CV box: skills typed by hand only after asking (or once there are some), so the jobs start higher */
+  .handbtn { display: inline; }
+  .cvactions { flex-wrap: wrap; row-gap: 4px; }
+  .cvactions .primary { flex: 1 1 100%; }
+  .cvactions .linkbtn { flex: 1 1 0; text-align: center; padding: 8px 4px; }
+  .skillsbox:not(.open):not(.has) .skillsrow, .skillsbox:not(.open):not(.has) .suggest { display: none; }
+  .skillsbox.has .handbtn, .skillsbox.open .handbtn { display: none; }
+}

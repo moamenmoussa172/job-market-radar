@@ -336,3 +336,54 @@ def test_git_errors_never_show_the_token(tmp_path):
     with pytest.raises(RuntimeError) as err:
         site_export.publish_git({"a.html": b"x"}, "me/repo", "gh-pages", "secret-token", remote_url=str(tmp_path / "missing"))
     assert "secret-token" not in str(err.value) and "push failed" in str(err.value)
+
+
+def test_pages_point_at_versioned_css_and_js():
+    files = {"style.css": b"a{}", "pages.js": b"x()", "index.html": b'<link href="style.css"><script src="app.js">',
+             "jobs/egypt/index.html": b'<link rel="stylesheet" href="../../style.css"><script src="../../pages.js" defer>'}
+    out = site_export.version_assets(dict(files))
+    v = site_export.hashlib if hasattr(site_export, "hashlib") else __import__("hashlib")
+    css_id = v.sha1(b"a{}").hexdigest()[:10]
+    assert f'href="style.css?v={css_id}"'.encode() in out["index.html"]
+    assert b'src="app.js"' in out["index.html"]                                  # not in this file set: left alone
+    assert f'href="../../style.css?v={css_id}"'.encode() in out["jobs/egypt/index.html"]
+    assert b'pages.js?v=' in out["jobs/egypt/index.html"]
+    changed = site_export.version_assets({**files, "style.css": b"b{}"})
+    assert changed["index.html"] != out["index.html"]                            # new CSS -> new address
+
+
+def test_publish_with_git_uploads_big_sites_in_steps(tmp_path, monkeypatch):
+    """Thousands of new files go up in several pushes to a temporary branch; the site branch still ends as
+    one parentless commit with everything, and the temporary branch is removed."""
+    import shutil
+    import subprocess
+    import pytest
+    if not shutil.which("git"):
+        pytest.skip("git not installed")
+    remote = tmp_path / "remote.git"
+    subprocess.run(["git", "init", "-q", "--bare", str(remote)], check=True)
+    monkeypatch.setattr(site_export, "PUSH_CHUNK_FILES", 3)
+    files = {f"job/j{i}/index.html": f"<p>job {i}".encode() for i in range(10)} | {"index.html": b"<html>"}
+    site_export.publish_git(files, "me/repo", "gh-pages", "tok", remote_url=str(remote))
+    git = lambda *a: subprocess.run(["git", "-C", str(remote), *a], capture_output=True, text=True, check=True).stdout
+    assert git("rev-list", "--count", "gh-pages").strip() == "1"
+    assert sorted(git("ls-tree", "-r", "--name-only", "gh-pages").split()) == sorted(files)
+    assert git("branch", "--list").split() == ["gh-pages"]                       # gh-pages-upload is gone
+    site_export.publish_git({**files, "index.html": b"<html>2"}, "me/repo", "gh-pages", "tok", remote_url=str(remote))
+    assert git("show", "gh-pages:index.html") == "<html>2" and git("rev-list", "--count", "gh-pages").strip() == "1"
+
+
+def test_only_github_side_push_errors_are_retried():
+    t = site_export._TRANSIENT
+    assert t.search("git push failed: error: RPC failed; HTTP 500 curl 22 The requested URL returned error: 500")
+    assert t.search("fatal: the remote end hung up unexpectedly")
+    assert not t.search("fatal: '/tmp/missing' does not appear to be a git repository")
+    assert not t.search("remote: Permission to me/repo.git denied")
+
+
+def test_locations_are_tidied_for_display():
+    t = site_export.tidy_location
+    assert t("HELIOPOLIS,EGYPT") == "Heliopolis, Egypt"
+    assert t("Cairo, Cairo, Egypt") == "Cairo, Egypt"
+    assert t("RIYADH, KSA") == "Riyadh, KSA"
+    assert t("New York, NY") == "New York, NY" and t(None) is None and t("Berlin") == "Berlin"

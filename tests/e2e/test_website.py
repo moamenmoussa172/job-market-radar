@@ -123,9 +123,12 @@ def browser():
 class Page:
     """A fresh visitor (empty storage) with JS errors collected."""
 
-    def __init__(self, browser, base, width=1366, height=1000, storage: dict | None = None, mobile=False):
+    def __init__(self, browser, base, width=1366, height=1000, storage: dict | None = None, mobile=False,
+                 timezone: str = "UTC"):
+        # UTC: no country is guessed from the time zone, so a fresh visitor starts at "any country"
         self.ctx = browser.new_context(viewport={"width": width, "height": height}, is_mobile=mobile,
-                                       has_touch=mobile, permissions=["clipboard-read", "clipboard-write"])
+                                       has_touch=mobile, permissions=["clipboard-read", "clipboard-write"],
+                                       timezone_id=timezone)
         init = "localStorage.setItem('jr_lang', JSON.stringify('en'));"
         for k, v in (storage or {}).items():
             init += f"localStorage.setItem({json.dumps(k)}, {json.dumps(json.dumps(v))});"
@@ -911,3 +914,44 @@ def test_rss_feeds_parse(base, data):
     for path in list(feeds.values())[:10]:
         root = ET.fromstring(fetch(base, path))
         assert root.find("./channel/title").text and root.findall("./channel/item")
+
+
+
+# --------------------------------------------------------------------------- update 64: first visit, order, phones
+def test_first_visit_guesses_the_country_from_the_time_zone(page, data):
+    pg = page(timezone="Africa/Cairo")
+    p = pg.open()
+    assert p.locator("#country").input_value() == "Egypt"
+    p.locator("#country").select_option("")                     # "any country" is remembered: no guess again
+    p.reload()
+    pg.open()
+    assert p.locator("#country").input_value() == ""
+    pg2 = page(timezone="Africa/Cairo")
+    p2 = pg2.open("#country=Germany")                           # a shared link wins over the guess
+    assert p2.locator("#country").input_value() == "Germany"
+    assert page().open().locator("#country").input_value() == ""  # UTC: no guess
+
+
+def test_one_company_does_not_fill_the_first_screen(page, data):
+    pg = page()
+    p = pg.open("#country=Egypt")
+    companies = [c.lower() for c in p.locator("#jobList li.job .where b").all_inner_texts()[:10]]
+    top = max(companies.count(c) for c in set(companies))
+    assert top <= 4, companies
+    no_errors(pg)
+
+
+def test_locations_are_tidy(data):
+    shouting = [j["l"] for j in data["jobs"] if j.get("l") and "," in j["l"] and re.search(r",\S", j["l"])]
+    assert len(shouting) < 20, shouting[:5]
+
+
+def test_phone_cards_are_compact_and_cv_box_folds(page, data):
+    pg = page(width=390, height=844, mobile=True)
+    p = pg.open("#country=Egypt")
+    first = p.locator("#jobList li.job").first.bounding_box()
+    assert first["height"] < 200, first
+    assert not p.locator("#mySkillInput").is_visible() and p.locator("#skillsHandBtn").is_visible()
+    p.locator("#skillsHandBtn").click()
+    assert p.locator("#mySkillInput").is_visible()
+    no_errors(pg)

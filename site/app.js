@@ -17,7 +17,7 @@
       anyCountry: "any country", anyRole: "any tech", allOf: (x) => `${x} (all roles)`,
       countLabel: "jobs you can apply to", countAll: "open tech jobs", share: "Share this search", copied: "Link copied",
       updated: (d) => `Updated ${d}. New jobs are added every morning.`,
-      yourSkills: "Match jobs to your skills", addSkill: "Add a skill you have",
+      yourSkills: "Match jobs to your skills", addSkill: "Add a skill you have", addByHand: "or add skills by hand",
       yourSkillsHint: "Upload your CV or add skills. Every job gets a match score, and the best matches come first.",
       heroTitle: "Tech jobs you can actually get.",
       heroSub: "Fresh every morning from company career pages and job boards across Egypt, the Gulf, Europe and remote, filtered by where you live.",
@@ -90,7 +90,7 @@
       reportClosed: "Job closed or wrong? Tell us", reported: "Thanks! We hid this job for you and will check it.",
       nlTitle: "Radarak Weekly", nlText: "Every Sunday: the week's new tech jobs in Egypt, the Gulf and remote, in one short email.",
       nlEmail: "Your email", nlEmailPh: "you@example.com", nlBtn: "Subscribe", nlThanks: "Check your inbox to confirm.",
-      tgPlace: (p) => `New ${p} jobs every morning on Telegram`, tgJoin: "Join on Telegram", tgFoot: "New jobs every day on Telegram:", hideTip: "Hide",
+      tgPlace: (p) => `New ${p} jobs every morning on Telegram`, tgJoin: "Join on Telegram", tgAny: "New tech jobs every morning on Telegram", tgFoot: "New jobs every day on Telegram:", hideTip: "Hide",
       learnTitle: "What to learn next", learnNow: (m) => `You match <b>${m}</b> jobs right now.`,
       learnHint: "Each step counts the extra jobs you'd match (60%+ of their skills) after learning it and the ones above it.",
       learnJobs: (n) => `+${n} jobs`, learnTotal: (a, b) => `Learn all ${a === 1 ? "of it" : "three"}: <b>${b}</b> jobs you match`,
@@ -110,7 +110,7 @@
       anyCountry: "أي دولة", anyRole: "أي مجال تقني", allOf: (x) => `${x} (كل الوظايف)`,
       countLabel: "وظيفة تقدر تقدّم عليها", countAll: "وظيفة تقنية متاحة", share: "شارك البحث ده", copied: "اتنسخ اللينك",
       updated: (d) => `آخر تحديث ${d}. وظايف جديدة بتتضاف كل يوم الصبح.`,
-      yourSkills: "شوف الوظايف المناسبة لمهاراتك", addSkill: "ضيف مهارة عندك",
+      yourSkills: "شوف الوظايف المناسبة لمهاراتك", addSkill: "ضيف مهارة عندك", addByHand: "أو ضيف مهاراتك بإيدك",
       yourSkillsHint: "ارفع الـ CV أو ضيف مهاراتك. كل وظيفة هتاخد نسبة تطابق، والأنسب هتظهر الأول.",
       heroTitle: "وظايف تك تقدر توصلها فعلًا.",
       heroSub: "بتتحدّث كل يوم الصبح من صفحات توظيف الشركات ومواقع الوظايف في مصر والخليج وأوروبا والريموت، ومفلترة حسب البلد اللي إنت فيها.",
@@ -183,7 +183,7 @@
       reportClosed: "الوظيفة اتقفلت أو فيها غلط؟ قولنا", reported: "شكرًا! خبّينا الوظيفة دي عندك وهنراجعها.",
       nlTitle: "نشرة رادارك الأسبوعية", nlText: "كل يوم حد: وظايف التك الجديدة في مصر والخليج والريموت، في إيميل واحد قصير.",
       nlEmail: "الإيميل بتاعك", nlEmailPh: "you@example.com", nlBtn: "اشترك", nlThanks: "شوف الإيميل بتاعك عشان تأكد الاشتراك.",
-      tgPlace: (p) => `وظايف ${p} الجديدة كل صبح على تيليجرام`, tgJoin: "اشترك على تيليجرام", tgFoot: "وظايف جديدة كل يوم على تيليجرام:", hideTip: "إخفاء",
+      tgPlace: (p) => `وظايف ${p} الجديدة كل صبح على تيليجرام`, tgJoin: "اشترك على تيليجرام", tgAny: "وظايف التك الجديدة كل صبح على تيليجرام", tgFoot: "وظايف جديدة كل يوم على تيليجرام:", hideTip: "إخفاء",
       learnTitle: "تتعلم إيه بعد كده", learnNow: (m) => `إنت مناسب لـ <b>${m}</b> وظيفة دلوقتي.`,
       learnHint: "كل خطوة بتحسب الوظايف الزيادة اللي هتبقى مناسب لها (60%+ من مهاراتها) لو اتعلمت المهارة دي واللي فوقها.",
       learnJobs: (n) => `+${n} وظيفة`, learnTotal: (a, b) => `لو اتعلمتهم ${a === 1 ? "" : "التلاتة"}: <b>${b}</b> وظيفة مناسبة ليك`,
@@ -423,8 +423,37 @@
     const byNew = (a, b) => (a.job.p < b.job.p ? 1 : a.job.p > b.job.p ? -1 : 0);
     if (sort === "match") out.sort((a, b) => b.match - a.match || b.have - a.have || byNew(a, b));
     else if (sort === "pay") out.sort((a, b) => ((b.pay ? b.pay[0] + b.pay[1] : -1) - (a.pay ? a.pay[0] + a.pay[1] : -1)) || byNew(a, b));
-    else out.sort(byNew);
+    else { out.sort(byNew); return spreadCompanies(out); }
     return out;
+  }
+  // Newest first, but one company that posted 30 jobs today shouldn't fill the whole first screen.
+  // A company's 3rd and 4th job of a day are listed as if a day older, the 5th and 6th two days older, and so
+  // on (at most a week); within each day, companies take turns (round robin) in the order they first appear.
+  const dayNum = (iso) => Math.round(Date.parse(iso + "T12:00:00Z") / 864e5);
+  function spreadCompanies(list) {
+    const rank = new Map();
+    const keyed = list.map((g, i) => {
+      const c = (g.job.c || g.key).toLowerCase(), k = g.job.p + "|" + c, r = rank.get(k) || 0;
+      rank.set(k, r + 1);
+      return { g, c, i, day: dayNum(g.job.p) - Math.min(7, Math.floor(r / 2)) };
+    });
+    keyed.sort((a, b) => b.day - a.day || a.i - b.i);
+    const res = [];
+    for (let i = 0; i < keyed.length;) {
+      let k = i;
+      while (k < keyed.length && keyed[k].day === keyed[i].day) k++;
+      const queues = new Map();
+      for (const x of keyed.slice(i, k)) {
+        if (!queues.has(x.c)) queues.set(x.c, []);
+        queues.get(x.c).push(x.g);
+      }
+      const qs = [...queues.values()];
+      for (let round = 0, left = k - i; left > 0; round++) {
+        for (const q of qs) if (q.length > round) { res.push(q[round]); left--; }
+      }
+      i = k;
+    }
+    return res;
   }
 
   // ------------------------------------------------------------------ jobs
@@ -449,6 +478,8 @@
         stroke-dasharray="${((c * pct) / 100).toFixed(1)} ${c.toFixed(1)}"/>` : ""}</svg><b>${pct}%</b></span>`;
   }
 
+  // "Remote", "Remote job", "Anywhere" next to the Remote badge says nothing new
+  const placeText = (j) => (j.w === "Remote" && /^(remote( job| \(anywhere\))?|anywhere|worldwide)$/i.test((j.l || "").trim()) ? "" : j.l || "");
   function jobRow(g) {
     const j = g.job, f = g.flags, mine = mySkillIdx();
     const others = g.all.length - 1;
@@ -474,7 +505,7 @@
       <span class="avatar" aria-hidden="true">${esc(initial)}</span>
       <div class="jmain">
         <h3><a href="${esc(j.u)}" target="_blank" rel="${linkRel(j)}">${esc(j.t)}</a></h3>
-        <p class="where"><b>${esc(j.c || "")}</b><span>${esc(j.l || "")}</span>${others > 0
+        <p class="where"><b>${esc(j.c || "")}</b><span>${esc(placeText(j))}</span>${others > 0
           ? `<button type="button" class="locbtn" data-key="${esc(g.key)}" aria-expanded="${locsOpen}">${locsOpen ? t("hideLocs") : t("moreLocs")(others)}</button>` : ""}</p>
         <div class="facts">${facts}</div>
         ${j.k.length ? `<div class="skills">${skills}</div>` : ""}
@@ -483,7 +514,7 @@
       </div>
       <div class="jside">
         ${mine.size && j.k.length ? matchRing(g.have, j.k.length) : ""}
-        <span class="age">${f & FLAG.longOpen ? t("longOpen") : ago(j.p)}</span>
+        <span class="age">${f & FLAG.longOpen ? t("longOpen") : ago(j.p)}${j.by ? `<i class="by"> · ${esc(j.by)}</i>` : ""}</span>
         <div class="rowbtns">
           <a class="wa" href="${esc(waLink(j))}" target="_blank" rel="noopener" data-share="${esc(j.id)}" aria-label="${esc(t("shareWa"))}" title="${esc(t("shareWa"))}">${WA_ICON}</a>
           <button type="button" class="save" data-id="${esc(j.id)}" aria-pressed="${isSaved}">${BOOKMARK}<span>${isSaved ? t("saved") : t("save")}</span></button>
@@ -1116,6 +1147,7 @@
     renderLearn();
     renderNewBanner();
     renderAlerts();
+    document.querySelector(".skillsbox").classList.toggle("has", mySkills.size > 0);
     renderJobs();
     if (currentJob) { const g = groupFor(currentJob), j = jobs.find((x) => x.id === currentJob); if (g && j) renderDrawer(g, j); }
     renderSaved();
@@ -1316,6 +1348,24 @@
     $("nlForm").addEventListener("submit", () => { track("newsletter-subscribe"); setTimeout(() => toast(t("nlThanks")), 300); });
   }
 
+  const TZ_COUNTRY = {
+    "Africa/Cairo": "Egypt", "Asia/Riyadh": "Saudi Arabia", "Asia/Dubai": "United Arab Emirates", "Asia/Qatar": "Qatar",
+    "Asia/Kuwait": "Kuwait", "Asia/Bahrain": "Bahrain", "Asia/Muscat": "Oman", "Asia/Amman": "Jordan", "Asia/Beirut": "Lebanon",
+    "Asia/Baghdad": "Iraq", "Asia/Damascus": "Syria", "Asia/Aden": "Yemen", "Asia/Gaza": "Palestine", "Asia/Hebron": "Palestine",
+    "Africa/Casablanca": "Morocco", "Africa/Algiers": "Algeria", "Africa/Tunis": "Tunisia", "Africa/Tripoli": "Libya",
+    "Africa/Khartoum": "Sudan", "Africa/Lagos": "Nigeria", "Africa/Nairobi": "Kenya", "Africa/Accra": "Ghana",
+    "Africa/Johannesburg": "South Africa", "Africa/Addis_Ababa": "Ethiopia", "Europe/Istanbul": "Turkey",
+    "Asia/Karachi": "Pakistan", "Asia/Kolkata": "India", "Asia/Calcutta": "India", "Asia/Dhaka": "Bangladesh",
+    "Europe/London": "United Kingdom", "Europe/Berlin": "Germany", "Europe/Paris": "France", "Europe/Amsterdam": "Netherlands",
+    "Europe/Madrid": "Spain", "Europe/Dublin": "Ireland", "Europe/Warsaw": "Poland", "Europe/Rome": "Italy",
+  };
+  function guessCountry() {
+    let tz = "";
+    try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch { /* old browser */ }
+    const c = TZ_COUNTRY[tz];
+    return c && [...$("country").options].some((o) => o.value === c) ? c : "";
+  }
+
   // Telegram channels (meta.telegram, from TELEGRAM_CHANNELS) and RSS feeds (meta.feeds): new jobs without coming back
   const tgName = (ch) => ch.pl.includes("Remote") ? t("remote")
     : ch.pl.length === 1 ? ch.pl[0]
@@ -1333,9 +1383,8 @@
     if (!ch || store.get("alertsHidden", "") === "1") { row.hidden = true; return; }
     const c = $("country").value, isRemote = ch.pl.includes("Remote");
     const label = isRemote ? t("remote") : ch.pl.includes(c) && ch.pl.length > 1 ? c : tgName(ch);
-    const feeds = meta.feeds || {}, feed = isRemote ? feeds.Remote : feeds[c] || (ch.pl.length === 1 ? feeds[ch.pl[0]] : "");
-    const html = `<p>📣 ${esc(t("tgPlace")(label))}</p><a class="tg" href="${esc(ch.u)}" target="_blank" rel="noopener" data-tg>${esc(t("tgJoin"))}</a>`
-      + (feed ? `<a class="rss" href="${esc(feed)}" type="application/rss+xml">RSS</a>` : "")
+    const text = !c && !isRemote ? t("tgAny") : t("tgPlace")(label);
+    const html = `<p>📣 ${esc(text)}</p><a class="tg" href="${esc(ch.u)}" target="_blank" rel="noopener" data-tg>${esc(t("tgJoin"))}</a>`
       + `<button class="x" type="button" data-hide aria-label="${esc(t("hideTip"))}" title="${esc(t("hideTip"))}">×</button>`;
     if (row.innerHTML !== html) row.innerHTML = html;
     row.hidden = false;
@@ -1435,8 +1484,20 @@
     jobs.forEach(prepJob);
     applyLanguage();
     setupTelegram();
-    const saved = store.get("country", "");
-    if (saved && !location.hash) $("country").value = saved;
+    $("skillsHandBtn").addEventListener("click", () => {
+      document.querySelector(".skillsbox").classList.add("open");
+      $("mySkillInput").focus();
+    });
+    // the visitor's last country; on a first visit, a guess from the device's time zone (Africa/Cairo -> Egypt),
+    // so the first screen shows jobs they can apply to. Picking "any country" is remembered and stops the guess.
+    const saved = store.get("country", null);
+    if (!location.hash) {
+      if (saved) $("country").value = saved;
+      else if (saved === null) {
+        const g = guessCountry();
+        if (g) { $("country").value = g; track("country-guess/" + g); }
+      }
+    }
     readHash();
     bind();
     if (document.fonts) document.fonts.ready.then(sizeHero);
