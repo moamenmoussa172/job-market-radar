@@ -955,3 +955,34 @@ def test_phone_cards_are_compact_and_cv_box_folds(page, data):
     p.locator("#skillsHandBtn").click()
     assert p.locator("#mySkillInput").is_visible()
     no_errors(pg)
+
+
+# --------------------------------------------------------------------------- update 65: learn next + share card
+CV_TEXT = ("Data Engineer with 3 years of experience. Built ETL pipelines with Python, SQL, PostgreSQL, Apache NiFi and "
+           "Spark. Data modeling, dbt, Amazon Redshift, Power BI dashboards, Git, Docker. Data quality and reconciliation.")
+
+
+def test_cv_shows_next_skill_and_makes_a_share_card(browser, base, tmp_path):
+    ctx = browser.new_context(viewport={"width": 1280, "height": 900}, timezone_id="UTC", accept_downloads=True)
+    ctx.add_init_script("localStorage.setItem('jr_lang', JSON.stringify('en'));")
+    p = ctx.new_page()
+    errors = []
+    p.on("pageerror", lambda e: errors.append(str(e)))
+    p.goto(base + "/#country=Egypt")
+    p.wait_for_function("/\\d/.test(document.querySelector('#count').textContent)", timeout=30000)
+    p.locator("#cvPasteBtn").click()
+    p.locator("#cvText").fill(CV_TEXT)
+    p.locator("#cvRead").click()
+    p.wait_for_selector("#cvResult:not([hidden])")
+    learn = p.locator("#cvResult .learntop")
+    if learn.count():
+        assert "Learn" in learn.inner_text() and "+" in learn.inner_text()
+    with p.expect_download() as dl:
+        p.locator("#cvResult [data-sharecard]").click()
+    path = tmp_path / "card.png"
+    dl.value.save_as(path)
+    data = path.read_bytes()
+    assert data[:8] == b"\x89PNG\r\n\x1a\n"
+    assert int.from_bytes(data[16:20], "big") == 1080 and int.from_bytes(data[20:24], "big") == 1350
+    assert not errors, errors
+    ctx.close()

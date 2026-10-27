@@ -719,3 +719,9 @@ button.bar:hover .name { color: var(--violet-ink); }
   .skillsbox:not(.open):not(.has) .skillsrow, .skillsbox:not(.open):not(.has) .suggest { display: none; }
   .skillsbox.has .handbtn, .skillsbox.open .handbtn { display: none; }
 }
+
+/* CV result: the single most useful skill to learn, and the share button */
+.learntop { margin: 10px 0 4px; padding: 10px 12px; border-radius: var(--r-s); background: color-mix(in srgb, var(--amber) 16%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--amber) 45%, transparent); font-size: 15px; color: var(--ink); }
+.sharecard { white-space: nowrap; }
+.learn .sharecard { margin-top: 12px; }

@@ -91,6 +91,11 @@
       nlTitle: "Radarak Weekly", nlText: "Every Sunday: the week's new tech jobs in Egypt, the Gulf and remote, in one short email.",
       nlEmail: "Your email", nlEmailPh: "you@example.com", nlBtn: "Subscribe", nlThanks: "Check your inbox to confirm.",
       tgPlace: (p) => `New ${p} jobs every morning on Telegram`, tgJoin: "Join on Telegram", tgAny: "New tech jobs every morning on Telegram", tgFoot: "New jobs every day on Telegram:", hideTip: "Hide",
+      shareCard: "Share my result", shareCardDone: "Image saved. Share it on LinkedIn or WhatsApp!",
+      cardMatch: "I match", cardJobs: (what, where) => `${what} jobs${where ? " in " + where : ""}`, cardTech: "tech", cardRemote: "remote",
+      cardNext: "My next skills to learn", cardHave: "My top skills", cardJobsN: (n) => `+${n} jobs`,
+      cardCta: "Find the jobs you can actually get", cardPrivacy: "My CV was read on my device. It was never uploaded.",
+      cardShareText: "Here's what the job market says about my skills. Check yours:", learnTop: (s, n) => `🎯 Learn <b>${s}</b> → <b>+${n}</b> more jobs you match`,
       learnTitle: "What to learn next", learnNow: (m) => `You match <b>${m}</b> jobs right now.`,
       learnHint: "Each step counts the extra jobs you'd match (60%+ of their skills) after learning it and the ones above it.",
       learnJobs: (n) => `+${n} jobs`, learnTotal: (a, b) => `Learn all ${a === 1 ? "of it" : "three"}: <b>${b}</b> jobs you match`,
@@ -184,6 +189,11 @@
       nlTitle: "نشرة رادارك الأسبوعية", nlText: "كل يوم حد: وظايف التك الجديدة في مصر والخليج والريموت، في إيميل واحد قصير.",
       nlEmail: "الإيميل بتاعك", nlEmailPh: "you@example.com", nlBtn: "اشترك", nlThanks: "شوف الإيميل بتاعك عشان تأكد الاشتراك.",
       tgPlace: (p) => `وظايف ${p} الجديدة كل صبح على تيليجرام`, tgJoin: "اشترك على تيليجرام", tgAny: "وظايف التك الجديدة كل صبح على تيليجرام", tgFoot: "وظايف جديدة كل يوم على تيليجرام:", hideTip: "إخفاء",
+      shareCard: "شارك نتيجتك", shareCardDone: "الصورة اتحفظت. شاركها على لينكدإن أو واتساب!",
+      cardMatch: "أنا مناسب لـ", cardJobs: (what, where) => `وظيفة ${what}${where ? " في " + where : ""}`, cardTech: "تك", cardRemote: "ريموت",
+      cardNext: "المهارات اللي هتعلمها بعد كده", cardHave: "أهم مهاراتي", cardJobsN: (n) => `+${n} وظيفة`,
+      cardCta: "لاقي الوظايف اللي تقدر تاخدها فعلًا", cardPrivacy: "الـ CV بتاعي اتقرا على جهازي، ومترفعش في أي حتة.",
+      cardShareText: "ده رأي سوق الشغل في مهاراتي. شوف مهاراتك:", learnTop: (s, n) => `🎯 اتعلم <b>${s}</b> ← <b>+${n}</b> وظيفة زيادة مناسبة ليك`,
       learnTitle: "تتعلم إيه بعد كده", learnNow: (m) => `إنت مناسب لـ <b>${m}</b> وظيفة دلوقتي.`,
       learnHint: "كل خطوة بتحسب الوظايف الزيادة اللي هتبقى مناسب لها (60%+ من مهاراتها) لو اتعلمت المهارة دي واللي فوقها.",
       learnJobs: (n) => `+${n} وظيفة`, learnTotal: (a, b) => `لو اتعلمتهم ${a === 1 ? "" : "التلاتة"}: <b>${b}</b> وظيفة مناسبة ليك`,
@@ -625,7 +635,103 @@
             <button type="button" class="chip add" data-add="${esc(s.skill)}">+ ${t("learnKnow")}</button></span></li>`).join("")}</ol>
         <p class="learntotal">${t("learnTotal")(plan.steps.length, `${num(plan.start)} → ${num(plan.end)}`)}
           <span class="up">+${plan.start ? Math.round((100 * (plan.end - plan.start)) / plan.start) + "%" : num(plan.end - plan.start)}</span></p>
-        <p class="hint">${t("learnHint")}</p>` : `<p class="hint">${t("learnNone")}</p>`}`;
+        <p class="hint">${t("learnHint")}</p>` : `<p class="hint">${t("learnNone")}</p>`}
+      <button type="button" class="primary sm sharecard" data-sharecard>📸 ${t("shareCard")}</button>`;
+  }
+
+  // ------------------------------------------------------------------ "share my result": an image made in the browser
+  // Only counts and skill names go on the card; the CV itself never leaves the device.
+  function cardScope() {
+    const c = $("country").value, r = $("role").value || "";
+    const what = r.startsWith("role:") || r.startsWith("track:") ? r.slice(r.indexOf(":") + 1)
+      : quick.remote || $("workMode").value === "Remote" ? t("cardRemote") : t("cardTech");
+    return t("cardJobs")(what, c);
+  }
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+  function wrapLines(ctx, text, max) {
+    const words = String(text).split(" "), lines = [];
+    let line = "";
+    for (const w of words) {
+      const next = line ? line + " " + w : w;
+      if (ctx.measureText(next).width > max && line) { lines.push(line); line = w; } else line = next;
+    }
+    if (line) lines.push(line);
+    return lines;
+  }
+  async function makeCard() {
+    const W = 1080, H = 1350, P = 84, rtl = lang === "ar";
+    const D = '"Bricolage Grotesque", "IBM Plex Sans Arabic", sans-serif', F = '"IBM Plex Sans Arabic", system-ui, sans-serif';
+    try { await Promise.all(["800 80px " + D, "700 40px " + F, "500 30px " + F].map((f) => document.fonts.load(f))); } catch { /* system fonts */ }
+    const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+    const ctx = cv.getContext("2d");
+    ctx.fillStyle = "#17113A"; ctx.fillRect(0, 0, W, H);
+    [[W * 0.95, 60, 620, "rgba(106,75,255,.55)"], [40, H - 80, 560, "rgba(255,92,57,.35)"]].forEach(([x, y, r, c]) => {
+      const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, c); g.addColorStop(1, "rgba(23,17,58,0)");
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    });
+    ctx.strokeStyle = "rgba(255,255,255,.08)"; ctx.lineWidth = 2;
+    [140, 230, 320].forEach((r) => { ctx.beginPath(); ctx.arc(W - 150, 190, r, 0, Math.PI * 2); ctx.stroke(); });
+    ctx.direction = rtl ? "rtl" : "ltr";
+    const X = (x) => (rtl ? W - x : x);
+    const text = (s, x, y, font, color, align) => { ctx.font = font; ctx.fillStyle = color; ctx.textAlign = align || (rtl ? "right" : "left"); ctx.fillText(s, X(x), y); };
+    // brand
+    const lx = X(P + 30);
+    ctx.fillStyle = "#6A4BFF"; ctx.beginPath(); ctx.arc(lx, 128, 30, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,.55)"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(lx, 128, 16, 0, Math.PI * 2); ctx.stroke();
+    [[12, -12, 6, "#FFB020"], [-12, 7, 5, "#FF5C39"], [7, 13, 4, "#12B886"]].forEach(([dx, dy, r, c]) => { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(lx + dx, 128 + dy, r, 0, Math.PI * 2); ctx.fill(); });
+    text("Radarak", P + 76, 146, "800 50px " + D, "#FFFFFF");
+    // the number
+    const plan = learnPlan() || { start: 0, steps: [] };
+    text(t("cardMatch"), P, 300, "600 44px " + F, "#C9C2F5");
+    text(num(plan.start), P, 520, "800 230px " + D, "#FFFFFF");
+    ctx.font = "700 54px " + F;
+    const scope = wrapLines(ctx, cardScope(), W - 2 * P);
+    scope.slice(0, 2).forEach((l, i) => text(l, P, 610 + i * 66, "700 54px " + F, "#FFFFFF"));
+    // next skills (or the skills they have)
+    let y = 610 + Math.min(2, scope.length) * 66 + 50;
+    roundRect(ctx, P, y, W - 2 * P, 360, 28); ctx.fillStyle = "rgba(255,255,255,.08)"; ctx.fill();
+    const steps = plan.steps.slice(0, 3);
+    text(steps.length ? t("cardNext") : t("cardHave"), P + 36, y + 70, "700 34px " + F, "#FFB020");
+    const top = Math.max(1, ...steps.map((s) => s.gain));
+    const rows = steps.length ? steps : [...mySkills].slice(0, 3).map((s) => ({ skill: s }));
+    rows.forEach((s, i) => {
+      const ry = y + 140 + i * 82;
+      text(s.skill, P + 36, ry, "700 40px " + F, "#FFFFFF");
+      if (s.gain) {
+        text(t("cardJobsN")(num(s.gain)), W - P - 36, ry, "700 36px " + F, "#4ADE9B", rtl ? "left" : "right");
+        const bw = 300 * s.gain / top, bx = rtl ? P + 36 + 230 : W - P - 36 - 230 - bw;
+        roundRect(ctx, bx, ry - 24, bw, 16, 8); ctx.fillStyle = "#6A4BFF"; ctx.fill();
+      }
+    });
+    // call to action
+    y += 410;
+    text(t("cardCta"), P, y, "600 34px " + F, "#C9C2F5");
+    const g = ctx.createLinearGradient(P, 0, W - P, 0); g.addColorStop(0, "#6A4BFF"); g.addColorStop(0.55, "#B13FE0"); g.addColorStop(1, "#FF5C39");
+    roundRect(ctx, P, y + 30, W - 2 * P, 104, 52); ctx.fillStyle = g; ctx.fill();
+    text("radarak.online", W / 2, y + 100, "800 52px " + D, "#FFFFFF", "center");
+    text(t("cardPrivacy"), W / 2, H - 52, "500 26px " + F, "rgba(255,255,255,.55)", "center");
+    return new Promise((resolve) => cv.toBlob(resolve, "image/png"));
+  }
+  async function shareCard() {
+    track("share-card");
+    const blob = await makeCard();
+    if (!blob) return;
+    const file = new File([blob], "radarak-my-match.png", { type: "image/png" });
+    const url = location.origin + location.pathname;
+    try {
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], text: t("cardShareText") + " " + url });
+        return;
+      }
+    } catch (e) { if (e && e.name === "AbortError") return; }
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = file.name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    toast(t("shareCardDone"));
   }
 
   // ------------------------------------------------------------------ "new since your last visit"
@@ -852,7 +958,9 @@
     // jobs close to this profile: matches plus near-matches; what do they ask for that the CV doesn't mention?
     const mine = mySkillIdx();
     const near = current.filter((j) => j.k.length >= 3 && j.k.filter((k) => mine.has(k)).length / j.k.length >= 0.4);
-    const matched = current.filter((j) => j.k.length && j.k.filter((k) => mine.has(k)).length / j.k.length >= MATCH).length;
+    // same count as "What to learn next" and the share card: each job once, the way the list shows it
+    const plan0 = learnPlan();
+    const matched = plan0 ? plan0.start : current.filter((j) => j.k.length && j.k.filter((k) => mine.has(k)).length / j.k.length >= MATCH).length;
     const gap = new Map();
     near.forEach((j) => j.k.forEach((k) => { if (!mine.has(k)) gap.set(k, (gap.get(k) || 0) + 1); }));
     const gaps = [...gap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([k]) => meta.skills[k]);
@@ -865,12 +973,14 @@
         <div><b>${num(matched)}</b><span>${t("cvMatches")}</span></div>
         ${role ? `<div><b>${esc(role)}</b><span>${t("cvRole")}</span></div>` : ""}
       </div>
+      ${(() => { const pl = learnPlan(), st = pl && pl.steps[0]; return st ? `<p class="learntop">${t("learnTop")(esc(st.skill), num(st.gain))}</p>` : ""; })()}
       <p class="hint">${t("cvAdded")}</p>
       ${gaps.length ? `<div class="gap"><p><b>${t("cvGapTitle")}</b></p><p class="hint">${t("cvGapHint")}</p>
         <div class="chips">${gaps.map((s) => `<button type="button" class="chip add" data-add="${esc(s)}">+ ${esc(s)}</button>`).join("")}</div></div>` : ""}
       <button type="button" class="linkbtn learnjump" id="learnJump">${t("learnTitle")} ↓</button>
       <div class="actions">
         ${role ? `<button type="button" class="cvbtn" id="cvRoleBtn">${esc(t("cvShowRole")(role))}</button>` : ""}
+        <button type="button" class="primary sharecard" data-sharecard>📸 ${t("shareCard")}</button>
         <button type="button" class="ghostbtn" id="cvBestBtn">${t("cvShowBest")}</button>
         <button type="button" class="linkbtn" id="cvClearBtn">${t("cvClear")}</button>
       </div>`;
@@ -1484,6 +1594,7 @@
     jobs.forEach(prepJob);
     applyLanguage();
     setupTelegram();
+    document.addEventListener("click", (e) => { if (e.target.closest("[data-sharecard]")) shareCard(); });
     $("skillsHandBtn").addEventListener("click", () => {
       document.querySelector(".skillsbox").classList.add("open");
       $("mySkillInput").focus();
