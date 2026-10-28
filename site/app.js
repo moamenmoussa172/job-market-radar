@@ -767,7 +767,7 @@
     const lx = X(P + 30);
     ctx.fillStyle = "#0A84FF"; ctx.beginPath(); ctx.arc(lx, 128, 30, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = "rgba(255,255,255,.55)"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(lx, 128, 16, 0, Math.PI * 2); ctx.stroke();
-    [[12, -12, 6, "#FFB020"], [-12, 7, 5, "#FF5C39"], [7, 13, 4, "#12B886"]].forEach(([dx, dy, r, c]) => { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(lx + dx, 128 + dy, r, 0, Math.PI * 2); ctx.fill(); });
+    [[12, -12, 6, "#FFFFFF"], [-12, 7, 5, "#64D2FF"], [7, 13, 4, "#30D158"]].forEach(([dx, dy, r, c]) => { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(lx + dx, 128 + dy, r, 0, Math.PI * 2); ctx.fill(); });
     text("Radarak", P + 76, 146, "800 50px " + D, "#FFFFFF");
     // the number
     const plan = learnPlan() || { start: 0, steps: [] };

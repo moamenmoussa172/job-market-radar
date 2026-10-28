@@ -849,3 +849,4 @@ h1, h2, h3 { letter-spacing: -.02em; }
 .reportcta:hover { filter: none; opacity: .92; }
 .tabs-wrap { background: color-mix(in srgb, var(--paper) 92%, transparent); }
 @media (max-width: 720px) { .radar { display: none; } .hero-in { padding-top: 28px; } }
+.report-page .topbar .navlink { color: var(--ink-2); }

@@ -6,10 +6,10 @@
   const W = 1080, H = 1350, PAD = 72;
   const SITE = location.href.replace(/report\.html.*$/, "").replace(/[?#].*$/, "");
   const TRACK_COLORS = {
-    "Data & Analytics": "#7C5CFA", "AI & Machine Learning": "#E64980", "Software Engineering": "#3B82F6",
-    "Mobile Development": "#FF7A1A", "QA & Testing": "#12B886", "UI/UX Design": "#D946EF", "DevOps & Cloud": "#0EA5E9",
-    "Security": "#EF4444", "ERP & CRM": "#E89A00", "Networks & Telecom": "#14B8A6", "Product & Delivery": "#65A30D",
-    "IT & Support": "#64748B", "Embedded & Chip Design": "#A0522D",
+    "Data & Analytics": "#5E5CE6", "AI & Machine Learning": "#D63A7A", "Software Engineering": "#0071E3",
+    "Mobile Development": "#E8730C", "QA & Testing": "#1A9E5C", "UI/UX Design": "#B04FD6", "DevOps & Cloud": "#0A93C9",
+    "Security": "#D93636", "ERP & CRM": "#C98500", "Networks & Telecom": "#13998C", "Product & Delivery": "#5A9A10",
+    "IT & Support": "#6E6E73", "Embedded & Chip Design": "#9A5B33",
   };
   const AR_PLACES = {
     All: "كل الأماكن", Remote: "ريموت", Egypt: "مصر", "Saudi Arabia": "السعودية", "United Arab Emirates": "الإمارات",
@@ -116,9 +116,9 @@
   }
   function logo(x, y, s) {
     const cx = fx(x + s / 2), cy = y + s / 2, k = s / 32;
-    ctx.fillStyle = "#6A4BFF"; ctx.beginPath(); ctx.arc(cx, cy, 15 * k, 0, 7); ctx.fill();
+    ctx.fillStyle = "#0071E3"; ctx.beginPath(); ctx.arc(cx, cy, 15 * k, 0, 7); ctx.fill();
     ctx.strokeStyle = "rgba(255,255,255,.55)"; ctx.lineWidth = 1.8 * k; ctx.beginPath(); ctx.arc(cx, cy, 8.5 * k, 0, 7); ctx.stroke();
-    [[6.5, -6.5, 3, "#FFB020"], [-6.5, 3.5, 2.5, "#FF5C39"], [3.5, 6.5, 2.1, "#10B981"]].forEach(([dx, dy, r, c]) => {
+    [[6.5, -6.5, 3, "#FFFFFF"], [-6.5, 3.5, 2.5, "#64D2FF"], [3.5, 6.5, 2.1, "#30D158"]].forEach(([dx, dy, r, c]) => {
       ctx.fillStyle = c; ctx.beginPath(); ctx.arc(cx + dx * k, cy + dy * k, r * k, 0, 7); ctx.fill();
     });
   }
@@ -127,23 +127,23 @@
     const d = summary(place);
     ctx.clearRect(0, 0, W, H);
     // background
-    ctx.fillStyle = "#F6F5FC"; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = "#F5F5F7"; ctx.fillRect(0, 0, W, H);
     let g = ctx.createRadialGradient(W * 0.92, 40, 0, W * 0.92, 40, 620);
-    g.addColorStop(0, "#E2D9FF"); g.addColorStop(1, "rgba(226,217,255,0)"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    g.addColorStop(0, "#D6E8FF"); g.addColorStop(1, "rgba(214,232,255,0)"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
     g = ctx.createRadialGradient(0, H * 0.78, 0, 0, H * 0.78, 520);
-    g.addColorStop(0, "#FFE1D6"); g.addColorStop(1, "rgba(255,225,214,0)"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    g.addColorStop(0, "#FFFFFF"); g.addColorStop(1, "rgba(255,255,255,0)"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
     // radar rings, top corner
-    ctx.strokeStyle = "rgba(91,63,224,.13)"; ctx.lineWidth = 2;
+    ctx.strokeStyle = "rgba(0,113,227,.12)"; ctx.lineWidth = 2;
     [220, 150, 80].forEach((r) => { ctx.beginPath(); ctx.arc(fx(W - 60), 120, r, 0, 7); ctx.stroke(); });
 
     // header
     logo(PAD, 64, 60);
-    text(rtl() ? "رادارك" : "Radarak", PAD + 76, 108, display(44), "#19163A");
-    text(t("kicker"), PAD, 190, body(22, 700), "#6A4BFF");
-    text(`${d.place} · ${d.range}`, PAD, 236, display(40, 700), "#19163A", "start", W - 2 * PAD);
+    text(rtl() ? "رادارك" : "Radarak", PAD + 76, 108, display(44), "#1D1D1F");
+    text(t("kicker"), PAD, 190, body(22, 700), "#0071E3");
+    text(`${d.place} · ${d.range}`, PAD, 236, display(40, 700), "#1D1D1F", "start", W - 2 * PAD);
 
     if (!d.enough) {
-      wrapText(t("soon"), PAD, 340, body(30), "#615D80", W - 2 * PAD, 44);
+      wrapText(t("soon"), PAD, 340, body(30), "#6E6E73", W - 2 * PAD, 44);
       footer(); return d;
     }
     // big number
@@ -151,48 +151,48 @@
     ctx.font = `800 150px "Bricolage Grotesque", sans-serif`; ctx.direction = rtl() ? "rtl" : "ltr"; ctx.textAlign = "start";
     const numW = ctx.measureText(d.n.toLocaleString("en-US")).width;
     g = ctx.createLinearGradient(fx(PAD, numW), 0, fx(PAD, numW) + numW, 0);
-    g.addColorStop(0, rtl() ? "#FF5C39" : "#6A4BFF"); g.addColorStop(0.5, "#B03FE0"); g.addColorStop(1, rtl() ? "#6A4BFF" : "#FF5C39");
+    g.addColorStop(0, rtl() ? "#5E5CE6" : "#0071E3"); g.addColorStop(1, rtl() ? "#0071E3" : "#5E5CE6");
     ctx.fillStyle = g; ctx.fillText(d.n.toLocaleString("en-US"), fx(PAD), 400);
     ctx.restore();
-    text(t("newJobs"), PAD + numW + 22, 360, body(36, 600), "#19163A");
+    text(t("newJobs"), PAD + numW + 22, 360, body(36, 600), "#1D1D1F");
     if (d.change !== null) {
       const up = d.change >= 0, label = `${up ? "▲" : "▼"} ${Math.abs(d.change)}% ${t("vsPrev")}`;
       ctx.font = body(24, 700); const lw = ctx.measureText(label).width + 36;
-      rrect(PAD + numW + 22, 376, lw, 46, 23, up ? "#D7F5EA" : "#FFE1DA");
-      text(label, PAD + numW + 40, 408, body(24, 700), up ? "#0B7A55" : "#B4232F");
+      rrect(PAD + numW + 22, 376, lw, 46, 23, up ? "#E3F5EA" : "#FFE1DA");
+      text(label, PAD + numW + 40, 408, body(24, 700), up ? "#12733F" : "#B4232F");
     }
 
     // hiring by track
     let y = 490;
-    text(t("byTrack"), PAD, y, display(32), "#19163A"); y += 26;
+    text(t("byTrack"), PAD, y, display(32), "#1D1D1F"); y += 26;
     const maxT = Math.max(1, ...d.tracks.map((x) => x[1]));
     d.tracks.forEach(([name, n]) => {
       y += 46;
-      text(name, PAD, y, body(25, 600), "#19163A", "start", 330);
+      text(name, PAD, y, body(25, 600), "#1D1D1F", "start", 330);
       const bw = Math.max(8, (W - 2 * PAD - 360 - 80) * (n / maxT));
-      rrect(PAD + 350, y - 24, W - 2 * PAD - 350 - 80, 28, 14, "#ECEAF6");
-      rrect(PAD + 350, y - 24, bw, 28, 14, TRACK_COLORS[name] || "#6A4BFF");
-      text(n.toLocaleString("en-US"), W - PAD, y, body(25, 700), "#19163A", "end");
+      rrect(PAD + 350, y - 24, W - 2 * PAD - 350 - 80, 28, 14, "#E8E8ED");
+      rrect(PAD + 350, y - 24, bw, 28, 14, TRACK_COLORS[name] || "#0071E3");
+      text(n.toLocaleString("en-US"), W - PAD, y, body(25, 700), "#1D1D1F", "end");
     });
 
     // two columns: rising skills | most asked-for
     y += 72;
     const colW = (W - 2 * PAD - 40) / 2;
     const col = (x0, title, rows, valueOf, color) => {
-      text(title, x0, y, display(30), "#19163A");
+      text(title, x0, y, display(30), "#1D1D1F");
       rows.forEach((r, i) => {
         const yy = y + 50 + i * 44;
-        text(r[0], x0, yy, body(25, 600), "#19163A", "start", colW - 150);
+        text(r[0], x0, yy, body(25, 600), "#1D1D1F", "start", colW - 150);
         text(valueOf(r), x0 + colW, yy, body(24, 700), color, "end");
       });
     };
-    col(PAD, t("rising"), d.rising, (r) => t("pts")(r[3]), "#0B7A55");
-    col(PAD + colW + 40, t("topSkills"), d.top, (r) => `${Math.round(r[2])}%`, "#6A4BFF");
+    col(PAD, t("rising"), d.rising, (r) => t("pts")(r[3]), "#12733F");
+    col(PAD + colW + 40, t("topSkills"), d.top, (r) => `${Math.round(r[2])}%`, "#0071E3");
 
     // companies
     y += 50 + Math.max(d.rising.length, d.top.length, 1) * 44 + 50;
     if (d.companies.length) {
-      text(t("companies"), PAD, y, display(30), "#19163A");
+      text(t("companies"), PAD, y, display(30), "#1D1D1F");
       let x = PAD, yy = y + 26;
       ctx.font = body(23, 600);
       d.companies.forEach(([c]) => {
@@ -200,8 +200,8 @@
         if (x + w > W - PAD) { x = PAD; yy += 56; }
         if (yy + 44 > H - 170) return;
         rrect(x, yy, w, 44, 22, "#FFFFFF");
-        ctx.strokeStyle = "#E3E1F0"; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(fx(x, w), yy, w, 44, 22); ctx.stroke();
-        text(label, x + 18, yy + 30, body(23, 600), "#19163A");
+        ctx.strokeStyle = "#E5E5EA"; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(fx(x, w), yy, w, 44, 22); ctx.stroke();
+        text(label, x + 18, yy + 30, body(23, 600), "#1D1D1F");
         ctx.font = body(23, 600);
         x += w + 12;
       });
@@ -213,7 +213,7 @@
   function footer() {
     const fy = H - 150;
     const g = ctx.createLinearGradient(0, 0, W, 0);
-    g.addColorStop(0, "#6A4BFF"); g.addColorStop(0.5, "#B03FE0"); g.addColorStop(1, "#FF5C39");
+    g.addColorStop(0, "#0071E3"); g.addColorStop(1, "#5E5CE6");
     ctx.fillStyle = g; ctx.beginPath(); ctx.roundRect(PAD - 16, fy, W - 2 * PAD + 32, 108, 26); ctx.fill();
     text(t("footer1"), PAD + 14, fy + 44, body(27, 700), "#FFFFFF", "start", W - 2 * PAD - 30);
     text(SITE.replace(/^https?:\/\//, "").replace(/\/$/, ""), PAD + 14, fy + 84, body(22, 500), "rgba(255,255,255,.92)", "start", W - 2 * PAD - 30);

@@ -335,8 +335,8 @@ CSS = """
 """
 
 BRAND_SVG = ('<svg viewBox="0 0 32 32" aria-hidden="true"><circle class="disc" cx="16" cy="16" r="15"/><circle class="ring" '
-             'cx="16" cy="16" r="8.5"/><circle cx="22.5" cy="9.5" r="3" fill="#FFB020"/><circle cx="9.5" cy="19.5" r="2.5" '
-             'fill="#FF5C39"/><circle cx="19.5" cy="22.5" r="2.1" fill="#12B886"/></svg>')
+             'cx="16" cy="16" r="8.5"/><circle cx="22.5" cy="9.5" r="3" fill="#FFFFFF"/><circle cx="9.5" cy="19.5" r="2.5" '
+             'fill="#64D2FF"/><circle cx="19.5" cy="22.5" r="2.1" fill="#30D158"/></svg>')
 
 
 def _shell(lang: str, rel: str, title: str, desc: str, canonical: str, alt_en: str, alt_ar: str, other_href: str,

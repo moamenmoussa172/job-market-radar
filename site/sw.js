@@ -2,7 +2,7 @@
    - Pages, code and job data: network first (always fresh when online), the last copy when offline or slow.
    - Fonts, icons and libraries: from the cache first (they rarely change).
    Only this site's own files are handled; analytics and other sites go straight to the network. */
-const CACHE = "radarak-v1";
+const CACHE = "radarak-v2";   // v2: new colors and icons (Oct 2026)
 const SHELL = ["./", "index.html", "style.css", "app.js", "manifest.webmanifest", "icons/icon-192.png",
   "fonts/bricolage-grotesque-latin-700-normal.woff2", "fonts/ibm-plex-sans-arabic-latin-400-normal.woff2"];
 const SLOW_MS = 4000;   // on a slow connection, show the saved copy instead of waiting
