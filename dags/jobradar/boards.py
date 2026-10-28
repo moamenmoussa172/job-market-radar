@@ -42,11 +42,15 @@ DEAD_AFTER_FAILURES = 3
 HARVEST_DAYS = 7
 MAX_PROBES_PER_RUN = int(os.environ.get("BOARD_PROBES_PER_RUN", "800"))
 PROBE_RECHECK_DAYS = 30
+# Most guesses per platform per run. SmartRecruiters answers every name (an empty list instead of
+# "not found"), so its guesses rarely resolve: they must not take the whole daily budget.
+PROBE_ATS_CAP = {"smartrecruiters": int(os.environ.get("BOARD_PROBES_SMARTRECRUITERS", "100"))}
 PROBE_PAUSE_SECONDS = 0.3   # a company with no tech jobs today is tried again a month later
 # Some platforms limit how fast one address may ask: those guesses go slower, and when a platform
 # answers 429 ("too many requests") it gets no more guesses this run, so the daily collection
 # of its real boards isn't blocked too.
-PROBE_MIN_INTERVAL = {"workable": 4.0, "smartrecruiters": 1.5, "recruitee": 1.0, "personio": 1.0}
+PROBE_MIN_INTERVAL = {"workable": 4.0, "smartrecruiters": 1.5, "recruitee": 1.0, "personio": 1.0, "bamboohr": 1.0,
+                      "pinpoint": 1.0}
 COMPANIES_FILE = Path(os.environ.get("DBT_PROJECT_DIR") or Path(__file__).resolve().parents[2] / "dbt") \
     / "seeds" / "companies.csv"
 
@@ -84,6 +88,8 @@ TOKEN_PATTERNS = {
     "workday": r"([a-z0-9-]+\.wd[0-9]+\.myworkdayjobs\.com/(?:[a-z]{2}-[A-Z]{2}/)?[A-Za-z0-9_-]+)",
     "breezy": r"([A-Za-z0-9-]+)\.breezy\.hr",
     "teamtailor": r"([A-Za-z0-9-]+)\.teamtailor\.com",
+    "bamboohr": r"([A-Za-z0-9-]+)\.bamboohr\.com",
+    "pinpoint": r"([A-Za-z0-9-]+)\.pinpointhq\.com",
 }
 _NOT_TOKENS = {"embed", "api", "v1", "jobs", "job", "j", "boards", "careers", "search", "apply", "oneclick-ui",
                "www", "app", "help", "support", "docs", "blog", "career", "marketplace", "status", ""}
@@ -369,6 +375,11 @@ def matches_country(jobs: list[dict], country: str | None) -> bool:
 def probe_board(ats: str, token: str, country: str | None) -> tuple[str, str | None]:
     """-> (status, note). active = board exists and its tech jobs are in the company's country."""
     try:
+        if ats == "smartrecruiters":
+            # an unknown company id still returns 200 with an empty list: no posting at all = not a board
+            head = sources._get_json(sources.SMARTRECRUITERS_URL.format(token=token), params={"limit": 1})
+            if isinstance(head, dict) and not (head.get("totalFound") or head.get("content")):
+                return "dead", "no postings (SmartRecruiters answers for any name)"
         jobs = sources.ATS_FETCHERS[ats](token)
     except requests.HTTPError as exc:
         code = exc.response.status_code if exc.response is not None else None
@@ -384,6 +395,21 @@ def probe_board(ats: str, token: str, country: str | None) -> tuple[str, str | N
     return "dead", f"jobs not in {country} (probably a different company)"
 
 
+def cap_per_platform(rows: list[tuple], limit: int, caps: dict[str, int] | None = None) -> list[tuple]:
+    """Keep the order, at most `limit` rows, and at most caps[ats] rows of a platform."""
+    caps = PROBE_ATS_CAP if caps is None else caps
+    out, per = [], {}
+    for row in rows:
+        ats = row[0]
+        if ats in caps and per.get(ats, 0) >= caps[ats]:
+            continue
+        per[ats] = per.get(ats, 0) + 1
+        out.append(row)
+        if len(out) >= limit:
+            break
+    return out
+
+
 def validate_probes(conn, limit: int = MAX_PROBES_PER_RUN) -> dict[str, int]:
     with conn.cursor() as cur:
         cur.execute(
@@ -397,9 +423,9 @@ def validate_probes(conn, limit: int = MAX_PROBES_PER_RUN) -> dict[str, int]:
             order by b.last_checked_at nulls first, b.company_name, b.ats
             limit %s
             """,
-            (PROBE_RECHECK_DAYS, limit),
+            (PROBE_RECHECK_DAYS, limit * 4),
         )
-        todo = cur.fetchall()
+        todo = cap_per_platform(cur.fetchall(), limit)
     counts = {"active": 0, "dead": 0, "candidate": 0, "retry": 0, "skipped": 0, "rate_limited": 0}
     found: set[str] = set()
     blocked: set[str] = set()          # platforms that said "too many requests" this run

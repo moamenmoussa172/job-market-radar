@@ -48,6 +48,8 @@ keyed as (
             when 'personio'   then 1
             when 'workday'    then 1
             when 'teamtailor' then 1
+            when 'bamboohr'   then 1
+            when 'pinpoint'   then 1
             when 'breezy'     then 5   -- no description
             when 'successfactors' then 1
             when 'phenom'     then 2   -- company site, teaser only

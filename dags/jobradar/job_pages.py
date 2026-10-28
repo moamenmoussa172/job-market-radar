@@ -29,7 +29,7 @@ log = logging.getLogger(__name__)
 
 # company career sites (the board readers in sources.ATS_FETCHERS)
 JOB_PAGE_SOURCES = ("greenhouse", "lever", "ashby", "smartrecruiters", "workable", "recruitee", "personio", "breezy",
-                    "teamtailor", "workday", "successfactors", "phenom", "oracle")
+                    "teamtailor", "workday", "successfactors", "phenom", "oracle", "bamboohr", "pinpoint")
 MIN_DESCRIPTION_CHARS = 400
 MAX_DESCRIPTION_CHARS = 8000
 MAX_COUNTRIES = 60          # remote jobs open to a whole region list many countries

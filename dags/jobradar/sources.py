@@ -172,12 +172,16 @@ ASHBY_URL = "https://api.ashbyhq.com/posting-api/job-board/{token}"
 SMARTRECRUITERS_URL = "https://api.smartrecruiters.com/v1/companies/{token}/postings"
 WORKABLE_URL = "https://www.workable.com/api/accounts/{token}"
 RECRUITEE_URL = "https://{token}.recruitee.com/api/offers/"           # public Careers Site API
+BAMBOOHR_LIST_URL = "https://{token}.bamboohr.com/careers/list"                  # public careers page data
+BAMBOOHR_DETAIL_URL = "https://{token}.bamboohr.com/careers/{id}/detail"
+BAMBOOHR_DETAILS_MAX = 40                                                          # descriptions per board per day
+PINPOINT_URL = "https://{token}.pinpointhq.com/postings.json"                      # public postings feed
 PERSONIO_URLS = ["https://{token}.jobs.personio.de/xml",                # public XML job feed
                  "https://{token}.jobs.personio.com/xml"]
 
 # Platforms whose board names can be guessed from a company name (used by probing)
 PROBE_ATS = ("greenhouse", "lever", "ashby", "smartrecruiters", "workable", "recruitee", "personio",
-             "breezy", "teamtailor")
+             "breezy", "teamtailor", "bamboohr", "pinpoint")
 # + enterprise platforms (big corporates, banks, telcos, oil & gas): their board ids can't be guessed,
 # they come from company_boards.csv or from job links that point to them (harvest).
 BOARD_ATS = PROBE_ATS + ("workday", "successfactors", "phenom", "oracle")
@@ -267,6 +271,40 @@ def _fetch_breezy(token: str) -> list[dict]:
     if not isinstance(positions, list):
         raise ValueError(f"breezy '{token}' did not return a positions list")
     return [p for p in positions if isinstance(p, dict) and is_tech_role(p.get("name"))]
+
+
+def _fetch_bamboohr(token: str) -> list[dict]:
+    """BambooHR careers site (<company>.bamboohr.com/careers): the open jobs list, then the description
+    of each tech job from its detail page (popular with startups and mid-size firms in the region)."""
+    payload = _get_json(BAMBOOHR_LIST_URL.format(token=token))
+    rows = payload.get("result") if isinstance(payload, dict) else None
+    if not isinstance(rows, list):
+        raise ValueError(f"bamboohr '{token}' did not return a jobs list")
+    jobs = []
+    for r in rows:
+        if not isinstance(r, dict) or not is_tech_role(r.get("jobOpeningName")):
+            continue
+        job = {**r, "job_url": f"https://{token}.bamboohr.com/careers/{r.get('id')}"}
+        if len(jobs) < BAMBOOHR_DETAILS_MAX:
+            try:
+                detail = _get_json(BAMBOOHR_DETAIL_URL.format(token=token, id=r.get("id")))
+                opening = ((detail or {}).get("result") or {}).get("jobOpening") or {}
+                job["description"] = opening.get("description")
+                job["datePosted"] = opening.get("datePosted")
+                job["compensation"] = opening.get("compensation")
+            except (requests.RequestException, ValueError, AttributeError):
+                pass                                    # the job still counts, without its description
+        jobs.append(job)
+    return jobs
+
+
+def _fetch_pinpoint(token: str) -> list[dict]:
+    """Pinpoint careers site (<company>.pinpointhq.com): public postings feed with full descriptions."""
+    payload = _get_json(PINPOINT_URL.format(token=token))
+    rows = payload.get("data") if isinstance(payload, dict) else None
+    if not isinstance(rows, list):
+        raise ValueError(f"pinpoint '{token}' did not return a postings list")
+    return [r for r in rows if isinstance(r, dict) and is_tech_role(r.get("title"))]
 
 
 def _local(tag: str) -> str:
@@ -794,6 +832,8 @@ ATS_FETCHERS: dict[str, Callable[[str], list[dict]]] = {
     "teamtailor": _fetch_teamtailor,
     "phenom": _fetch_phenom,
     "oracle": _fetch_oracle,
+    "bamboohr": _fetch_bamboohr,
+    "pinpoint": _fetch_pinpoint,
 }
 
 
@@ -887,6 +927,24 @@ def extract_breezy(tokens: list[str] | None = None, pause_seconds: float = 0.5,
 def extract_teamtailor(tokens: list[str] | None = None, pause_seconds: float = 0.5,
                        meta: dict[str, dict] | None = None) -> ExtractResult:
     return extract_company_boards("teamtailor", tokens, pause_seconds, meta)
+
+
+def extract_bamboohr(tokens: list[str] | None = None, pause_seconds: float = 0.5,
+                     meta: dict[str, dict] | None = None) -> ExtractResult:
+    return extract_company_boards("bamboohr", tokens, pause_seconds, meta)
+
+
+def extract_pinpoint(tokens: list[str] | None = None, pause_seconds: float = 0.5,
+                     meta: dict[str, dict] | None = None) -> ExtractResult:
+    return extract_company_boards("pinpoint", tokens, pause_seconds, meta)
+
+
+def bamboohr_id(record: dict) -> str:
+    return f"{record.get('board_token', '')}:{record.get('id') or record['job_url']}"
+
+
+def pinpoint_id(record: dict) -> str:
+    return f"{record.get('board_token', '')}:{record.get('id') or record.get('url')}"
 
 
 def breezy_id(record: dict) -> str:
@@ -1435,6 +1493,8 @@ SOURCES: dict[str, SourceSpec] = {
     "oracle": SourceSpec(extract_oracle, oracle_id, required=False, board_ats="oracle"),
     "breezy": SourceSpec(extract_breezy, breezy_id, required=False, board_ats="breezy"),
     "teamtailor": SourceSpec(extract_teamtailor, teamtailor_id, required=False, board_ats="teamtailor"),
+    "bamboohr": SourceSpec(extract_bamboohr, bamboohr_id, required=False, board_ats="bamboohr"),
+    "pinpoint": SourceSpec(extract_pinpoint, pinpoint_id, required=False, board_ats="pinpoint"),
     "successfactors": SourceSpec(extract_successfactors, successfactors_id, required=False,
                                  board_ats="successfactors"),
     # key-based aggregators: optional (missing key / quota reached only warns)

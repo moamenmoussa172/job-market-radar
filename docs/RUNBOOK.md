@@ -83,6 +83,8 @@ To add a company you know is hiring, open one of its job links and add a line to
 | `jobs.smartrecruiters.com/AlMosafer/...` | `smartrecruiters,AlMosafer,Almosafer,Saudi Arabia` |
 | `anghami.breezy.hr/p/...` | `breezy,anghami,Anghami,United Arab Emirates` |
 | `spidersilk.teamtailor.com/jobs/...` | `teamtailor,spidersilk,spiderSilk,Jordan` |
+| `breadfast.bamboohr.com/careers/41` | `bamboohr,breadfast,Breadfast,Egypt` |
+| `tabby.pinpointhq.com/postings/...` | `pinpoint,tabby,Tabby,United Arab Emirates` |
 | `xyz.recruitee.com/o/...` / `xyz.jobs.personio.de/...` | `recruitee,xyz,...` / `personio,xyz,...` |
 
 The next run checks each new line with one request and starts collecting from it. Listed boards that fail

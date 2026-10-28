@@ -125,13 +125,14 @@ def test_all_sources_registered():
     assert set(sources.SOURCES) == {"remotive", "jobicy", "himalayas", "arbeitnow", "greenhouse", "lever",
                                     "ashby", "jsearch", "jooble", "smartrecruiters", "workable",
                                     "recruitee", "personio", "adzuna", "bundesagentur", "workday", "successfactors",
-                                    "breezy", "teamtailor", "remoteok", "phenom", "oracle"}
+                                    "breezy", "teamtailor", "remoteok", "phenom", "oracle", "bamboohr", "pinpoint"}
 
 
 def test_optional_sources():
     assert {s for s, spec in sources.SOURCES.items() if not spec.required} == {
         "remotive", "jsearch", "jooble", "smartrecruiters", "workable", "recruitee", "personio", "adzuna",
-        "bundesagentur", "workday", "successfactors", "breezy", "teamtailor", "remoteok", "phenom", "oracle"}
+        "bundesagentur", "workday", "successfactors", "breezy", "teamtailor", "remoteok", "phenom", "oracle",
+        "bamboohr", "pinpoint"}
 
 
 def test_daily_slice_rotates_through_every_pair():
@@ -809,3 +810,76 @@ def test_arbeitnow_keeps_earlier_pages_when_still_rate_limited(monkeypatch):
     monkeypatch.setattr(sources.time, "sleep", lambda s: None)
     res = sources.extract_arbeitnow()
     assert len(res.records) == 1 and "stopped at page 2" in res.warnings[0]
+
+
+def test_bamboohr_list_and_details(monkeypatch):
+    calls = []
+
+    def fake(url, params=None, headers=None):
+        calls.append(url)
+        if url.endswith("/careers/list"):
+            return {"meta": {"totalCount": 2}, "result": [
+                {"id": "41", "jobOpeningName": "Senior Data Engineer", "departmentLabel": "Data",
+                 "employmentStatusLabel": "Full-Time", "location": {"city": "Cairo", "state": None},
+                 "atsLocation": {"country": "Egypt", "city": "Cairo"}, "isRemote": None, "locationType": "2"},
+                {"id": "42", "jobOpeningName": "Office Manager"}]}
+        if url.endswith("/careers/41/detail"):
+            return {"result": {"jobOpening": {"description": "<p>Build pipelines with Spark</p>", "datePosted": "2026-10-20"}}}
+        raise AssertionError(url)
+    monkeypatch.setattr(sources, "_get_json", fake)
+    res = sources.extract_bamboohr(tokens=["breadfast"], pause_seconds=0)
+    [job] = res.records
+    assert sources.bamboohr_id(job) == "breadfast:41"
+    assert job["job_url"] == "https://breadfast.bamboohr.com/careers/41"
+    assert job["description"].startswith("<p>Build") and job["datePosted"] == "2026-10-20"
+    assert not any(u.endswith("/42/detail") for u in calls)                      # non-tech: no detail call
+    monkeypatch.setattr(sources, "_get_json", lambda url, params=None, headers=None: {"error": "x"})
+    assert sources.extract_bamboohr(tokens=["nope"], pause_seconds=0).warnings
+
+
+def test_bamboohr_job_kept_when_detail_fails(monkeypatch):
+    def fake(url, params=None, headers=None):
+        if url.endswith("/careers/list"):
+            return {"result": [{"id": "7", "jobOpeningName": "Backend Engineer"}]}
+        raise ValueError("not json")
+    monkeypatch.setattr(sources, "_get_json", fake)
+    [job] = sources.extract_bamboohr(tokens=["acme"], pause_seconds=0).records
+    assert "description" not in job or job.get("description") is None
+
+
+def test_pinpoint_postings(monkeypatch):
+    feed = {"data": [
+        {"id": "9", "title": "Machine Learning Engineer", "description": "<p>PyTorch</p>",
+         "url": "https://tabby.pinpointhq.com/postings/abc", "workplace_type": "hybrid",
+         "location": {"city": "Dubai", "name": "Dubai", "country": "United Arab Emirates"}},
+        {"id": "10", "title": "Receptionist"}]}
+    monkeypatch.setattr(sources, "_get_json", lambda url, params=None, headers=None: feed)
+    res = sources.extract_pinpoint(tokens=["tabby"], pause_seconds=0)
+    assert [sources.pinpoint_id(r) for r in res.records] == ["tabby:9"]
+    monkeypatch.setattr(sources, "_get_json", lambda url, params=None, headers=None: [])
+    assert sources.extract_pinpoint(tokens=["x"], pause_seconds=0).warnings
+
+
+def test_new_platforms_are_probed_and_harvested():
+    from jobradar import boards
+    pairs = boards.probe_tokens("Breadfast")
+    assert ("bamboohr", "breadfast") in pairs and ("pinpoint", "breadfast") in pairs
+    assert boards.tokens_in_text("apply at https://swvl.bamboohr.com/careers/12 or https://tabby.pinpointhq.com/postings/x") \
+        == {("bamboohr", "swvl"), ("pinpoint", "tabby")}
+
+
+def test_smartrecruiters_guess_without_any_posting_is_dead(monkeypatch):
+    from jobradar import boards
+    monkeypatch.setattr(sources, "_get_json", lambda url, params=None, headers=None: {"totalFound": 0, "content": []})
+    assert boards.probe_board("smartrecruiters", "NoSuchCo", "Egypt")[0] == "dead"
+    monkeypatch.setattr(sources, "_get_json", lambda url, params=None, headers=None: (
+        {"totalFound": 3, "content": [{"id": "1", "name": "Cashier"}]}))
+    assert boards.probe_board("smartrecruiters", "RealCo", "Egypt") == ("candidate", "no tech jobs to verify yet")
+
+
+def test_probe_budget_is_shared_between_platforms():
+    from jobradar import boards
+    rows = [("smartrecruiters", f"s{i}", "Egypt", f"C{i}") for i in range(10)] + [("workable", "w1", "Egypt", "W")]
+    picked = boards.cap_per_platform(rows, 5, {"smartrecruiters": 2})
+    assert [r[0] for r in picked] == ["smartrecruiters", "smartrecruiters", "workable"]
+    assert len(boards.cap_per_platform(rows, 4, {})) == 4
