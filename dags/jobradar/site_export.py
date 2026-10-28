@@ -347,6 +347,9 @@ def all_site_files(conn) -> dict[str, bytes]:
     jobs = all_jobs(data)
     job_pages.attach_details(conn, jobs, meta)                # which jobs get their own page (Google for Jobs)
     seo = seo_pages.seo_files(jobs, meta, site_base_url())  # also fills meta["feeds"]
+    from jobradar import insights
+    data["data/insights.json"] = json.dumps(insights.all_insights(jobs, meta), ensure_ascii=False,
+                                            separators=(",", ":")).encode("utf-8")
     data["data/meta.json"] = json.dumps(meta, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     return version_assets({**site_files(), **data, **add_newsletter(add_analytics(seo))})
 

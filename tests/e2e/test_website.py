@@ -986,3 +986,29 @@ def test_cv_shows_next_skill_and_makes_a_share_card(browser, base, tmp_path):
     assert int.from_bytes(data[16:20], "big") == 1080 and int.from_bytes(data[20:24], "big") == 1350
     assert not errors, errors
     ctx.close()
+
+
+def test_insight_of_the_day_card(browser, base, tmp_path):
+    if not exists(base, "data/insights.json"):
+        pytest.skip("no insights published yet")
+    items = json.loads(fetch(base, "data/insights.json"))["items"]
+    if not items:
+        pytest.skip("no insight today")
+    ctx = browser.new_context(viewport={"width": 1280, "height": 900}, timezone_id="UTC", accept_downloads=True)
+    ctx.add_init_script("localStorage.setItem('jr_lang', JSON.stringify('en'));")
+    p = ctx.new_page()
+    p.goto(base + "/")
+    p.wait_for_selector("#insight", timeout=30000)
+    card = p.locator("#insight")
+    assert items[0]["title"]["en"] in card.inner_text()
+    assert p.locator("#jobList > li").nth(4).get_attribute("id") == "insight"     # after the 4th job
+    if len(items) > 1:
+        p.locator("#insight [data-ins=next]").click()
+        assert items[1]["title"]["en"] in p.locator("#insight").inner_text()
+    with p.expect_download() as dl:
+        p.locator("#insight [data-ins=img]").click()
+    path = tmp_path / "insight.png"
+    dl.value.save_as(path)
+    data = path.read_bytes()
+    assert data[:4] == b"\x89PNG" and int.from_bytes(data[16:20], "big") == 1080
+    ctx.close()

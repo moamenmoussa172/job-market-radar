@@ -272,6 +272,34 @@ def record_posted(conn, chat: str, job_ids: list[str]) -> None:
     conn.commit()
 
 
+def todays_insight(conn) -> dict | None:
+    """The site's insight of the day (same data as the website), or None if it can't be computed."""
+    try:
+        import json
+        from jobradar import insights, site_export
+        data = site_export.export_site_data(conn)
+        items = insights.all_insights(site_export.all_jobs(data), json.loads(data["data/meta.json"]))["items"]
+        return items[0] if items else None
+    except Exception as exc:  # noqa: BLE001 - the job posts go out anyway
+        conn.rollback()
+        log.warning("telegram: no insight today (%s)", exc)
+        return None
+
+
+def post_insight(conn, token: str, chat: str, insight: dict, url: str, today: dt.date | None = None) -> bool:
+    """Send the insight of the day to a channel, once per day (kept in raw.telegram_posts as insight:<date>)."""
+    from jobradar.insights import telegram_text
+    key = f"insight:{(today or dt.date.today()).isoformat()}"
+    with conn.cursor() as cur:
+        cur.execute("select 1 from raw.telegram_posts where chat = %s and job_id = %s", (chat, key))
+        if cur.fetchone():
+            return False
+    send_message(token, chat, telegram_text(insight, url))
+    record_posted(conn, chat, [key])
+    time.sleep(1.5)
+    return True
+
+
 def post_from_env(conn) -> dict[str, int]:
     """Post today's new jobs to every configured channel. -> {chat: jobs posted}. Never raises for one channel."""
     token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
@@ -282,8 +310,11 @@ def post_from_env(conn) -> dict[str, int]:
     limit = int(os.environ.get("TELEGRAM_MAX_JOBS", "40"))
     ensure_schema(conn)
     url, result = site_url(), {}
+    insight = todays_insight(conn)
     for channel in channels:
         try:
+            if insight:
+                post_insight(conn, token, channel.chat, insight, url)
             jobs = select_jobs(conn, channel, limit)
             for text in format_messages(channel, jobs, url):
                 send_message(token, channel.chat, text)

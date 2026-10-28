@@ -107,8 +107,8 @@ CSS = """
 .clist .cnt{font:700 13px/1 var(--font);color:var(--violet-ink);background:var(--violet-soft);border-radius:99px;padding:6px 9px;white-space:nowrap}
 .intro{font-size:16px;line-height:1.7;max-width:860px}
 .seonav{display:flex;gap:4px 14px;flex-wrap:wrap;align-items:center}
-.seonav a.navlink{color:rgba(255,255,255,.85);text-decoration:none;font-weight:600;font-size:14px}
-.seonav a.navlink:hover{color:#fff;text-decoration:underline}
+.seonav a.navlink{color:var(--ink-2);text-decoration:none;font-weight:500;font-size:14px}
+.seonav a.navlink:hover{color:var(--ink);text-decoration:none}
 @media (max-width:600px){.seonav a.navlink{display:none}.saltable th,.saltable td{padding:10px}.saltable .bar{min-width:70px}}
 """
 

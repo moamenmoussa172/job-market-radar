@@ -91,6 +91,8 @@
       nlTitle: "Radarak Weekly", nlText: "Every Sunday: the week's new tech jobs in Egypt, the Gulf and remote, in one short email.",
       nlEmail: "Your email", nlEmailPh: "you@example.com", nlBtn: "Subscribe", nlThanks: "Check your inbox to confirm.",
       tgPlace: (p) => `New ${p} jobs every morning on Telegram`, tgJoin: "Join on Telegram", tgAny: "New tech jobs every morning on Telegram", tgFoot: "New jobs every day on Telegram:", hideTip: "Hide",
+      insKicker: "Insight of the day", insSee: "See the jobs", insImg: "Save image", insPrev: "Previous insight", insNext: "Next insight",
+      insChannels: "New jobs every morning: t.me/radarak_egypt · gulf · remote",
       shareCard: "Share my result", shareCardDone: "Image saved. Share it on LinkedIn or WhatsApp!",
       cardMatch: "I match", cardJobs: (what, where) => `${what} jobs${where ? " in " + where : ""}`, cardTech: "tech", cardRemote: "remote",
       cardNext: "My next skills to learn", cardHave: "My top skills", cardJobsN: (n) => `+${n} jobs`,
@@ -189,6 +191,8 @@
       nlTitle: "نشرة رادارك الأسبوعية", nlText: "كل يوم حد: وظايف التك الجديدة في مصر والخليج والريموت، في إيميل واحد قصير.",
       nlEmail: "الإيميل بتاعك", nlEmailPh: "you@example.com", nlBtn: "اشترك", nlThanks: "شوف الإيميل بتاعك عشان تأكد الاشتراك.",
       tgPlace: (p) => `وظايف ${p} الجديدة كل صبح على تيليجرام`, tgJoin: "اشترك على تيليجرام", tgAny: "وظايف التك الجديدة كل صبح على تيليجرام", tgFoot: "وظايف جديدة كل يوم على تيليجرام:", hideTip: "إخفاء",
+      insKicker: "معلومة النهارده", insSee: "شوف الوظايف", insImg: "احفظ الصورة", insPrev: "المعلومة اللي قبلها", insNext: "المعلومة اللي بعدها",
+      insChannels: "وظايف جديدة كل صبح: t.me/radarak_egypt · gulf · remote",
       shareCard: "شارك نتيجتك", shareCardDone: "الصورة اتحفظت. شاركها على لينكدإن أو واتساب!",
       cardMatch: "أنا مناسب لـ", cardJobs: (what, where) => `وظيفة ${what}${where ? " في " + where : ""}`, cardTech: "تك", cardRemote: "ريموت",
       cardNext: "المهارات اللي هتعلمها بعد كده", cardHave: "أهم مهاراتي", cardJobsN: (n) => `+${n} وظيفة`,
@@ -256,6 +260,7 @@
   };
   let lang = store.get("lang", (navigator.language || "").startsWith("ar") ? "ar" : "en");
   let trends = null;
+  let insightsData = null, insIdx = 0;                  // data/insights.json: today's insight first
   let meta = null, jobs = [], regionOf = {}, shown = PAGE, groups = [], current = [];
   // The job list comes in two files: data/jobs.json (remote + Middle East & Africa, what most visitors need)
   // and data/jobs-more.json (everything else), fetched only when the visitor looks beyond those regions.
@@ -536,7 +541,9 @@
   function renderJobs() {
     const list = $("jobList");
     list.removeAttribute("aria-busy");
-    list.innerHTML = groups.slice(0, shown).map(jobRow).join("");
+    const rows = groups.slice(0, shown).map(jobRow);
+    if (insightsData && insightsData.items.length && rows.length >= 6) rows.splice(4, 0, insightCard());
+    list.innerHTML = rows.join("");
     const companies = new Set(current.map((j) => (j.c || "").toLowerCase()).filter(Boolean)).size;
     $("resultSummary").innerHTML = t("summary")(num(groups.length), num(companies));
     const empty = $("empty");
@@ -639,6 +646,85 @@
       <button type="button" class="primary sm sharecard" data-sharecard>📸 ${t("shareCard")}</button>`;
   }
 
+  // ------------------------------------------------------------------ insight of the day (a card in the job list)
+  const L = (o) => (o && (o[lang] || o.en)) || "";
+  function insightCard() {
+    const items = insightsData.items, n = items.length, ins = items[((insIdx % n) + n) % n];
+    const bars = ins.bars.map((b) => `<li><span>${esc(L(b.l))}</span><span class="ib"><i style="width:${Math.max(2, Math.round(b.v * 100))}%"></i></span><b>${esc(b.t)}</b></li>`).join("");
+    return `<li class="insight" id="insight" aria-label="${esc(t("insKicker"))}">
+      <p class="ins-k">📊 ${esc(t("insKicker"))} · ${esc(shortDate(insightsData.date))}</p>
+      <div class="ins-main"><b class="ins-big">${esc(ins.big)}</b><div><h3>${esc(L(ins.title))}</h3><p>${esc(L(ins.big_label))}</p></div></div>
+      <ul class="ins-bars">${bars}</ul>
+      <p class="ins-note">${esc(L(ins.note))}</p>
+      <div class="ins-act">
+        <span class="ins-nav"><button type="button" data-ins="prev" aria-label="${esc(t("insPrev"))}">‹</button><span>${(((insIdx % n) + n) % n) + 1} / ${n}</span><button type="button" data-ins="next" aria-label="${esc(t("insNext"))}">›</button></span>
+        ${ins.link ? `<a class="linkbtn" href="${esc(ins.link)}" data-ins="go">${esc(t("insSee"))} →</a>` : ""}
+        <button type="button" class="ghostbtn sm" data-ins="img">📸 ${esc(t("insImg"))}</button>
+      </div></li>`;
+  }
+  function onInsightClick(e) {
+    const b = e.target.closest("[data-ins]");
+    if (!b || !insightsData) return;
+    const what = b.dataset.ins;
+    if (what === "prev" || what === "next") {
+      insIdx += what === "next" ? 1 : -1;
+      const el = $("insight");
+      if (el) el.outerHTML = insightCard();
+      track("insight-" + what);
+    } else if (what === "img") { insightImage(); }
+    else if (what === "go") { track("insight-go"); }
+  }
+  async function insightImage() {
+    const items = insightsData.items, n = items.length, ins = items[((insIdx % n) + n) % n];
+    track("insight-image/" + ins.id);
+    const W = 1080, H = 1350, P = 80, rtl = lang === "ar";
+    const D = '"Bricolage Grotesque", "IBM Plex Sans Arabic", sans-serif', F = '"IBM Plex Sans Arabic", system-ui, sans-serif';
+    try { await Promise.all(["800 80px " + D, "700 40px " + F, "500 30px " + F].map((f) => document.fonts.load(f))); } catch { /* system fonts */ }
+    const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+    const ctx = cv.getContext("2d");
+    ctx.fillStyle = "#0F1222"; ctx.fillRect(0, 0, W, H);
+    const glow = ctx.createRadialGradient(W, 0, 0, W, 0, 760); glow.addColorStop(0, "rgba(10,132,255,.35)"); glow.addColorStop(1, "rgba(15,18,34,0)");
+    ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
+    ctx.direction = rtl ? "rtl" : "ltr";
+    const X = (x) => (rtl ? W - x : x);
+    const text = (s, x, y, font, color, align) => { ctx.font = font; ctx.fillStyle = color; ctx.textAlign = align || (rtl ? "right" : "left"); ctx.fillText(s, X(x), y); };
+    text("Radarak", P, 130, "800 48px " + D, "#FFFFFF");
+    text("📊 " + t("insKicker") + " · " + shortDate(insightsData.date), P, 210, "700 30px " + F, "#8FC1FF");
+    ctx.font = "800 58px " + D;
+    const title = wrapLines(ctx, L(ins.title), W - 2 * P).slice(0, 4);
+    title.forEach((l, i) => text(l, P, 300 + i * 70, "800 58px " + D, "#FFFFFF"));
+    let y = 300 + title.length * 70 + 130;
+    text(ins.big, P, y, "800 130px " + D, "#0A84FF");
+    ctx.font = "600 32px " + F;
+    wrapLines(ctx, L(ins.big_label), W - 2 * P).slice(0, 2).forEach((l, i) => text(l, P, y + 56 + i * 42, "600 32px " + F, "#C7CCDB"));
+    y += 130;
+    const bars = ins.bars.slice(0, 5), rowH = bars.length > 3 ? 58 : 66;
+    roundRect(ctx, P, y, W - 2 * P, 50 + bars.length * rowH, 26); ctx.fillStyle = "rgba(255,255,255,.06)"; ctx.fill();
+    bars.forEach((b, i) => {
+      const ry = y + 66 + i * rowH;
+      text(L(b.l), P + 34, ry, "600 32px " + F, "#FFFFFF");
+      text(b.t, W - P - 34, ry, "700 32px " + F, "#FFFFFF", rtl ? "left" : "right");
+      const bw = Math.max(6, 300 * b.v), bx = rtl ? P + 34 + 130 : W - P - 34 - 130 - 300;
+      roundRect(ctx, bx, ry - 22, 300, 14, 7); ctx.fillStyle = "rgba(255,255,255,.12)"; ctx.fill();
+      roundRect(ctx, rtl ? bx + 300 - bw : bx, ry - 22, bw, 14, 7); ctx.fillStyle = "#0A84FF"; ctx.fill();
+    });
+    ctx.font = "500 28px " + F;
+    const noteY = Math.min(H - 228, Math.max(y + 50 + bars.length * rowH + 60, H - 300));
+    wrapLines(ctx, L(ins.note), W - 2 * P).slice(0, 1).forEach((l) => text(l, P, noteY, "500 28px " + F, "#C7CCDB"));
+    roundRect(ctx, P, H - 190, W - 2 * P, 96, 48); ctx.fillStyle = "#FFFFFF"; ctx.fill();
+    text("radarak.online", W / 2, H - 126, "800 46px " + D, "#0F1222", "center");
+    text(t("insChannels"), W / 2, H - 44, "500 26px " + F, "rgba(255,255,255,.6)", "center");
+    const blob = await new Promise((r) => cv.toBlob(r, "image/png"));
+    if (!blob) return;
+    const file = new File([blob], `radarak-insight-${insightsData.date}.png`, { type: "image/png" });
+    try {
+      if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], text: L(ins.title) + " · radarak.online" }); return; }
+    } catch (e) { if (e && e.name === "AbortError") return; }
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = file.name;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    toast(t("shareCardDone"));
+  }
+
   // ------------------------------------------------------------------ "share my result": an image made in the browser
   // Only counts and skill names go on the card; the CV itself never leaves the device.
   function cardScope() {
@@ -667,8 +753,8 @@
     try { await Promise.all(["800 80px " + D, "700 40px " + F, "500 30px " + F].map((f) => document.fonts.load(f))); } catch { /* system fonts */ }
     const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
     const ctx = cv.getContext("2d");
-    ctx.fillStyle = "#17113A"; ctx.fillRect(0, 0, W, H);
-    [[W * 0.95, 60, 620, "rgba(106,75,255,.55)"], [40, H - 80, 560, "rgba(255,92,57,.35)"]].forEach(([x, y, r, c]) => {
+    ctx.fillStyle = "#0F1222"; ctx.fillRect(0, 0, W, H);
+    [[W * 0.95, 60, 680, "rgba(10,132,255,.40)"], [40, H - 80, 560, "rgba(94,92,230,.28)"]].forEach(([x, y, r, c]) => {
       const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, c); g.addColorStop(1, "rgba(23,17,58,0)");
       ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
     });
@@ -679,13 +765,13 @@
     const text = (s, x, y, font, color, align) => { ctx.font = font; ctx.fillStyle = color; ctx.textAlign = align || (rtl ? "right" : "left"); ctx.fillText(s, X(x), y); };
     // brand
     const lx = X(P + 30);
-    ctx.fillStyle = "#6A4BFF"; ctx.beginPath(); ctx.arc(lx, 128, 30, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#0A84FF"; ctx.beginPath(); ctx.arc(lx, 128, 30, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = "rgba(255,255,255,.55)"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(lx, 128, 16, 0, Math.PI * 2); ctx.stroke();
     [[12, -12, 6, "#FFB020"], [-12, 7, 5, "#FF5C39"], [7, 13, 4, "#12B886"]].forEach(([dx, dy, r, c]) => { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(lx + dx, 128 + dy, r, 0, Math.PI * 2); ctx.fill(); });
     text("Radarak", P + 76, 146, "800 50px " + D, "#FFFFFF");
     // the number
     const plan = learnPlan() || { start: 0, steps: [] };
-    text(t("cardMatch"), P, 300, "600 44px " + F, "#C9C2F5");
+    text(t("cardMatch"), P, 300, "600 44px " + F, "#C7CCDB");
     text(num(plan.start), P, 520, "800 230px " + D, "#FFFFFF");
     ctx.font = "700 54px " + F;
     const scope = wrapLines(ctx, cardScope(), W - 2 * P);
@@ -703,13 +789,13 @@
       if (s.gain) {
         text(t("cardJobsN")(num(s.gain)), W - P - 36, ry, "700 36px " + F, "#4ADE9B", rtl ? "left" : "right");
         const bw = 300 * s.gain / top, bx = rtl ? P + 36 + 230 : W - P - 36 - 230 - bw;
-        roundRect(ctx, bx, ry - 24, bw, 16, 8); ctx.fillStyle = "#6A4BFF"; ctx.fill();
+        roundRect(ctx, bx, ry - 24, bw, 16, 8); ctx.fillStyle = "#0A84FF"; ctx.fill();
       }
     });
     // call to action
     y += 410;
-    text(t("cardCta"), P, y, "600 34px " + F, "#C9C2F5");
-    const g = ctx.createLinearGradient(P, 0, W - P, 0); g.addColorStop(0, "#6A4BFF"); g.addColorStop(0.55, "#B13FE0"); g.addColorStop(1, "#FF5C39");
+    text(t("cardCta"), P, y, "600 34px " + F, "#C7CCDB");
+    const g = ctx.createLinearGradient(P, 0, W - P, 0); g.addColorStop(0, "#0A84FF"); g.addColorStop(1, "#5E5CE6");
     roundRect(ctx, P, y + 30, W - 2 * P, 104, 52); ctx.fillStyle = g; ctx.fill();
     text("radarak.online", W / 2, y + 100, "800 52px " + D, "#FFFFFF", "center");
     text(t("cardPrivacy"), W / 2, H - 52, "500 26px " + F, "rgba(255,255,255,.55)", "center");
@@ -1570,6 +1656,14 @@
     // let the page paint first (the headline is the biggest thing on screen), then fetch the big job list,
     // so the first paint never waits for, or competes with, a multi-megabyte download
     await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0)));
+    // the insight of the day: optional, shown as a card in the job list
+    const wantInsight = location.hash === "#insight";
+    fetch("data/insights.json").then((r) => (r.ok ? r.json() : null)).catch(() => null).then((d) => {
+      if (!d || !d.items || !d.items.length) return;
+      insightsData = d;
+      if (meta) renderJobs();
+      if (wantInsight && $("insight")) $("insight").scrollIntoView({ behavior: "smooth", block: "center" });
+    });
     // trends are optional and only needed on the Trends tab: load them in the background
     fetch("data/trends.json").then((r) => (r.ok ? r.json() : null)).catch(() => null).then((tr) => {
       trends = tr;
@@ -1595,6 +1689,7 @@
     applyLanguage();
     setupTelegram();
     document.addEventListener("click", (e) => { if (e.target.closest("[data-sharecard]")) shareCard(); });
+    $("jobList").addEventListener("click", onInsightClick);
     $("skillsHandBtn").addEventListener("click", () => {
       document.querySelector(".skillsbox").classList.add("open");
       $("mySkillInput").focus();
@@ -1613,6 +1708,7 @@
     bind();
     if (document.fonts) document.fonts.ready.then(sizeHero);
     update(true);
+    if (wantInsight && $("insight")) $("insight").scrollIntoView({ behavior: "smooth", block: "center" });
     maybeLoadMore();
   }
 

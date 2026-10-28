@@ -358,7 +358,7 @@ def _shell(lang: str, rel: str, title: str, desc: str, canonical: str, alt_en: s
   <meta name="description" content="{_e(desc)}">
   <link rel="canonical" href="{_e(canonical)}">
   {alternates}{head_extra}
-  <meta name="theme-color" content="#5B3FE0">
+  <meta name="theme-color" content="#FFFFFF">
   <meta property="og:type" content="website">
   <meta property="og:title" content="{_e(title)}">
   <meta property="og:description" content="{_e(desc)}">
