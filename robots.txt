@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://radarak.online/sitemap.xml
+Sitemap: https://radarak.online/sitemap-jobs.xml
