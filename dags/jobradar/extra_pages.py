@@ -56,6 +56,12 @@ E = {
         "ci_empty": "No companies match these filters.", "ci_jobs": "{n} open jobs",
         "sal_search": "Search a role", "sal_track": "Track", "sal_place": "Place", "sal_count": "{n} of {t} roles",
         "sal_empty": "No roles match.",
+        "est_h": "Typical monthly pay in Egypt & the Gulf", "est_h_place": "Typical monthly pay{inp}",
+        "est_note": ("Salary estimates from Glassdoor, in local currency per month: total pay (base salary + bonus). "
+                     "They are not from the jobs above. A row is shown only when at least 10 salaries stand behind it, "
+                     "and old data shows its date, so you can judge it."),
+        "est_med": "Median / month", "est_range": "Usual range", "est_n": "Salaries", "est_up": "Updated",
+        "rate": "{r} / 5 on Glassdoor", "rate_n": "from {n} employee reviews",
     },
     "ar": {
         "c_h": "وظايف التك في {c}", "c_title": "وظايف التك في {c} ({n} متاحة) | رادارك",
@@ -86,8 +92,17 @@ E = {
         "ci_empty": "مفيش شركات بالفلاتر دي.", "ci_jobs": "{n} وظيفة متاحة",
         "sal_search": "دوّر على وظيفة", "sal_track": "المجال", "sal_place": "المكان", "sal_count": "{n} من {t} وظيفة",
         "sal_empty": "مفيش وظايف بالبحث ده.",
+        "est_h": "المرتب الشهري المعتاد في مصر والخليج", "est_h_place": "المرتب الشهري المعتاد{inp}",
+        "est_note": ("تقديرات مرتبات من Glassdoor، بالعملة المحلية في الشهر: إجمالي المرتب (الأساسي + البونص). "
+                     "مش من الوظايف اللي فوق. الصف بيظهر بس لو وراه 10 مرتبات على الأقل، والبيانات القديمة مكتوب "
+                     "تاريخها عشان تحكم عليها بنفسك."),
+        "est_med": "المتوسط / شهر", "est_range": "المدى المعتاد", "est_n": "مرتبات", "est_up": "آخر تحديث",
+        "rate": "{r} من 5 على Glassdoor", "rate_n": "من {n} تقييم من الموظفين",
     },
 }
+
+CITY_AR = {"Cairo": "القاهرة", "Alexandria": "الإسكندرية", "Riyadh": "الرياض", "Jeddah": "جدة", "Dubai": "دبي",
+           "Abu Dhabi": "أبوظبي", "Doha": "الدوحة", "Kuwait City": "مدينة الكويت", "Manama": "المنامة", "Muscat": "مسقط"}
 
 CSS = """
 .saltable{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-l);overflow:hidden;font-size:15px}
@@ -98,6 +113,11 @@ CSS = """
 .saltable .bar{display:block;height:6px;border-radius:3px;background:var(--line);margin-top:6px;position:relative;min-width:120px}
 .saltable .bar i{position:absolute;top:0;bottom:0;border-radius:3px;background:var(--mint)}
 .note{font-size:14px;color:var(--muted);max-width:860px}
+.estcity{margin:22px 0 8px;font:700 18px/1.2 var(--display)}
+.estgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(340px,100%),1fr));gap:12px 20px}
+.saltable td small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.rating{display:inline-flex;align-items:center;gap:8px;margin:4px 0 0;font-size:15px}
+.rating b{font:800 18px/1 var(--display)}
 .clist{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px}
 .clist li{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);padding:12px 14px}
 .clist li a{display:flex;flex-direction:column;gap:2px;min-width:0;color:var(--ink);text-decoration:none}
@@ -206,8 +226,13 @@ def _company_page(name: str, cslug: str, jobs: list[dict], lang: str, meta: dict
         place_chips.append((t["remote"], (rel + place_pages[REMOTE]) if REMOTE in place_pages else None, remote))
     roles = Counter(j.get("r") for j in uj if j.get("r"))
     app = rel + "#q=" + quote(name)
+    rate = (meta.get("_ratings") or {}).get(name)
+    rate_html = (f'<p class="rating">⭐ <b>{_e(x["rate"].format(r=rate["rating"]))}</b>'
+                 f'<a href="{_e(rate["link"])}" target="_blank" rel="noopener nofollow">{_e(x["rate_n"].format(n=_num(rate["reviews"])))}</a></p>'
+                 if rate and rate.get("link") else "")
     body = f"""    <h1>{_e(x['c_h'].format(c=name))}</h1>
     <p class="lead">{_e(x['c_sub'].format(n=_num(n), jobs=t['job1'] if n == 1 else t['jobsN'], d=d))}{f' · {_e(x["industry"])}: {_e(industry)}' if industry else ''}</p>
+    {rate_html}
     <div class="ctarow"><a class="primary" href="{_e(app)}">{_e(x['c_cta'].format(c=name))} →</a><span>{_e(t['cta_hint'])}</span></div>
     {_stats(stats)}
     <div class="cols">
@@ -316,6 +341,32 @@ def _juniors_page(jobs: list[dict], lang: str, meta: dict, base: str, today: dt.
 
 
 # ------------------------------------------------------------------------------------------ salaries
+def estimates_block(estimates: list[dict], lang: str, place: str | None = None) -> str:
+    """Glassdoor estimates (meta["pay_est"]) per city: role, monthly median and range, local currency."""
+    x = E[lang]
+    rows = [e for e in estimates or [] if place is None or e.get("co") == place]
+    if not rows:
+        return ""
+    cities: dict[str, list[dict]] = {}
+    for e in rows:
+        cities.setdefault(e["city"], []).append(e)
+    tables = []
+    for city, es in sorted(cities.items(), key=lambda kv: -sum(e["n"] for e in kv[1])):
+        es = sorted(es, key=lambda e: -e["md"])
+        label = CITY_AR.get(city, city) if lang == "ar" else city
+        body = "".join(
+            f'<tr><td>{_e(e["q"])}<small>{_e(x["est_up"])}: {_e(e.get("up") or "")}</small></td>'
+            f'<td class="num"><b>{_num(e["md"])}</b> {_e(e["cur"])}</td>'
+            f'<td class="num">{_num(e["lo"])} – {_num(e["hi"])}</td><td class="num">{_num(e["n"])}</td></tr>' for e in es)
+        tables.append(f'<div><h3 class="estcity">{_e(label)}</h3><table class="saltable"><thead><tr><th>{_e(x["sal_role"])}</th>'
+                      f'<th>{_e(x["est_med"])}</th><th>{_e(x["est_range"])}</th><th>{_e(x["est_n"])}</th></tr></thead>'
+                      f'<tbody>{body}</tbody></table></div>')
+    inp = x["inp"].format(p=place_name(place, lang)) if place else ""
+    head = x["est_h_place"].format(inp=inp) if place else x["est_h"]
+    return (f'<section id="typical"><h2>{_e(head)}</h2><p class="note">{_e(x["est_note"])}</p>'
+            f'<div class="estgrid">{"".join(tables)}</div></section>')
+
+
 def _role_tracks(jobs: list[dict]) -> dict[str, str]:
     return {j.get("r"): j.get("tr") for j in jobs if j.get("r") and j.get("tr")}
 
@@ -335,7 +386,7 @@ def _pay_rows(jobs: list[dict]) -> list[tuple[str, int, int, int, int]]:
 
 def _salary_page(place: str | None, jobs: list[dict], lang: str, base: str, today: dt.date,
                  others: list[tuple[str, str, int]], all_places: list[tuple[str, str]] | None = None,
-                 role_track: dict[str, str] | None = None) -> tuple[str, str] | None:
+                 role_track: dict[str, str] | None = None, estimates: list[dict] | None = None) -> tuple[str, str] | None:
     t, x = T[lang], E[lang]
     sub = "" if place is None else ("remote" if place == REMOTE else slug(place)) + "/"
     path = ("ar/" if lang == "ar" else "") + "salaries/" + sub + "index.html"
@@ -380,6 +431,7 @@ def _salary_page(place: str | None, jobs: list[dict], lang: str, base: str, toda
     <p class="lead">{_e(x['sal_sub'].format(n=_num(paid), d=d))}</p>
     {table}
     <p class="note">{_e(x['sal_note'])}</p>
+    {estimates_block(estimates or [], lang, None if place in (None, REMOTE) else place) if place != REMOTE else ""}
     {f'<section><h2>{_e(x["sal_places"])}</h2>{place_links}</section>' if place_links else ''}"""
     crumbs = [(t["home"], ""), (x["nav_salaries"], None if place is None else ("ar/" if lang == "ar" else "") + "salaries/")]
     if place is not None:
@@ -419,12 +471,12 @@ def extra_files(jobs: list[dict], meta: dict, base: str, today: dt.date,
                    "salaries/" + ("remote" if p == REMOTE else slug(p)) + "/", paid_by_place[p]) for p in sal_places]
         all_places = [("salaries/", E[lang]["all"])] + [(href, lbl) for lbl, href, _ in others]
         role_track = _role_tracks(jobs)
-        path, html = _salary_page(None, jobs, lang, base, today, others, all_places, role_track)
+        path, html = _salary_page(None, jobs, lang, base, today, others, all_places, role_track, meta.get("pay_est"))
         out[path] = html.encode()
         for p in sal_places:
             pj = [j for j in jobs if (j.get("w") == "Remote" if p == REMOTE else p in (j.get("co") or []))]
             path, html = _salary_page(p, pj, lang, base, today, [o for o in others if not o[1].endswith(
-                ("remote" if p == REMOTE else slug(p)) + "/")], all_places, role_track)
+                ("remote" if p == REMOTE else slug(p)) + "/")], all_places, role_track, meta.get("pay_est"))
             out[path] = html.encode()
     for path in out:
         if path.endswith("index.html") and not path.startswith("ar/"):

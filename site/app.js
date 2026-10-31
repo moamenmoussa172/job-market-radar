@@ -28,6 +28,10 @@
       haveTitle: "Skills you have", missTitle: "Skills to add", missHint: "Tap one you already know to add it to your skills.",
       matchCta: "Add your skills or upload your CV to see how well you match this job.", matchCtaBtn: "Add my skills",
       noSkills: "This posting doesn't list specific skills.", alsoIn: "Also posted in", similarTitle: "Similar jobs",
+      estPer: "/mo", estTip: "Typical pay for this role here (Glassdoor estimate), not from this job",
+      estLong: (q, city) => `Typical for ${q} in ${city}, all experience levels`, estMed: "median",
+      estSrc: (n, up) => `Glassdoor estimate from ${n} salaries${up ? ", updated " + up : ""}. Not from this job.`,
+      fTypical: "Typical pay",
       fWorkMode: "Work mode", fSalary: "Salary", fLevel: "Level", fRole: "Role", fIndustry: "Industry", fSource: "Source",
       yourMatch: (a, b) => `You have ${a} of the ${b} skills this job asks for`, longOpenFull: "Open for a while (posted long ago)", matchOf: (a, b) => `You have ${a} of ${b} skills this job asks for`, skillsMatch: "match",
       suggest: "Often asked for these jobs:", removeSkill: (s) => `Remove ${s}`,
@@ -128,6 +132,10 @@
       haveTitle: "مهارات عندك", missTitle: "مهارات تضيفها", missHint: "دوس على أي مهارة بتعرفها عشان تضيفها لمهاراتك.",
       matchCta: "ضيف مهاراتك أو ارفع الـ CV عشان تشوف قد إيه الوظيفة دي مناسبة ليك.", matchCtaBtn: "ضيف مهاراتي",
       noSkills: "الإعلان ده مش مكتوب فيه مهارات محددة.", alsoIn: "منشورة كمان في", similarTitle: "وظايف شبهها",
+      estPer: " في الشهر", estTip: "المرتب المعتاد للوظيفة دي هنا (تقدير Glassdoor)، مش من الإعلان",
+      estLong: (q, city) => `المعتاد لـ ${q} في ${city}، لكل مستويات الخبرة`, estMed: "المتوسط",
+      estSrc: (n, up) => `تقدير Glassdoor من ${n} مرتب${up ? "، آخر تحديث " + up : ""}. مش من الإعلان ده.`,
+      fTypical: "المرتب المعتاد",
       fWorkMode: "نوع الشغل", fSalary: "المرتب", fLevel: "المستوى", fRole: "الوظيفة", fIndustry: "المجال", fSource: "المصدر",
       yourMatch: (a, b) => `عندك ${a} من ${b} مهارات الوظيفة دي طالباها`, longOpenFull: "مفتوحة من زمان (اتنشرت من فترة طويلة)", matchOf: (a, b) => `عندك ${a} من ${b} مهارات الوظيفة دي طالباها`, skillsMatch: "تطابق",
       suggest: "مطلوبة كتير في الوظايف دي:", removeSkill: (s) => `شيل ${s}`,
@@ -476,6 +484,12 @@
     const days = Math.max(0, Math.round((Date.now() - new Date(iso + "T12:00:00Z")) / 864e5));
     return days === 0 ? t("today") : days === 1 ? t("yesterday") : t("daysAgo")(days);
   }
+  const CITY_AR = { Cairo: "القاهرة", Alexandria: "الإسكندرية", Riyadh: "الرياض", Jeddah: "جدة", Dubai: "دبي",
+    "Abu Dhabi": "أبوظبي", Doha: "الدوحة", "Kuwait City": "مدينة الكويت", Manama: "المنامة", Muscat: "مسقط" };
+  const estOf = (j) => (j.pe != null && meta.pay_est ? meta.pay_est[j.pe] : null);
+  const kNum = (n) => (n >= 1000 ? (Math.round(n / 100) / 10).toString().replace(/\.0$/, "") + "k" : String(n));
+  // the range stays left-to-right inside Arabic text
+  const estShort = (e) => `<bdi dir="ltr">≈ ${esc(kNum(e.lo))}–${esc(kNum(e.hi))} ${esc(e.cur)}</bdi>${esc(t("estPer"))}`;
   const payText = ($) => ($ ? ($[0] === $[1] ? `$${$[0]}k` : `$${$[0]}k – $${$[1]}k`) : "");
   const mySkillIdx = () => new Set([...mySkills].map((s) => meta.skills.indexOf(s)).filter((i) => i >= 0));
 
@@ -502,7 +516,8 @@
     const facts = [
       g.all.some(isNew) ? `<span class="fact new">${t("newTag")}</span>` : "",
       sv && sv.a && !String(g.key).startsWith("saved:") ? `<span class="fact applied">✓ ${t("applied")}</span>` : "",
-      g.pay ? `<span class="fact pay">${payText(g.pay)}</span>` : "",
+      g.pay ? `<span class="fact pay">${payText(g.pay)}</span>`
+        : estOf(j) ? `<span class="fact pay est" title="${esc(t("estTip"))}">${estShort(estOf(j))}</span>` : "",
       j.w === "Remote" ? `<span class="fact remote">${j.ww ? t("remoteWorld") : t("remote")}</span>` : `<span class="fact">${esc(j.w)}</span>`,
       f & FLAG.visa ? `<span class="fact visa">${t("visaTag")}</span>` : "",
       f & FLAG.nationals ? `<span class="fact nat">${t("natTag")}</span>` : "",
@@ -1225,6 +1240,10 @@
       <dl class="dfacts">
         ${fact(t("fWorkMode"), esc(j.w === "Remote" ? (j.ww ? t("remoteWorld") : t("remote")) : j.w))}
         ${fact(t("fSalary"), g.pay ? payText(g.pay) + " / yr" : "")}
+        ${!g.pay && estOf(j) ? (() => { const e = estOf(j); return fact(t("fTypical"),
+          `<b>${estShort(e)}</b> <span class="muted">· ${esc(t("estMed"))} <bdi dir="ltr">${esc(num(e.md))} ${esc(e.cur)}</bdi></span>
+           <small class="estsrc">${esc(t("estLong")(e.q, lang === "ar" ? CITY_AR[e.city] || e.city : e.city))}. ${e.u
+             ? `<a href="${esc(e.u)}" target="_blank" rel="noopener nofollow">${esc(t("estSrc")(num(e.n), e.up))}</a>` : esc(t("estSrc")(num(e.n), e.up))}</small>`); })() : ""}
         ${fact(t("fLevel"), j.s && j.s !== "Not stated" ? esc(j.s) : "")}
         ${fact(t("fRole"), esc(j.r) + ` <span class="muted">· ${esc(j.tr)}</span>`)}
         ${fact(t("fIndustry"), j.i && j.i !== "Not identified" ? esc(j.i) : "")}

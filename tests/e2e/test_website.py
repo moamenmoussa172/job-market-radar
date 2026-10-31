@@ -20,7 +20,7 @@ import re
 import threading
 import urllib.request
 from pathlib import Path
-from urllib.parse import urljoin, urlparse
+from urllib.parse import quote, urljoin, urlparse
 
 import pytest
 
@@ -1011,4 +1011,29 @@ def test_insight_of_the_day_card(browser, base, tmp_path):
     dl.value.save_as(path)
     data = path.read_bytes()
     assert data[:4] == b"\x89PNG" and int.from_bytes(data[16:20], "big") == 1080
+    ctx.close()
+
+
+def test_typical_pay_on_cards_and_in_details(browser, base, data):
+    jobs, meta = data["jobs"], data["meta"]
+    est = meta.get("pay_est") or []
+    with_est = [j for j in jobs if j.get("pe") is not None and not j.get("$")]
+    if not est or not with_est:
+        pytest.skip("no salary estimates published yet")
+    j = with_est[0]
+    e = est[j["pe"]]
+    ctx = browser.new_context(viewport={"width": 1280, "height": 900}, timezone_id="UTC")
+    ctx.add_init_script("localStorage.setItem('jr_lang', JSON.stringify('en'));")
+    p = ctx.new_page()
+    p.goto(base + "/#job=" + j["id"])
+    p.wait_for_selector("#drawerBody .dfacts", timeout=30000)
+    details = p.locator("#drawerBody").inner_text()
+    assert "Typical pay" in details and e["cur"] in details and f"Typical for {e['q']} in {e['city']}, all experience levels" in details
+    assert "Not from this job" in details
+    p.keyboard.press("Escape")
+    p.goto(base + "/#q=" + quote(j["t"]))
+    p.wait_for_selector("#jobList li.job", timeout=30000)
+    card = p.locator(f'#jobList li.job[data-jid="{j["id"]}"]')
+    if card.count():
+        assert card.locator(".fact.pay.est").inner_text().startswith("≈ ") and e["cur"] in card.inner_text()
     ctx.close()

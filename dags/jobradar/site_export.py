@@ -205,6 +205,10 @@ def split_jobs(jobs: list[dict], region_of: dict[str, str]) -> tuple[list[dict],
     return core, more
 
 
+def _dump(obj) -> bytes:
+    return json.dumps(obj, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+
+
 def all_jobs(data: dict[str, bytes]) -> list[dict]:
     """Both job files of an export, as one list (for the search pages, newsletter, ...)."""
     return json.loads(data["data/jobs.json"]) + json.loads(data.get("data/jobs-more.json", b"[]"))
@@ -344,13 +348,21 @@ def all_site_files(conn) -> dict[str, bytes]:
     data = export_site_data(conn)
     meta = json.loads(data["data/meta.json"])
     meta["telegram"] = alerts.telegram_links()            # public channels, for "Get new jobs on Telegram"
-    jobs = all_jobs(data)
+    from jobradar import enrich
+    core, more = json.loads(data["data/jobs.json"]), json.loads(data.get("data/jobs-more.json", b"[]"))
+    meta["pay_est"] = enrich.load_estimates(conn) if conn is not None else []   # "typical pay" (Glassdoor estimates)
+    if enrich.attach_estimates(core + more, meta["pay_est"]):
+        data["data/jobs.json"] = _dump(core)
+        data["data/jobs-more.json"] = _dump(more)
+    meta["_ratings"] = enrich.load_ratings(conn) if conn is not None else {}     # company pages only
+    jobs = core + more
     job_pages.attach_details(conn, jobs, meta)                # which jobs get their own page (Google for Jobs)
     seo = seo_pages.seo_files(jobs, meta, site_base_url())  # also fills meta["feeds"]
     from jobradar import insights
     data["data/insights.json"] = json.dumps(insights.all_insights(jobs, meta), ensure_ascii=False,
                                             separators=(",", ":")).encode("utf-8")
-    data["data/meta.json"] = json.dumps(meta, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    meta.pop("_ratings", None)                             # used by the company pages, not by the app
+    data["data/meta.json"] = _dump(meta)
     return version_assets({**site_files(), **data, **add_newsletter(add_analytics(seo))})
 
 
