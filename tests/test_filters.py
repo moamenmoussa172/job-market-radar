@@ -81,3 +81,30 @@ def test_guard_style_security_jobs_are_not_tech():
     assert not is_tech_role("Security Officer")
     assert not is_tech_role("Security Supervisor - Mall")
     assert is_tech_role("Information Security Officer") and is_tech_role("Cyber Security Specialist")
+
+
+# ------------------------------------------------- business roles from company career sites
+from jobradar.filters import is_board_role, is_business_role  # noqa: E402
+
+
+@pytest.mark.parametrize("title", [
+    "Account Manager", "Key Account Manager - Fintech", "Senior Account Manager, Enterprise", "Customer Success Manager",
+    "Client Success Lead", "Project Manager", "Senior Program Manager", "Relationship Manager - SME Payments",
+    "Projektleiter Digitalisierung",
+])
+def test_business_roles_are_kept_from_company_sites(title):
+    assert is_business_role(title) and is_board_role(title)
+
+
+@pytest.mark.parametrize("title", [
+    "Construction Project Manager", "Events Project Coordinator", "Marketing Project Manager", "HR Project Lead",
+    "Warehouse Project Manager", "Interior Fit-out Project Manager", "Sales Executive", "Accountant",
+])
+def test_other_business_jobs_stay_out(title):
+    assert not is_business_role(title)
+
+
+def test_business_roles_never_enter_from_aggregators():
+    # aggregators keep using is_tech_role, which still drops account managers
+    assert not is_tech_role("Account Manager") and not is_tech_role("Customer Success Manager")
+    assert is_tech_role("Odoo Developer") and is_tech_role("SAP ABAP Consultant") and is_board_role("SAP FICO Consultant")

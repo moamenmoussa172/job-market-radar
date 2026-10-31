@@ -387,3 +387,16 @@ def test_locations_are_tidied_for_display():
     assert t("Cairo, Cairo, Egypt") == "Cairo, Egypt"
     assert t("RIYADH, KSA") == "Riyadh, KSA"
     assert t("New York, NY") == "New York, NY" and t(None) is None and t("Berlin") == "Berlin"
+
+
+def test_marts_schema_accepts_every_track():
+    """fct_job_postings has an accepted_values test on track; a new track in role_tracks.csv must be added there too."""
+    import csv
+    import re
+    root = Path(__file__).resolve().parents[1]
+    with open(root / "dbt" / "seeds" / "role_tracks.csv", newline="") as f:
+        tracks = {r["track"] for r in csv.DictReader(f)} - {"Not tech"}
+    yml = (root / "dbt" / "models" / "marts" / "_marts.yml").read_text(encoding="utf-8")
+    block = re.search(r"- name: track.*?values:\s*\[(.*?)\]", yml, re.S).group(1)
+    accepted = set(re.findall(r"'([^']+)'", block))
+    assert tracks <= accepted, tracks - accepted

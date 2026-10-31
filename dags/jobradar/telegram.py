@@ -37,7 +37,7 @@ NEW_DAYS = 2
 TRACK_EMOJI = {
     "Data & Analytics": "🟣", "AI & Machine Learning": "🧠", "Software Engineering": "🔵", "Mobile Development": "📱",
     "QA & Testing": "🧪", "UI/UX Design": "🎨", "DevOps & Cloud": "☁️", "Security": "🔐", "ERP & CRM": "🧾",
-    "Networks & Telecom": "📡", "Product & Delivery": "🧭", "IT & Support": "🛠", "Embedded & Chip Design": "🔌",
+    "Networks & Telecom": "📡", "Product & Delivery": "🧭", "IT & Support": "🛠", "Embedded & Chip Design": "🔌", "Clients & Projects": "🤝",
 }
 FLAGS = {
     "Egypt": "🇪🇬", "Saudi Arabia": "🇸🇦", "United Arab Emirates": "🇦🇪", "Qatar": "🇶🇦", "Kuwait": "🇰🇼",

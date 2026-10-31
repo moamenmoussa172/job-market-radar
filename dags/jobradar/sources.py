@@ -22,7 +22,7 @@ from typing import Callable
 
 import requests
 
-from jobradar.filters import is_tech_role
+from jobradar.filters import is_board_role, is_tech_role
 
 log = logging.getLogger(__name__)
 
@@ -261,7 +261,7 @@ def _fetch_greenhouse(token: str) -> list[dict]:
         except requests.RequestException as exc:
             last_exc = exc
             continue
-        return [j for j in payload.get("jobs", []) if is_tech_role(j.get("title"))]
+        return [j for j in payload.get("jobs", []) if is_board_role(j.get("title"))]
     raise last_exc or requests.HTTPError(f"greenhouse board '{token}' not found")
 
 
@@ -270,7 +270,7 @@ def _fetch_breezy(token: str) -> list[dict]:
     positions = _get_json(BREEZY_URL.format(token=token))
     if not isinstance(positions, list):
         raise ValueError(f"breezy '{token}' did not return a positions list")
-    return [p for p in positions if isinstance(p, dict) and is_tech_role(p.get("name"))]
+    return [p for p in positions if isinstance(p, dict) and is_board_role(p.get("name"))]
 
 
 def _fetch_bamboohr(token: str) -> list[dict]:
@@ -282,7 +282,7 @@ def _fetch_bamboohr(token: str) -> list[dict]:
         raise ValueError(f"bamboohr '{token}' did not return a jobs list")
     jobs = []
     for r in rows:
-        if not isinstance(r, dict) or not is_tech_role(r.get("jobOpeningName")):
+        if not isinstance(r, dict) or not is_board_role(r.get("jobOpeningName")):
             continue
         job = {**r, "job_url": f"https://{token}.bamboohr.com/careers/{r.get('id')}"}
         if len(jobs) < BAMBOOHR_DETAILS_MAX:
@@ -304,7 +304,7 @@ def _fetch_pinpoint(token: str) -> list[dict]:
     rows = payload.get("data") if isinstance(payload, dict) else None
     if not isinstance(rows, list):
         raise ValueError(f"pinpoint '{token}' did not return a postings list")
-    return [r for r in rows if isinstance(r, dict) and is_tech_role(r.get("title"))]
+    return [r for r in rows if isinstance(r, dict) and is_board_role(r.get("title"))]
 
 
 def _local(tag: str) -> str:
@@ -341,7 +341,7 @@ def _fetch_teamtailor(token: str) -> list[dict]:
         jobs = parse_teamtailor_rss(text)
     except ET.ParseError as exc:
         raise ValueError(f"teamtailor '{token}' did not return an RSS feed") from exc
-    return [j for j in jobs if is_tech_role(j.get("title"))]
+    return [j for j in jobs if is_board_role(j.get("title"))]
 
 
 def _fetch_lever(token: str) -> list[dict]:
@@ -356,7 +356,7 @@ def _fetch_lever(token: str) -> list[dict]:
                 last_exc = exc
                 continue
             if isinstance(postings, list):
-                return [j for j in postings if is_tech_role(j.get("text"))]
+                return [j for j in postings if is_board_role(j.get("text"))]
     raise last_exc or requests.HTTPError(f"lever board '{token}' not found")
 
 
@@ -364,7 +364,7 @@ def _fetch_ashby(token: str) -> list[dict]:
     payload = _get_json(ASHBY_URL.format(token=token), params={"includeCompensation": "true"})
     return [
         j for j in payload.get("jobs", [])
-        if j.get("isListed", True) and is_tech_role(j.get("title"))
+        if j.get("isListed", True) and is_board_role(j.get("title"))
     ]
 
 
@@ -378,7 +378,7 @@ def _fetch_smartrecruiters(token: str, max_pages: int = 20) -> list[dict]:
     for page in range(max_pages):
         payload = _get_json(url, params={"limit": 100, "offset": page * 100})
         content = payload.get("content") or []
-        data_items.extend(p for p in content if is_tech_role(p.get("name")))
+        data_items.extend(p for p in content if is_board_role(p.get("name")))
         if len(content) < 100 or (page + 1) * 100 >= (payload.get("totalFound") or 0):
             break
     # One details call per matching posting; big employers list hundreds of tech roles,
@@ -401,7 +401,7 @@ def _fetch_workable(token: str) -> list[dict]:
     jobs = payload.get("jobs") if isinstance(payload, dict) else None
     if jobs is None:
         raise ValueError(f"workable account '{token}' returned no jobs list")
-    return [{**j, "account_name": payload.get("name")} for j in jobs if is_tech_role(j.get("title"))]
+    return [{**j, "account_name": payload.get("name")} for j in jobs if is_board_role(j.get("title"))]
 
 
 def _fetch_recruitee(token: str) -> list[dict]:
@@ -409,7 +409,7 @@ def _fetch_recruitee(token: str) -> list[dict]:
     offers = payload.get("offers") if isinstance(payload, dict) else None
     if offers is None:
         raise ValueError(f"recruitee '{token}' returned no offers list")
-    return [o for o in offers if is_tech_role(o.get("title"))]
+    return [o for o in offers if is_board_role(o.get("title"))]
 
 
 def parse_personio_xml(xml_text: str) -> list[dict]:
@@ -443,7 +443,7 @@ def _fetch_personio(token: str) -> list[dict]:
             last_exc = exc
             continue
         return [{**j, "job_url": f"https://{token}.jobs.personio.de/job/{j.get('id')}"}
-                for j in jobs if is_tech_role(j.get("name"))]
+                for j in jobs if is_board_role(j.get("name"))]
     if isinstance(last_exc, ET.ParseError):
         raise ValueError(f"personio '{token}' did not return a job feed")
     raise last_exc or requests.HTTPError(f"personio '{token}' not found")
@@ -583,7 +583,7 @@ def _fetch_workday(token: str) -> list[dict]:
                 list_url, {"appliedFacets": {}, "limit": WORKDAY_PAGE, "offset": page * WORKDAY_PAGE, "searchText": ""})
             postings = data.get("jobPostings") or []
             for jp in postings:
-                if (jp.get("externalPath") and is_tech_role(jp.get("title"))
+                if (jp.get("externalPath") and is_board_role(jp.get("title"))
                         and wanted.search(jp.get("locationsText") or "")):
                     summaries.setdefault(jp["externalPath"], jp)
             if len(postings) < WORKDAY_PAGE or (page + 1) * WORKDAY_PAGE >= (data.get("total") or 0):
@@ -604,7 +604,7 @@ def _fetch_workday(token: str) -> list[dict]:
                            "searchText": ""})
             postings = data.get("jobPostings") or []
             for jp in postings:
-                if jp.get("externalPath") and is_tech_role(jp.get("title")):
+                if jp.get("externalPath") and is_board_role(jp.get("title")):
                     summaries.setdefault(jp["externalPath"], jp)
             if len(postings) < WORKDAY_PAGE or (page + 1) * WORKDAY_PAGE >= (data.get("total") or 0):
                 break
@@ -723,7 +723,7 @@ def _fetch_successfactors(token: str) -> list[dict]:
         try:
             deadline = time.monotonic() + SUCCESSFACTORS_MAX_SECONDS
             jobs = parse_successfactors_stream(_successfactors_chunks(token, params), deadline)
-            return [j for j in jobs if is_tech_role(j.get("title"))]
+            return [j for j in jobs if is_board_role(j.get("title"))]
         except ValueError as exc:
             last_exc = exc
     raise last_exc or ValueError(f"successfactors '{token}' failed")
@@ -779,7 +779,7 @@ def _fetch_phenom(token: str) -> list[dict]:
             if wanted and place:   # a filtered search: keep only that country even if the site mixes others in
                 jobs = [j for j in jobs if place.lower() in json.dumps([j.get("country"), j.get("location"),
                                                                          j.get("multi_location")]).lower()] or jobs
-            return [j for j in jobs if is_tech_role(j.get("title"))]
+            return [j for j in jobs if is_board_role(j.get("title"))]
     return []
 
 
@@ -815,7 +815,7 @@ def _fetch_oracle(token: str) -> list[dict]:
         offset += len(page.get("requisitionList") or [])
         if offset >= int(page.get("TotalJobsCount") or 0):
             break
-    return [j for j in jobs if is_tech_role(j.get("Title"))]
+    return [j for j in jobs if is_board_role(j.get("Title"))]
 
 
 ATS_FETCHERS: dict[str, Callable[[str], list[dict]]] = {
@@ -1168,7 +1168,7 @@ SEARCH_ROLES = ["software engineer", "data engineer", "data analyst", "developer
                 "qa engineer", "cyber security", "network engineer", "sap consultant", "product manager",
                 "ux designer", "machine learning engineer", "mobile developer", "flutter developer",
                 "solutions architect", "presales engineer", "soc analyst", "embedded software engineer",
-                "ai engineer", "it manager"]
+                "ai engineer", "it manager", "odoo", "sap abap"]
 ADZUNA_ROLES = ["data engineer", "data analyst", "software engineer", "frontend developer",
                 "backend developer", "qa engineer", "ux designer", "devops engineer",
                 "mobile developer", "data scientist", "cyber security", "sap consultant",

@@ -9,7 +9,7 @@
     "Data & Analytics": "#5E5CE6", "AI & Machine Learning": "#D63A7A", "Software Engineering": "#0071E3",
     "Mobile Development": "#E8730C", "QA & Testing": "#1A9E5C", "UI/UX Design": "#B04FD6", "DevOps & Cloud": "#0A93C9",
     "Security": "#D93636", "ERP & CRM": "#C98500", "Networks & Telecom": "#13998C", "Product & Delivery": "#5A9A10",
-    "IT & Support": "#6E6E73", "Embedded & Chip Design": "#9A5B33",
+    "IT & Support": "#6E6E73", "Embedded & Chip Design": "#9A5B33", "Clients & Projects": "#6D28D9",
   };
   const AR_PLACES = {
     All: "كل الأماكن", Remote: "ريموت", Egypt: "مصر", "Saudi Arabia": "السعودية", "United Arab Emirates": "الإمارات",

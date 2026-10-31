@@ -292,7 +292,7 @@
     "Data & Analytics": "data", "AI & Machine Learning": "ai", "Software Engineering": "sw", "Mobile Development": "mob",
     "QA & Testing": "qa", "UI/UX Design": "ux", "DevOps & Cloud": "ops", "Security": "sec", "ERP & CRM": "erp",
     "Networks & Telecom": "net", "Product & Delivery": "prod", "IT & Support": "it",
-    "Embedded & Chip Design": "emb",
+    "Embedded & Chip Design": "emb", "Clients & Projects": "biz",
   };
   const trackOfRole = {};
   const tc = (track) => `--tc:var(--t-${TRACK_KEY[track] || "it"})`;

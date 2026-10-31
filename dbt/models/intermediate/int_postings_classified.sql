@@ -212,6 +212,16 @@ select
                 else 'Other data role'
             end
 
+        -- ------------------------------- business roles at tech / fintech companies (filters.is_business_role)
+        -- Only landed from company career sites; fct_job_postings keeps them for tech / fintech employers only.
+        when job_title !~* 'construction|civil|mechanical|electrical|\mmep\M|clinical|medical|\mevents?\M|site\s+(manager|project)|interior|fit[\s-]?out|architectur|real\s+estate|facilit|marketing|creative|\mhr\M|human\s+resources|recruit|talent|legal|warehouse|logistics'
+         and job_title !~* 'engineer|developer|architect|scientist'
+         and job_title ~* 'customer\s+success|client\s+success|\m(key\s+)?account\s+(manager|director|lead)|\mkey\s+account|client\s+(account\s+)?manager|relationship\s+manager|\m(project|program|programme)\s+(manager|lead|coordinator|director)|\mproject\s+management\s+(officer|specialist|lead)|\mprojektleit|chef\s+de\s+projet|jefe\s+de\s+proyecto'
+            then case
+                when job_title ~* 'customer\s+success|client\s+success' then 'Customer Success Manager'
+                when job_title ~* 'account|relationship\s+manager|client\s+manager' then 'Account Manager'
+                else 'Project Manager' end
+
         -- ------------------------------------------------------------ other tech
         when job_title ~* 'product\s+(manager|owner)|produktmanager|chef\s+de\s+produit'
             then 'Product Manager / Owner'

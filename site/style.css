@@ -49,7 +49,7 @@
   --skel: #ECEAF5;
   --focus: 0 0 0 3px rgba(106, 75, 255, .35);
   --t-data: #7C5CFA; --t-ai: #E64980; --t-sw: #3B82F6; --t-mob: #FF7A1A; --t-qa: #12B886; --t-ux: #D946EF;
-  --t-ops: #0EA5E9; --t-sec: #EF4444; --t-erp: #E89A00; --t-net: #14B8A6; --t-prod: #65A30D; --t-it: #64748B; --t-emb: #A0522D;
+  --t-ops: #0EA5E9; --t-sec: #EF4444; --t-erp: #E89A00; --t-net: #14B8A6; --t-prod: #65A30D; --t-it: #64748B; --t-emb: #A0522D; --t-biz: #7048E8;
   --r-s: 8px; --r-m: 12px; --r-l: 20px;
   --font: "IBM Plex Sans Arabic", "Segoe UI", system-ui, sans-serif;
   --display: "Bricolage Grotesque", "IBM Plex Sans Arabic", "Segoe UI", system-ui, sans-serif;
@@ -64,7 +64,7 @@
     --visa-ink: #FFD27A; --visa-bg: #3D2E0D; --nat-ink: #FFA8B8; --nat-bg: #47192A; --ar-ink: #A9C8FF; --ar-bg: #1A2C55;
     --skel: #221E44;
     --t-data: #A08BFF; --t-ai: #FF7AA8; --t-sw: #6EA8FF; --t-mob: #FF9A4D; --t-qa: #3DD6A3; --t-ux: #EE7CFF;
-    --t-ops: #4CC4F5; --t-sec: #FF7A7A; --t-erp: #FFC233; --t-net: #3DD6C6; --t-prod: #A3E048; --t-it: #9AA8BC; --t-emb: #E0915F;
+    --t-ops: #4CC4F5; --t-sec: #FF7A7A; --t-erp: #FFC233; --t-net: #3DD6C6; --t-prod: #A3E048; --t-it: #9AA8BC; --t-emb: #E0915F; --t-biz: #B197FC;
     color-scheme: dark;
   }
 }
@@ -75,7 +75,7 @@
   --visa-ink: #FFD27A; --visa-bg: #3D2E0D; --nat-ink: #FFA8B8; --nat-bg: #47192A; --ar-ink: #A9C8FF; --ar-bg: #1A2C55;
   --skel: #221E44;
   --t-data: #A08BFF; --t-ai: #FF7AA8; --t-sw: #6EA8FF; --t-mob: #FF9A4D; --t-qa: #3DD6A3; --t-ux: #EE7CFF;
-  --t-ops: #4CC4F5; --t-sec: #FF7A7A; --t-erp: #FFC233; --t-net: #3DD6C6; --t-prod: #A3E048; --t-it: #9AA8BC; --t-emb: #E0915F;
+  --t-ops: #4CC4F5; --t-sec: #FF7A7A; --t-erp: #FFC233; --t-net: #3DD6C6; --t-prod: #A3E048; --t-it: #9AA8BC; --t-emb: #E0915F; --t-biz: #B197FC;
   color-scheme: dark;
 }
 
@@ -758,7 +758,7 @@ button.bar:hover .name { color: var(--violet-ink); }
   --amber: #FFB340; --coral: #FF6B35; --mint: #1A9E5C; --mint-ink: #12733F; --mint-soft: #E3F5EA;
   --focus: 0 0 0 4px rgba(0, 113, 227, .28);
   --t-data: #5E5CE6; --t-ai: #D63A7A; --t-sw: #0071E3; --t-mob: #E8730C; --t-qa: #1A9E5C; --t-ux: #B04FD6;
-  --t-ops: #0A93C9; --t-sec: #D93636; --t-erp: #C98500; --t-net: #13998C; --t-prod: #5A9A10; --t-it: #6E6E73; --t-emb: #9A5B33;
+  --t-ops: #0A93C9; --t-sec: #D93636; --t-erp: #C98500; --t-net: #13998C; --t-prod: #5A9A10; --t-it: #6E6E73; --t-emb: #9A5B33; --t-biz: #6D28D9;
   --r-s: 10px; --r-m: 14px; --r-l: 18px;
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, "IBM Plex Sans Arabic", sans-serif;
   --display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, "IBM Plex Sans Arabic", sans-serif;

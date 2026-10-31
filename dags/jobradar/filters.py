@@ -153,3 +153,33 @@ def is_tech_role(title: str | None) -> bool:
     if _AI_WORD.search(title) and _AI_NON_TECH.search(title) and not _AI_ROLE_WORD.search(title):
         return False
     return bool(_DATA_INCLUDE.search(title) or _TECH_INCLUDE.search(title))
+
+
+# ------------------------------------------------- business roles at tech companies
+# Account managers, customer success and project managers. Only kept from company career
+# sites (our board registry is tech, fintech and digital companies); dbt then keeps them only
+# for companies in tech / fintech industries (fct_job_postings). Track "Clients & Projects".
+_BUSINESS_ROLE = re.compile(
+    r"""
+    customer\s+success | client\s+success
+    | \b(key\s+)?account\s+(manager|director|lead) | \bkey\s+account | client\s+(account\s+)?manager | relationship\s+manager
+    | \b(project|program|programme)\s+(manager|lead|coordinator|director) | \bproject\s+management\s+(officer|specialist|lead)
+    | \bprojektleit | chef\s+de\s+projet | jefe\s+de\s+proyecto
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
+_BUSINESS_NOT = re.compile(
+    r"construction|civil|mechanical|electrical|\bmep\b|clinical|medical|\bevents?\b|site\s+(manager|project)|interior|fit[\s-]?out"
+    r"|architectur|real\s+estate|facilit|marketing|creative|\bhr\b|human\s+resources|recruit|talent|legal|warehouse|logistics",
+    re.IGNORECASE,
+)
+
+
+def is_business_role(title: str | None) -> bool:
+    """Account manager, customer success or project manager (not construction / events / marketing projects)."""
+    return bool(title) and bool(_BUSINESS_ROLE.search(title)) and not _BUSINESS_NOT.search(title)
+
+
+def is_board_role(title: str | None) -> bool:
+    """What we keep from a company's own career site: tech roles plus the business roles above."""
+    return is_tech_role(title) or is_business_role(title)
