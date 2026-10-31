@@ -14,7 +14,6 @@ check:   fails the run if a source returned nothing (pipeline health check).
 fx_rates: last 90 days of ECB reference rates -> S3 + raw.fx_rates. It never
           fails the run: if ECB is unreachable, dbt uses the last known rates.
 dbt_build: seeds + staging/intermediate/marts models + all dbt tests.
-enrich_pay: a few salary estimates and company ratings a day (OpenWeb Ninja free plans), before publishing.
 publish_site: exports jobs + stats to JSON and pushes the public website (site/) to
           GitHub Pages. Skipped if SITE_GITHUB_TOKEN is not set; never fails the run.
 sync_boards / discover_boards / probe_companies: the self-expanding company
@@ -31,7 +30,7 @@ from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.providers.standard.operators.bash import BashOperator
 from airflow.sdk import dag, get_current_context, task
 
-from jobradar import boards, enrich, fx, site_export, storage, telegram, warehouse
+from jobradar import boards, fx, site_export, storage, telegram, warehouse
 from jobradar.sources import SOURCES, load_board_details, load_board_rows
 
 log = logging.getLogger(__name__)
@@ -57,7 +56,6 @@ def job_radar_ingest():
             warehouse.ensure_schema(conn)
             fx.load_rates(conn, [])  # creates raw.fx_rates even if ECB is unreachable today
             boards.ensure_schema(conn)
-            enrich.ensure_schema(conn)
         finally:
             conn.close()
 
@@ -218,15 +216,6 @@ def job_radar_ingest():
         log.info("fx: loaded %s rate rows (%s days)", loaded, len({r[0] for r in rows}))
         return loaded
 
-    @task(retries=0)
-    def enrich_pay() -> dict:
-        """Today's share of salary estimates and company ratings (small free quotas). Never fails the run."""
-        conn = PostgresHook(postgres_conn_id=WAREHOUSE_CONN_ID).get_conn()
-        try:
-            return enrich.run(conn)
-        finally:
-            conn.close()
-
     dbt_build = BashOperator(
         task_id="dbt_build",
         # Paths and credentials come from env vars set in docker-compose.yml / .env
@@ -245,7 +234,7 @@ def job_radar_ingest():
     s >> rates
     loaded = load.expand(meta=extracted)
     [check(loaded), rates] >> dbt_build
-    dbt_build >> enrich_pay() >> publish_site()
+    dbt_build >> publish_site()
     dbt_build >> post_telegram()
     dbt_build >> send_newsletter()
     discover_boards(loaded)

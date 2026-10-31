@@ -350,9 +350,6 @@ body[data-tab="saved"] .layout, body[data-tab="about"] .layout { grid-template-c
 .facts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .fact { font-size: 13px; line-height: 1; padding: 6px 9px; border-radius: 6px; background: var(--paper); color: var(--ink-2); border: 1px solid var(--line); }
 .fact.pay { background: var(--mint-soft); color: var(--mint-ink); border-color: transparent; font-weight: 700; }
-.fact.pay.est { background: transparent; border: 1px dashed var(--mint-ink); font-weight: 600; }
-.estsrc { display: block; margin-top: 4px; color: var(--muted); font-size: 12.5px; line-height: 1.4; }
-.estsrc a { color: inherit; }
 .fact.remote { background: var(--violet-soft); color: var(--violet-ink); border-color: transparent; font-weight: 600; }
 .fact.visa { background: var(--visa-bg); color: var(--visa-ink); border-color: transparent; font-weight: 600; }
 .fact.nat { background: var(--nat-bg); color: var(--nat-ink); border-color: transparent; }
