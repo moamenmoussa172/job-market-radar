@@ -41,6 +41,8 @@ MAX_SEED_VALIDATIONS = 300
 DEAD_AFTER_FAILURES = 3
 HARVEST_DAYS = 7
 MAX_PROBES_PER_RUN = int(os.environ.get("BOARD_PROBES_PER_RUN", "800"))
+# companies in these countries are probed before the rest of the waiting list (people asked for them)
+PROBE_FIRST_COUNTRIES = [c.strip() for c in os.environ.get("BOARD_PROBE_FIRST_COUNTRIES", "Turkey").split(",") if c.strip()]
 PROBE_RECHECK_DAYS = 30
 # Most guesses per platform per run. SmartRecruiters answers every name (an empty list instead of
 # "not found"), so its guesses rarely resolve: they must not take the whole daily budget.
@@ -282,7 +284,8 @@ COUNTRY_KEYWORDS = {
     "Sri Lanka": ["sri lanka", "colombo"],
     "Nepal": ["nepal", "kathmandu", "lalitpur"],
     "Iceland": ["iceland", "reykjavik", "reykjavík"],
-    "Turkey": ["turkey", "türkiye", "turkiye", "istanbul", "ankara", "izmir"],
+    "Turkey": ["turkey", "türkiye", "turkiye", "istanbul", "ankara", "izmir", "bursa", "kocaeli", "gebze", "antalya",
+               "eskişehir", "eskisehir", "türkei", "turquie", "turquía"],
     # remote-first employers: accept the board if its tech jobs are remote
     "Remote": ["remote", "anywhere", "worldwide", "work from home", "distributed"],
     "Netherlands": ["netherlands", "amsterdam", "rotterdam", "utrecht", "eindhoven", "the hague"],
@@ -367,7 +370,8 @@ def seed_probes(conn, companies: list[dict]) -> int:
 def matches_country(jobs: list[dict], country: str | None) -> bool:
     if not country or country not in COUNTRY_KEYWORDS:
         return True  # nothing to check against
-    text = json.dumps(jobs, ensure_ascii=False).lower()
+    # "İstanbul".lower() is "i̇stanbul" (i + a combining dot): drop the dot so it matches "istanbul"
+    text = json.dumps(jobs, ensure_ascii=False).lower().replace("\u0307", "")
     words = COUNTRY_KEYWORDS[country] + (_MENA if country in MENA_COUNTRIES else [])
     return any(re.search(r"(?<![a-z])" + re.escape(w) + r"(?![a-z])", text) for w in words)
 
@@ -420,10 +424,10 @@ def validate_probes(conn, limit: int = MAX_PROBES_PER_RUN) -> dict[str, int]:
               and (b.last_checked_at is null or b.last_checked_at < now() - %s * interval '1 day')
               and not exists (select 1 from raw.company_boards a
                               where a.company_name = b.company_name and a.status = 'active')
-            order by b.last_checked_at nulls first, b.company_name, b.ats
+            order by b.last_checked_at nulls first, (b.country = any(%s)) desc, b.company_name, b.ats
             limit %s
             """,
-            (PROBE_RECHECK_DAYS, limit * 4),
+            (PROBE_RECHECK_DAYS, PROBE_FIRST_COUNTRIES, limit * 4),
         )
         todo = cap_per_platform(cur.fetchall(), limit)
     counts = {"active": 0, "dead": 0, "candidate": 0, "retry": 0, "skipped": 0, "rate_limited": 0}

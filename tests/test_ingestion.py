@@ -883,3 +883,17 @@ def test_probe_budget_is_shared_between_platforms():
     picked = boards.cap_per_platform(rows, 5, {"smartrecruiters": 2})
     assert [r[0] for r in picked] == ["smartrecruiters", "smartrecruiters", "workable"]
     assert len(boards.cap_per_platform(rows, 4, {})) == 4
+
+
+def test_turkish_boards_match_istanbul_with_a_capital_dotted_i():
+    from jobradar import boards
+    # "İstanbul".lower() keeps a combining dot; the check must still see Istanbul (and İzmir, Türkiye)
+    assert boards.matches_country([{"location": "İstanbul, Türkiye"}], "Turkey")
+    assert boards.matches_country([{"location": "İzmir"}], "Turkey")
+    assert boards.matches_country([{"location": "Gebze, Kocaeli"}], "Turkey")
+    assert not boards.matches_country([{"location": "Berlin, Germany"}], "Turkey")
+
+
+def test_turkey_is_searched_with_egypt_and_the_gulf():
+    from jobradar import sources
+    assert ("tr", "Turkey") in sources.SEARCH_COUNTRIES and ("tr", "Turkey") not in sources.EXTRA_SEARCH_COUNTRIES

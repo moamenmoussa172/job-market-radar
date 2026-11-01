@@ -70,7 +70,7 @@ pattern,country,region
 "\m(ukraine|kyiv|kiev|lviv)\M",Ukraine,Europe
 "\m(cyprus|limassol|nicosia)\M",Cyprus,Europe
 "\m(malta)\M",Malta,Europe
-"\m(turkey|türkiye|turkiye|istanbul|ankara)\M",Turkey,MENA
+"\m(turkey|t[uüÜ]rk[iİıI]ye|[iİ]stanbul|ankara|[iİ]zmir|bursa|kocaeli|gebze|antalya|eski[sş]ehir|konya|kayseri|gaziantep|trabzon|mersin|turqu[ií]a|t[uü]rkei|turquie)\M",Turkey,MENA
 "\m(egypt|cairo|alexandria|giza)\M",Egypt,MENA
 "\m(uae|u\.a\.e|united\s+arab\s+emirates|dubai|abu\s+dhabi)\M",United Arab Emirates,MENA
 "\m(saudi|ksa|riyadh|jeddah|dammam|khobar|dhahran|king\s+abdullah\s+economic\s+city|kaec|neom|jubail|yanbu|mecca|makkah|medina|madinah|tabuk|abha)\M",Saudi Arabia,MENA

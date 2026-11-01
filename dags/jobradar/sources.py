@@ -1137,7 +1137,7 @@ def extract_himalayas(queries: list[str] | None = None, max_pages: int = 5,
 # where few companies use the public job-board platforms.
 SEARCH_COUNTRIES = [  # (ISO code, name used in free-text queries)
     ("eg", "Egypt"), ("ae", "United Arab Emirates"), ("sa", "Saudi Arabia"), ("qa", "Qatar"),
-    ("kw", "Kuwait"), ("bh", "Bahrain"), ("om", "Oman"), ("jo", "Jordan"),
+    ("kw", "Kuwait"), ("bh", "Bahrain"), ("om", "Oman"), ("jo", "Jordan"), ("tr", "Turkey"),
 ]
 # More countries people asked for. They get their own small daily share (JSEARCH_EXTRA_PER_DAY /
 # JOOBLE_EXTRA_PER_DAY) so the Gulf and Egypt searches above keep their pace.
@@ -1147,7 +1147,7 @@ EXTRA_SEARCH_COUNTRIES = [
     ("rw", "Rwanda"), ("pk", "Pakistan"), ("bd", "Bangladesh"), ("lk", "Sri Lanka"), ("np", "Nepal"),
     ("kz", "Kazakhstan"), ("uz", "Uzbekistan"), ("ge", "Georgia"), ("am", "Armenia"), ("az", "Azerbaijan"),
     ("al", "Albania"), ("rs", "Serbia"), ("ba", "Bosnia and Herzegovina"), ("mk", "North Macedonia"),
-    ("sk", "Slovakia"), ("si", "Slovenia"), ("md", "Moldova"), ("tr", "Turkey"),
+    ("sk", "Slovakia"), ("si", "Slovenia"), ("md", "Moldova"),
 ]
 # Big Egyptian employers that post mostly on Wuzzuf / LinkedIn (no public career API we can read).
 # JSearch (Google for Jobs) and Jooble index those listings, so they are searched by company name:

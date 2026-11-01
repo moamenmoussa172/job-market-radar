@@ -16,6 +16,7 @@ _DATA_INCLUDE = re.compile(
     | \betl\b | \belt\b | \bdbt\b | \bwarehous | \blakehouse\b | \bbig\ data\b | \bdwh\b | \bedw\b
     | daten | donn[ée]es | \bdatos\b | \bdata-
     | \bmachine\ learning\b | \bml\b | \bmlops\b | \bai\b | scientist
+    | \bveri\b | yapay\ zek[aâ] | makine\ [oö][gğ]renme   # Turkish: data, AI, machine learning
     """,
     re.IGNORECASE | re.VERBOSE,
 )
@@ -23,7 +24,7 @@ _DATA_INCLUDE = re.compile(
 # Titles that mention "data" but are not data-profession roles.
 _DATA_EXCLUDE = re.compile(
     r"data\s*entry|data\s*cent(er|re)|datacenter|rechenzentrum|data\s*protection\s*officer"
-    r"|data\s+assistant|medical\s+data|\bai\s+trainers?\b",
+    r"|data\s+assistant|medical\s+data|\bai\s+trainers?\b|veri\s+giri[sş]",
     re.IGNORECASE,
 )
 
@@ -103,6 +104,10 @@ _TECH_INCLUDE = re.compile(
     | \bit\ (manager|director|lead|head) | head\ of\ (it|information\ technology|technology|infrastructure) | \bcio\b
     | speech\ (recognition|engineer|scientist|technolog) | (technical|customer|product|application)\ support\ engineer
     | computer\ vision | \bnlp\b | natural\ language | \bllm\b | genai | generative\ ai | prompt\ engineer
+    # Turkish (dotted/dotless i: "YAZILIM" and "Yazılım")
+    | yaz[ıi]l[ıi]m | geli[sş]tirici | siber\ g[uü]venlik | bilgi\ g[uü]venli[gğ]i | bilgi\ (i[sş]lem|teknolojileri)
+    | (sistem|a[gğ])\ (y[oö]netici|uzman|m[uü]hendis) | test\ (uzman|m[uü]hendis) | mobil\ (uygulama|geli[sş]tirici)
+    | [uü]r[uü]n\ y[oö]netici
     # German / French / Spanish / Dutch
     | entwickler | softwareentwickl | informatiker | fachinformatiker | systemadministrat | testautomat
     | d[ée]veloppeu | ing[ée]nieur\ (logiciel|devops|cloud|qa|test) | testeur

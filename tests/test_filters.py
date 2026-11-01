@@ -108,3 +108,17 @@ def test_business_roles_never_enter_from_aggregators():
     # aggregators keep using is_tech_role, which still drops account managers
     assert not is_tech_role("Account Manager") and not is_tech_role("Customer Success Manager")
     assert is_tech_role("Odoo Developer") and is_tech_role("SAP ABAP Consultant") and is_board_role("SAP FICO Consultant")
+
+
+@pytest.mark.parametrize("title", [
+    "Kıdemli Yazılım Geliştirme Uzmanı", "YAZILIM MÜHENDİSİ", "Veri Analisti", "Veri Mühendisi", "Siber Güvenlik Uzmanı",
+    "Sistem Yöneticisi", "Test Uzmanı", "Ürün Yöneticisi", "Mobil Uygulama Geliştirici", "Yapay Zeka Mühendisi",
+    "Bilgi İşlem Uzmanı", "Ağ Uzmanı",
+])
+def test_turkish_tech_titles_are_kept(title):
+    assert is_tech_role(title)
+
+
+@pytest.mark.parametrize("title", ["Veri Giriş Elemanı", "Satış Temsilcisi", "Muhasebe Uzmanı", "Makine Mühendisi"])
+def test_turkish_non_tech_titles_stay_out(title):
+    assert not is_tech_role(title)
