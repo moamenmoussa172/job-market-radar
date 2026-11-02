@@ -850,3 +850,8 @@ h1, h2, h3 { letter-spacing: -.02em; }
 .tabs-wrap { background: color-mix(in srgb, var(--paper) 92%, transparent); }
 @media (max-width: 720px) { .radar { display: none; } .hero-in { padding-top: 28px; } }
 .report-page .topbar .navlink { color: var(--ink-2); }
+
+/* Adzuna jobs seen from another country: how to find the same job on the company site */
+.adznote { margin: 12px 0 0; padding: 12px 14px; border-radius: var(--r-m); background: var(--paper); color: var(--ink-2); font-size: 14px; line-height: 1.5; }
+.adznote a { display: inline-block; margin-top: 6px; font-weight: 600; color: var(--violet-ink); }
+.credit a { color: inherit; text-decoration: underline; }

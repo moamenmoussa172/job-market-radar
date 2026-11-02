@@ -24,6 +24,9 @@
       segRole: "I'm looking for", segKeywords: "Keywords", searchBtn: "Search", browseTracks: "Browse by track",
       filters: "Filters", filtersN: (n) => `Filters (${n})`, quickTitle: "Show only", close: "Close",
       showN: (n) => `Show ${n} jobs`, miniPh: "Search jobs  ( / )", clearAll: "Clear all", removeFilter: (x) => `Remove filter ${x}`,
+      openOn: (src) => `Open on ${src}`, cardFind: "company site ↗",
+      adzNote: (place) => `Adzuna shows this job only to people in ${place}. If it says “not available in your region”, look for the same job on the company's own site:`,
+      findOnSite: (c) => `Find it on ${c}'s site ↗`,
       applyOn: "Apply on the company site", copyLink: "Copy link", linkCopied: "Link copied", posted: "Posted",
       haveTitle: "Skills you have", missTitle: "Skills to add", missHint: "Tap one you already know to add it to your skills.",
       matchCta: "Add your skills or upload your CV to see how well you match this job.", matchCtaBtn: "Add my skills",
@@ -124,6 +127,9 @@
       segRole: "بدوّر على", segKeywords: "كلمات بحث", searchBtn: "دوّر", browseTracks: "تصفّح حسب المجال",
       filters: "الفلاتر", filtersN: (n) => `الفلاتر (${n})`, quickTitle: "اعرض بس", close: "اقفل",
       showN: (n) => `اعرض ${n} وظيفة`, miniPh: "دوّر على وظيفة  ( / )", clearAll: "امسح الكل", removeFilter: (x) => `شيل فلتر ${x}`,
+      openOn: (src) => `افتحها على ${src}`, cardFind: "موقع الشركة ↗",
+      adzNote: (place) => `Adzuna بيعرض الوظيفة دي بس للي في ${place}. لو ظهرلك “not available in your region”، دوّر على نفس الوظيفة في موقع الشركة نفسها:`,
+      findOnSite: (c) => `دوّر عليها في موقع ${c} ↗`,
       applyOn: "قدّم على موقع الشركة", copyLink: "انسخ اللينك", linkCopied: "اتنسخ اللينك", posted: "اتنشرت",
       haveTitle: "مهارات عندك", missTitle: "مهارات تضيفها", missHint: "دوس على أي مهارة بتعرفها عشان تضيفها لمهاراتك.",
       matchCta: "ضيف مهاراتك أو ارفع الـ CV عشان تشوف قد إيه الوظيفة دي مناسبة ليك.", matchCtaBtn: "ضيف مهاراتي",
@@ -483,6 +489,16 @@
   const CHECK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
   const WA_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path class="wafill" d="M12 2.2a9.7 9.7 0 0 0-8.4 14.6L2.3 21.8l5.1-1.3A9.7 9.7 0 1 0 12 2.2Zm0 17.7a8 8 0 0 1-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1 1 12 19.9Zm4.4-6c-.2-.1-1.4-.7-1.7-.8-.2-.1-.4-.1-.5.1l-.8 1c-.1.2-.3.2-.5.1a6.6 6.6 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.5-.4h-.5a.9.9 0 0 0-.7.3 2.8 2.8 0 0 0-.9 2.1 4.9 4.9 0 0 0 1 2.6 11.2 11.2 0 0 0 4.3 3.8c1.6.7 2.2.7 3 .6a2.6 2.6 0 0 0 1.7-1.2 2.1 2.1 0 0 0 .2-1.2c-.1-.1-.2-.2-.5-.3Z"/></svg>';
   // a link that opens this job's details on Radarak (no filters, so it works for whoever receives it)
+  // Adzuna hides a job from visitors outside its country ("not available in your region"):
+  // for those visitors, offer a search for the same job on the company's own site
+  const ADZUNA = "Jobs by Adzuna";
+  let myCountry;
+  const adzunaFar = (j) => {
+    if (j.by !== ADZUNA) return false;
+    if (myCountry === undefined) myCountry = guessCountry();
+    return !(j.co || []).includes(myCountry);
+  };
+  const companySearch = (j) => "https://www.google.com/search?q=" + encodeURIComponent(`${j.c || ""} careers "${j.t}"`);
   const jobLink = (j) => location.origin + location.pathname + "#job=" + encodeURIComponent(j.id);
   const waLink = (j) => "https://wa.me/?text=" + encodeURIComponent(t("shareText")(j.t, j.c) + "\n" + jobLink(j));
   function matchRing(have, total) {
@@ -524,7 +540,7 @@
           ? `<button type="button" class="locbtn" data-key="${esc(g.key)}" aria-expanded="${locsOpen}">${locsOpen ? t("hideLocs") : t("moreLocs")(others)}</button>` : ""}</p>
         <div class="facts">${facts}</div>
         ${j.k.length ? `<div class="skills">${skills}</div>` : ""}
-        ${j.by ? `<p class="credit">${esc(j.by)}</p>` : ""}
+        ${j.by ? `<p class="credit">${esc(j.by)}${adzunaFar(j) && j.c ? ` · <a href="${esc(companySearch(j))}" target="_blank" rel="noopener nofollow">${t("cardFind")}</a>` : ""}</p>` : ""}
         ${locsOpen ? `<ul class="locs">${g.all.slice(1).map((x) => `<li><a href="${esc(x.u)}" target="_blank" rel="${linkRel(x)}">${esc(x.l || x.t)}</a></li>`).join("")}</ul>` : ""}
       </div>
       <div class="jside">
@@ -1211,11 +1227,13 @@
           <div class="facts">${g.pay ? `<span class="fact pay">${payText(g.pay)}</span>` : ""}<span class="fact role">${esc(j.r)}</span>${tags}</div></div>
       </header>
       <div class="dactions">
-        <a class="apply" href="${esc(j.u)}" target="_blank" rel="${linkRel(j)}">${t("applyOn")}
+        <a class="apply" href="${esc(j.u)}" target="_blank" rel="${linkRel(j)}">${j.by === ADZUNA ? t("openOn")("Adzuna") : t("applyOn")}
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></a>
         <button type="button" class="save" data-id="${esc(j.id)}" aria-pressed="${!!savedJobs[j.id]}">${BOOKMARK}<span>${savedJobs[j.id] ? t("saved") : t("save")}</span></button>
         <button type="button" class="applybtn" data-applied="${esc(j.id)}" aria-pressed="${!!(savedJobs[j.id] && savedJobs[j.id].a)}">${CHECK}<span>${savedJobs[j.id] && savedJobs[j.id].a ? t("applied") : t("markApplied")}</span></button>
       </div>
+      ${adzunaFar(j) && j.c ? `<p class="adznote">${esc(t("adzNote")((j.co || []).join(", ") || "its country"))}
+        <a href="${esc(companySearch(j))}" target="_blank" rel="noopener nofollow">${esc(t("findOnSite")(j.c))}</a></p>` : ""}
       <div class="dshare">
         <a class="wabtn" href="${esc(waLink(j))}" target="_blank" rel="noopener" data-share="${esc(j.id)}">${WA_ICON}<span>${t("shareWa")}</span></a>
         ${navigator.share ? `<button type="button" class="ghostbtn" id="shareJob">${t("shareMore")}</button>` : ""}

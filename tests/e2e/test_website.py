@@ -1012,3 +1012,21 @@ def test_insight_of_the_day_card(browser, base, tmp_path):
     data = path.read_bytes()
     assert data[:4] == b"\x89PNG" and int.from_bytes(data[16:20], "big") == 1080
     ctx.close()
+
+
+def test_adzuna_jobs_offer_the_company_site_outside_their_country(browser, base, data):
+    adz = [j for j in data["jobs"] if j.get("by") == "Jobs by Adzuna" and j.get("c") and "Egypt" not in j["co"]]
+    if not adz:
+        pytest.skip("no Adzuna jobs")
+    j = adz[0]
+    ctx = browser.new_context(viewport={"width": 1280, "height": 900}, timezone_id="Africa/Cairo")   # a visitor in Egypt
+    ctx.add_init_script("localStorage.setItem('jr_lang', JSON.stringify('en'));")
+    p = ctx.new_page()
+    p.goto(base + "/#job=" + j["id"])
+    p.wait_for_selector("#drawerBody .adznote", timeout=30000)
+    assert p.locator("#drawerBody a.apply").inner_text().strip().startswith("Open on Adzuna")
+    note = p.locator("#drawerBody .adznote")
+    assert "only to people in" in note.inner_text()
+    href = note.locator("a").get_attribute("href")
+    assert href.startswith("https://www.google.com/search?q=") and "careers" in href
+    ctx.close()
