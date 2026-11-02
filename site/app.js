@@ -40,6 +40,31 @@
       search: "Search", searchPh: "Title, company or skill", seniority: "Seniority", workMode: "Work mode",
       industry: "Industry", skill: "Must-have skill", arabic: "Arabic", any: "Any", arabicReq: "Required",
       arabicNot: "Not required", reset: "Clear all",
+      tabKit: "Apply kit",
+      kitIntro: "Save your details, CVs and cover letters once. When you open a job, Radarak shows which of your CVs fits it best and gives you every answer ready to copy.",
+      kitPrivacy: "🔒 Everything stays on this device. Nothing is uploaded to Radarak or sent anywhere. Use Backup to move it to another phone or browser.",
+      kitDetails: "My details", kitCvs: "My CVs", kitLetters: "Cover letters", kitBackup: "Backup",
+      kFirst: "First name", kLast: "Last name", kEmail: "Email", kPhone: "Phone (with country code)", kCountry: "Country",
+      kCity: "City", kLinkedin: "LinkedIn", kPortfolio: "GitHub / portfolio", kYears: "Years of experience",
+      kNotice: "Notice period", kNoticePh: "e.g. 1 month", kSalary: "Expected salary", kSalaryPh: "e.g. 40,000 EGP / month",
+      kitSaved: "Saved on this device",
+      kitAddCv: "+ Add a CV", kitCvHint: "PDF, Word (.docx) or text. Up to 5 CVs, for example one per role.",
+      kitCvName: "Name of this CV", kitCvSkills: (n) => `${n} skills found`, kitCvYears: (n) => `${n} years`,
+      kitUseCv: "Use for job matching", kitDownload: "Download", kitDelete: "Delete", kitReallyDelete: "Tap again to delete",
+      kitCvMax: "You can keep up to 5 CVs. Delete one to add another.", kitCvRead: (f) => `Reading ${f}…`,
+      kitCvAdded: (n) => `Added: ${n}`, kitNoCvs: "No CVs yet. Add the CV you send most, then one per role if you have more.",
+      kitAddLetter: "+ Add a cover letter", kitLetterName: "Name", kitLetterHelp: "These words fill in by themselves for each job: {company} {job} {first} {last} {years}",
+      kitLetterDefaultName: "Short letter",
+      kitLetterDefault: "Dear {company} hiring team,\n\nI'm applying for the {job} role. I have {years} years of experience, and the skills in this job match the work I do every day.\n\nI'd be happy to talk about how I can help your team.\n\nBest regards,\n{first} {last}",
+      kitExport: "Save a backup file", kitImport: "Restore from a backup", kitImported: "Your apply kit is back",
+      kitBadFile: "That file isn't a Radarak backup.", kitWipe: "Delete my apply kit", kitWiped: "Your apply kit was deleted from this device",
+      kitNoStorage: "This browser can't keep files (private window?). Your CVs will be gone when you close it.",
+      dKit: "Apply faster", dKitCta: "Save your details and CVs once. Then every job shows which CV fits it and gives you copy-ready answers.",
+      dKitBtn: "Set up my apply kit", dFit: "Which of your CVs fits this job", dBest: "best fit",
+      dMissing: (n) => `This job asks for ${n} that your best CV doesn't mention. If you have them, add them to the CV before you send it.`,
+      dAllThere: "Your best CV mentions every skill this job asks for. 👍", dNoSkills: "This job lists no skills we can compare.",
+      dCopy: "Copy-ready answers", dCopyHint: "Tap to copy, then paste into the application form.", dLetter: "Cover letter",
+      copied: "Copied", copy: "Copy", dEditKit: "Edit my apply kit", dSentWith: (n) => `Sent with: ${n}`,
       tabJobs: "Jobs", tabInsights: "Skills & pay", tabSaved: "Saved", tabAbout: "How it works", tabTrends: "Trends",
       weeklyReport: "Weekly report", reportCta: "Get this week's report card",
       weeklyTitle: "New jobs per week", risingTitle: "Skills on the rise", fallingTitle: "Skills cooling down",
@@ -143,6 +168,31 @@
       search: "بحث", searchPh: "وظيفة أو شركة أو مهارة", seniority: "المستوى", workMode: "نوع العمل",
       industry: "المجال", skill: "مهارة لازم تكون مطلوبة", arabic: "العربي", any: "الكل", arabicReq: "مطلوب",
       arabicNot: "مش مطلوب", reset: "امسح الكل",
+      tabKit: "ملف التقديم",
+      kitIntro: "احفظ بياناتك والـ CVs وخطابات التقديم مرة واحدة. ولما تفتح أي وظيفة، رادارك هيقولك أنهي CV من بتوعك الأنسب ليها، وهيجهزلك كل الإجابات جاهزة للنسخ.",
+      kitPrivacy: "🔒 كل حاجة بتفضل على الجهاز ده بس. مفيش حاجة بتترفع على رادارك أو بتتبعت لأي حد. استخدم النسخة الاحتياطية عشان تنقلها لموبايل أو متصفح تاني.",
+      kitDetails: "بياناتي", kitCvs: "الـ CVs بتاعتي", kitLetters: "خطابات التقديم", kitBackup: "نسخة احتياطية",
+      kFirst: "الاسم الأول", kLast: "اسم العيلة", kEmail: "الإيميل", kPhone: "الموبايل (بكود الدولة)", kCountry: "الدولة",
+      kCity: "المدينة", kLinkedin: "LinkedIn", kPortfolio: "GitHub / بورتفوليو", kYears: "سنين الخبرة",
+      kNotice: "فترة الإخطار", kNoticePh: "مثلًا شهر", kSalary: "المرتب المتوقع", kSalaryPh: "مثلًا 40,000 جنيه في الشهر",
+      kitSaved: "اتحفظ على الجهاز ده",
+      kitAddCv: "+ ضيف CV", kitCvHint: "PDF أو Word (.docx) أو نص. لحد 5 CVs، مثلًا واحد لكل وظيفة.",
+      kitCvName: "اسم الـ CV ده", kitCvSkills: (n) => `${n} مهارة`, kitCvYears: (n) => `${n} سنين`,
+      kitUseCv: "استخدمه في مطابقة الوظايف", kitDownload: "نزّله", kitDelete: "امسح", kitReallyDelete: "دوس تاني عشان تمسح",
+      kitCvMax: "تقدر تحتفظ بـ 5 CVs بس. امسح واحد عشان تضيف غيره.", kitCvRead: (f) => `بنقرا ${f}…`,
+      kitCvAdded: (n) => `اتضاف: ${n}`, kitNoCvs: "لسه مفيش CVs. ضيف الـ CV اللي بتبعته أكتر، وبعدين واحد لكل وظيفة لو عندك.",
+      kitAddLetter: "+ ضيف خطاب تقديم", kitLetterName: "الاسم", kitLetterHelp: "الكلمات دي بتتملى لوحدها لكل وظيفة: {company} {job} {first} {last} {years}",
+      kitLetterDefaultName: "خطاب قصير",
+      kitLetterDefault: "Dear {company} hiring team,\n\nI'm applying for the {job} role. I have {years} years of experience, and the skills in this job match the work I do every day.\n\nI'd be happy to talk about how I can help your team.\n\nBest regards,\n{first} {last}",
+      kitExport: "احفظ ملف نسخة احتياطية", kitImport: "رجّع من نسخة احتياطية", kitImported: "ملف التقديم رجع",
+      kitBadFile: "الملف ده مش نسخة احتياطية من رادارك.", kitWipe: "امسح ملف التقديم", kitWiped: "ملف التقديم اتمسح من الجهاز ده",
+      kitNoStorage: "المتصفح ده مش بيحتفظ بالملفات (يمكن نافذة خاصة؟). الـ CVs هتتمسح لما تقفله.",
+      dKit: "قدّم أسرع", dKitCta: "احفظ بياناتك والـ CVs مرة واحدة. وبعدها كل وظيفة هتقولك أنهي CV الأنسب، وهتديك إجابات جاهزة للنسخ.",
+      dKitBtn: "جهّز ملف التقديم", dFit: "أنهي CV من بتوعك الأنسب للوظيفة دي", dBest: "الأنسب",
+      dMissing: (n) => `الوظيفة دي طالبة ${n} والـ CV الأنسب مش ذاكرها. لو عندك المهارات دي، ضيفها للـ CV قبل ما تبعته.`,
+      dAllThere: "الـ CV الأنسب فيه كل المهارات اللي الوظيفة طالباها. 👍", dNoSkills: "الوظيفة دي مش مكتوب فيها مهارات نقدر نقارنها.",
+      dCopy: "إجابات جاهزة للنسخ", dCopyHint: "دوس عشان تنسخ، وبعدين الصق في فورم التقديم.", dLetter: "خطاب التقديم",
+      copied: "اتنسخ", copy: "انسخ", dEditKit: "عدّل ملف التقديم", dSentWith: (n) => `اتبعت بـ: ${n}`,
       tabJobs: "الوظايف", tabInsights: "المهارات والمرتبات", tabSaved: "المحفوظة", tabAbout: "إزاي بيشتغل", tabTrends: "الترندات",
       weeklyReport: "التقرير الأسبوعي", reportCta: "خد كارت تقرير الأسبوع ده",
       weeklyTitle: "الوظايف الجديدة كل أسبوع", risingTitle: "مهارات طالعة", fallingTitle: "مهارات بتهدى",
@@ -351,6 +401,7 @@
     btn.textContent = lang === "ar" ? "English" : "العربية";
     btn.lang = lang === "ar" ? "en" : "ar";
     $("aboutText").innerHTML = ABOUT[lang];
+    if ($("kit") && !$("kit").hidden) renderKit();
     document.querySelectorAll(".langpath").forEach((a) => { a.href = (lang === "ar" ? "ar/" : "") + a.dataset.path; });
     if (meta) {
       buildOptions();
@@ -591,7 +642,7 @@
     list.sort((a, b) => (byDay(a) < byDay(b) ? 1 : -1));
     $("savedList").innerHTML = list.map((id) => {
       const s = savedJobs[id], j = open.get(id);
-      const status = `<p class="savedmeta">${s.a ? `<span class="fact applied">✓ ${esc(t("appliedOn")(shortDate(s.a)))}</span>` : s.sv ? esc(t("savedOn")(shortDate(s.sv))) : ""}
+      const status = `<p class="savedmeta">${s.a ? `<span class="fact applied">✓ ${esc(t("appliedOn")(shortDate(s.a)))}</span>${s.cv ? ` <span class="sentwith">${esc(t("dSentWith")(s.cv))}</span>` : ""}` : s.sv ? esc(t("savedOn")(shortDate(s.sv))) : ""}
         <button type="button" class="applybtn" data-applied="${esc(id)}" aria-pressed="${!!s.a}">${CHECK}<span>${s.a ? t("applied") : t("markApplied")}</span></button></p>`;
       if (j) { const row = jobRow({ key: "saved:" + id, job: j, all: [j], pay: j.$ || null, flags: j.f || 0, have: 0, match: -1 }), at = row.lastIndexOf("</li>");
         return row.slice(0, at) + status + row.slice(at); }
@@ -612,7 +663,12 @@
   function toggleApplied(id) {
     const j = jobs.find((x) => x.id === id);
     if (!savedJobs[id]) { if (!j) return; savedJobs[id] = { t: j.t, c: j.c, l: j.l, u: j.u, df: j.df, sv: today() }; }
-    if (savedJobs[id].a) delete savedJobs[id].a; else { savedJobs[id].a = today(); track("applied"); }
+    if (savedJobs[id].a) { delete savedJobs[id].a; delete savedJobs[id].cv; }
+    else {
+      savedJobs[id].a = today(); track("applied");
+      const b = j && bestCv(j);                       // which CV you (most likely) sent, for your own records
+      if (b) savedJobs[id].cv = b.cv.name;
+    }
     store.set("saved", savedJobs);
   }
 
@@ -1112,6 +1168,275 @@
     }
   }
 
+  // ------------------------------------------------------------------ Apply kit: details, CVs and letters, all on this device
+  // Details and CV facts (skills, years) live in localStorage; the CV files themselves in IndexedDB.
+  // Nothing here is ever sent anywhere.
+  const KIT_FIELDS = [   // key, label, input type, autocomplete, placeholder
+    ["first", "kFirst", "text", "given-name"], ["last", "kLast", "text", "family-name"], ["email", "kEmail", "email", "email"],
+    ["phone", "kPhone", "tel", "tel"], ["country", "kCountry", "text", "country-name"], ["city", "kCity", "text", "address-level2"],
+    ["linkedin", "kLinkedin", "url", "url"], ["portfolio", "kPortfolio", "url", "url"], ["years", "kYears", "number", "off"],
+    ["notice", "kNotice", "text", "off", "kNoticePh"], ["salary", "kSalary", "text", "off", "kSalaryPh"],
+  ];
+  const KIT_MAX_CVS = 5;
+  let kit = store.get("kit", null) || { profile: {}, cvs: [], letters: [] };
+  kit.profile = kit.profile || {}; kit.cvs = kit.cvs || []; kit.letters = kit.letters || [];
+  const saveKit = () => store.set("kit", kit);
+  const kitHasData = () => kit.cvs.length > 0 || Object.values(kit.profile).some((v) => String(v || "").trim());
+
+  // a tiny IndexedDB key-value store for the CV files (localStorage is too small for files)
+  const cvFiles = (() => {
+    let dbp = null;
+    const open = () => (dbp = dbp || new Promise((ok, no) => {
+      try {
+        const r = indexedDB.open("radarak", 1);
+        r.onupgradeneeded = () => r.result.createObjectStore("cvs");
+        r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error);
+      } catch (e) { no(e); }
+    }));
+    const run = async (mode, fn) => {
+      const db = await open();
+      return new Promise((ok, no) => {
+        const tx = db.transaction("cvs", mode), req = fn(tx.objectStore("cvs"));
+        tx.oncomplete = () => ok(req ? req.result : undefined); tx.onerror = () => no(tx.error); tx.onabort = () => no(tx.error);
+      });
+    };
+    const mem = new Map();          // fallback when IndexedDB is blocked (some private windows)
+    let ok = true;
+    return {
+      async put(id, v) { try { if (ok) return await run("readwrite", (s) => s.put(v, id)); } catch { ok = false; } mem.set(id, v); return null; },
+      async get(id) { try { if (ok) return await run("readonly", (s) => s.get(id)); } catch { ok = false; } return mem.get(id); },
+      async del(id) { try { if (ok) return await run("readwrite", (s) => s.delete(id)); } catch { ok = false; } mem.delete(id); return null; },
+      get persistent() { return ok; },
+    };
+  })();
+
+  async function fileText(file) {
+    const name = file.name.toLowerCase();
+    const kind = name.endsWith(".pdf") || file.type === "application/pdf" ? "pdf"
+      : name.endsWith(".docx") ? "docx" : name.endsWith(".txt") || file.type.startsWith("text/") ? "txt" : null;
+    if (!kind) throw new Error("type");
+    return kind === "txt" ? file.text() : kind === "pdf" ? pdfText(await file.arrayBuffer()) : docxText(await file.arrayBuffer());
+  }
+
+  // how well one CV covers a job: its skills that the job asks for, and the ones it doesn't mention
+  function cvFit(cv, j) {
+    const have = new Set((cv.skills || []).map((s) => meta.skills.indexOf(s)).filter((i) => i >= 0));
+    const hit = j.k.filter((k) => have.has(k)), miss = j.k.filter((k) => !have.has(k));
+    return { cv, pct: j.k.length ? Math.round((100 * hit.length) / j.k.length) : 0, hit, miss };
+  }
+  function bestCv(j) {
+    if (!kit.cvs.length || !j.k.length) return null;
+    return kit.cvs.map((cv) => cvFit(cv, j)).sort((a, b) => b.pct - a.pct || a.miss.length - b.miss.length)[0];
+  }
+  function fillLetter(body, j) {
+    const p = kit.profile;
+    const vals = { company: j.c || "", job: j.t || "", first: p.first || "", last: p.last || "", years: p.years || "" };
+    return String(body || "").replace(/\{(company|job|first|last|years)\}/g, (m, k) => vals[k] || m);
+  }
+
+  async function copyText(text, btn) {
+    let done = false;
+    try { await navigator.clipboard.writeText(text); done = true; } catch { /* older browsers: fall back below */ }
+    if (!done) {
+      const ta = document.createElement("textarea");
+      ta.value = text; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      try { done = document.execCommand("copy"); } catch { done = false; }
+      ta.remove();
+    }
+    if (done && btn) {
+      btn.classList.add("done"); const old = btn.dataset.label || btn.textContent;
+      btn.dataset.label = old; btn.querySelector(".cl") ? (btn.querySelector(".cl").textContent = t("copied")) : (btn.textContent = t("copied"));
+      setTimeout(() => { btn.classList.remove("done"); if (btn.querySelector(".cl")) btn.querySelector(".cl").textContent = t("copy"); else btn.textContent = old; }, 1600);
+    }
+    return done;
+  }
+  async function downloadCv(id) {
+    const rec = await cvFiles.get(id);
+    if (!rec || !rec.blob) return;
+    const url = URL.createObjectURL(rec.blob), a = document.createElement("a");
+    a.href = url; a.download = rec.fileName || "cv"; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    track("kit-cv-download");
+  }
+
+  let kitMsg = "";
+  function renderKit() {
+    const p = kit.profile, el = $("kitBody");
+    if (!el) return;
+    const field = ([k, label, type, ac, ph]) => `<label class="kfield"><span>${esc(t(label))}</span>
+      <input id="k-${k}" data-kit="${k}" type="${type}" autocomplete="${ac}" ${type === "number" ? 'min="0" max="50" inputmode="numeric"' : ""}
+        ${ph ? `placeholder="${esc(t(ph))}"` : ""} value="${esc(p[k] || "")}" dir="auto"></label>`;
+    const cvs = kit.cvs.map((cv) => `<li class="kcv" data-cv="${esc(cv.id)}">
+        <div class="kcvhead"><input class="kcvname" data-cvname="${esc(cv.id)}" value="${esc(cv.name)}" aria-label="${esc(t("kitCvName"))}" dir="auto">
+          <small>${esc(cv.fileName || "")}</small></div>
+        <p class="kcvfacts">${esc(t("kitCvSkills")(cv.skills.length))}${cv.years ? " · " + esc(t("kitCvYears")(cv.years)) : ""}${cv.role ? " · " + esc(cv.role) : ""}</p>
+        <div class="kcvbtns"><button type="button" class="ghostbtn" data-cvuse="${esc(cv.id)}">${esc(t("kitUseCv"))}</button>
+          <button type="button" class="ghostbtn" data-cvdl="${esc(cv.id)}">${esc(t("kitDownload"))}</button>
+          <button type="button" class="linkbtn danger" data-cvdel="${esc(cv.id)}">${esc(t("kitDelete"))}</button></div></li>`).join("");
+    const letters = kit.letters.map((l) => `<li class="kletter" data-letter="${esc(l.id)}">
+        <div class="kletterhead"><input data-lname="${esc(l.id)}" value="${esc(l.name)}" aria-label="${esc(t("kitLetterName"))}" dir="auto">
+          <button type="button" class="linkbtn danger" data-ldel="${esc(l.id)}">${esc(t("kitDelete"))}</button></div>
+        <textarea data-lbody="${esc(l.id)}" rows="8" dir="auto">${esc(l.body)}</textarea></li>`).join("");
+    el.innerHTML = `
+      <p class="kitintro">${esc(t("kitIntro"))}</p>
+      <p class="kitprivacy">${esc(t("kitPrivacy"))}</p>
+      ${cvFiles.persistent ? "" : `<p class="kitwarn">${esc(t("kitNoStorage"))}</p>`}
+      <section class="kitsec"><h2>${esc(t("kitDetails"))}</h2>
+        <form class="kgrid" id="kitForm" autocomplete="on" onsubmit="return false">${KIT_FIELDS.map(field).join("")}</form>
+        <p class="hint kitsaved" id="kitSavedNote" hidden>✓ ${esc(t("kitSaved"))}</p></section>
+      <section class="kitsec"><h2>${esc(t("kitCvs"))} <span class="muted">${kit.cvs.length}/${KIT_MAX_CVS}</span></h2>
+        ${kit.cvs.length ? `<ul class="kcvs">${cvs}</ul>` : `<p class="hint">${esc(t("kitNoCvs"))}</p>`}
+        <button type="button" class="primary" id="kitAddCv" ${kit.cvs.length >= KIT_MAX_CVS ? "disabled" : ""}>${esc(t("kitAddCv"))}</button>
+        <input id="kitCvFile" type="file" accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" hidden>
+        <p class="hint">${esc(kit.cvs.length >= KIT_MAX_CVS ? t("kitCvMax") : t("kitCvHint"))}</p>
+        <p class="kitmsg" id="kitMsg" role="status" aria-live="polite">${esc(kitMsg)}</p></section>
+      <section class="kitsec"><h2>${esc(t("kitLetters"))}</h2>
+        <p class="hint">${esc(t("kitLetterHelp"))}</p>
+        ${kit.letters.length ? `<ul class="kletters">${letters}</ul>` : ""}
+        <button type="button" class="ghostbtn" id="kitAddLetter">${esc(t("kitAddLetter"))}</button></section>
+      <section class="kitsec"><h2>${esc(t("kitBackup"))}</h2>
+        <div class="kitrow"><button type="button" class="ghostbtn" id="kitExport">${esc(t("kitExport"))}</button>
+          <button type="button" class="ghostbtn" id="kitImportBtn">${esc(t("kitImport"))}</button>
+          <input id="kitImportFile" type="file" accept=".json,application/json" hidden>
+          <button type="button" class="linkbtn danger" id="kitWipe">${esc(t("kitWipe"))}</button></div></section>`;
+    kitMsg = "";
+  }
+
+  let kitSaveTimer = 0;
+  function kitInput(e) {
+    const x = e.target;
+    if (x.dataset.kit) { kit.profile[x.dataset.kit] = x.value.trim(); }
+    else if (x.dataset.cvname) { const cv = kit.cvs.find((c) => c.id === x.dataset.cvname); if (cv) cv.name = x.value.trim() || cv.fileName; }
+    else if (x.dataset.lname) { const l = kit.letters.find((c) => c.id === x.dataset.lname); if (l) l.name = x.value; }
+    else if (x.dataset.lbody) { const l = kit.letters.find((c) => c.id === x.dataset.lbody); if (l) l.body = x.value; }
+    else return;
+    clearTimeout(kitSaveTimer);
+    kitSaveTimer = setTimeout(() => { saveKit(); const n = $("kitSavedNote"); if (n) { n.hidden = false; setTimeout(() => { n.hidden = true; }, 1500); } }, 300);
+  }
+
+  async function addKitCv(file) {
+    if (!file) return;
+    const say = (m) => { kitMsg = m; const el = $("kitMsg"); if (el) el.textContent = m; };
+    if (kit.cvs.length >= KIT_MAX_CVS) { say(t("kitCvMax")); return; }
+    if (file.size > 10 * 1024 * 1024) { say(t("cvTooBig")); return; }
+    say(t("kitCvRead")(file.name));
+    let text;
+    try { text = await fileText(file); } catch (e) { say(e && e.message === "type" ? t("cvType") : t("cvFail")); return; }
+    if (!text || text.trim().length < 80) { say(t("cvNoText")); return; }
+    const skills = findSkills(text), role = guessRole(text), years = findYears(text);
+    const id = "cv" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    const base = file.name.replace(/\.[^.]+$/, "");
+    await cvFiles.put(id, { blob: file, fileName: file.name, type: file.type, text });
+    kit.cvs.push({ id, name: role ? `${role} CV` : base, fileName: file.name, skills, years, role, added: today() });
+    if (!kit.profile.years && years) kit.profile.years = String(years);
+    if (!kit.letters.length) kit.letters.push({ id: "l" + Date.now().toString(36), name: t("kitLetterDefaultName"), body: t("kitLetterDefault") });
+    saveKit();
+    track("kit-cv-add");
+    kitMsg = t("kitCvAdded")(kit.cvs[kit.cvs.length - 1].name);
+    renderKit(); refreshDrawer();
+  }
+
+  const KIT_VERSION = 1;
+  async function exportKit() {
+    const toB64 = (blob) => new Promise((ok) => { const r = new FileReader(); r.onload = () => ok(String(r.result)); r.readAsDataURL(blob); });
+    const files = {};
+    for (const cv of kit.cvs) {
+      const rec = await cvFiles.get(cv.id);
+      if (rec && rec.blob) files[cv.id] = { data: await toB64(rec.blob), fileName: rec.fileName, type: rec.type, text: rec.text };
+    }
+    const blob = new Blob([JSON.stringify({ radarak_kit: KIT_VERSION, saved: new Date().toISOString(), kit, files })], { type: "application/json" });
+    const url = URL.createObjectURL(blob), a = document.createElement("a");
+    a.href = url; a.download = `radarak-apply-kit-${today()}.json`; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    track("kit-export");
+  }
+  async function importKit(file) {
+    let data;
+    try { data = JSON.parse(await file.text()); } catch { data = null; }
+    if (!data || data.radarak_kit !== KIT_VERSION || !data.kit) { toast(t("kitBadFile")); return; }
+    for (const cv of kit.cvs) await cvFiles.del(cv.id);
+    kit = { profile: data.kit.profile || {}, cvs: (data.kit.cvs || []).slice(0, KIT_MAX_CVS), letters: data.kit.letters || [] };
+    for (const cv of kit.cvs) {
+      const f = (data.files || {})[cv.id];
+      if (!f) continue;
+      const blob = await (await fetch(f.data)).blob();
+      await cvFiles.put(cv.id, { blob, fileName: f.fileName, type: f.type, text: f.text });
+    }
+    saveKit(); renderKit(); refreshDrawer(); toast(t("kitImported")); track("kit-import");
+  }
+
+  function kitClick(e) {
+    const b = e.target.closest("button");
+    if (!b) return;
+    if (b.id === "kitAddCv") $("kitCvFile").click();
+    else if (b.id === "kitAddLetter") {
+      kit.letters.push({ id: "l" + Date.now().toString(36), name: t("kitLetterDefaultName"), body: t("kitLetterDefault") });
+      saveKit(); renderKit();
+    } else if (b.id === "kitExport") exportKit();
+    else if (b.id === "kitImportBtn") $("kitImportFile").click();
+    else if (b.id === "kitWipe" || b.dataset.cvdel || b.dataset.ldel) {
+      if (!b.classList.contains("sure")) { b.classList.add("sure"); b.dataset.was = b.textContent; b.textContent = t("kitReallyDelete");
+        setTimeout(() => { if (b.isConnected) { b.classList.remove("sure"); b.textContent = b.dataset.was; } }, 4000); return; }
+      if (b.id === "kitWipe") {
+        Promise.all(kit.cvs.map((cv) => cvFiles.del(cv.id))).then(() => {
+          kit = { profile: {}, cvs: [], letters: [] }; saveKit(); renderKit(); refreshDrawer(); toast(t("kitWiped"));
+        });
+      } else if (b.dataset.cvdel) {
+        cvFiles.del(b.dataset.cvdel); kit.cvs = kit.cvs.filter((c) => c.id !== b.dataset.cvdel); saveKit(); renderKit(); refreshDrawer();
+      } else {
+        kit.letters = kit.letters.filter((l) => l.id !== b.dataset.ldel); saveKit(); renderKit();
+      }
+    } else if (b.dataset.cvdl) downloadCv(b.dataset.cvdl);
+    else if (b.dataset.cvuse) {
+      cvFiles.get(b.dataset.cvuse).then((rec) => { if (rec && rec.text) { useCvText(rec.text); track("kit-cv-use"); goToJobs(); } });
+    }
+  }
+
+  // the "Apply faster" part of a job's details
+  function kitDrawer(j) {
+    if (!kitHasData()) {
+      return `<section class="dsection dkit"><h3>⚡ ${esc(t("dKit"))}</h3><p class="hint">${esc(t("dKitCta"))}</p>
+        <button type="button" class="ghostbtn" data-kitgo>${esc(t("dKitBtn"))}</button></section>`;
+    }
+    const p = kit.profile;
+    let fit = "";
+    if (kit.cvs.length) {
+      if (!j.k.length) fit = `<p class="hint">${esc(t("dNoSkills"))}</p>`;
+      else {
+        const rows = kit.cvs.map((cv) => cvFit(cv, j)).sort((a, b) => b.pct - a.pct);
+        const best = rows[0];
+        fit = `<ul class="dfit">${rows.map((r, i) => `<li class="${i === 0 ? "best" : ""}"><span class="fname">📄 ${esc(r.cv.name)}${i === 0 && rows.length > 1 ? ` <em>${esc(t("dBest"))}</em>` : ""}</span>
+            <span class="fbar"><i style="width:${r.pct}%"></i></span><b>${r.pct}%</b>
+            <button type="button" class="linkbtn" data-cvdl="${esc(r.cv.id)}">${esc(t("kitDownload"))}</button></li>`).join("")}</ul>
+          ${best.miss.length ? `<p class="hint">${esc(t("dMissing")(best.miss.slice(0, 6).map((k) => meta.skills[k]).join(", ")
+            + (best.miss.length > 6 ? ` (+${best.miss.length - 6})` : "")))}</p>` : `<p class="hint">${esc(t("dAllThere"))}</p>`}`;
+      }
+    }
+    const name = [p.first, p.last].filter(Boolean).join(" ");
+    const items = [[t("kFirst") + " / " + t("kLast"), name], ...KIT_FIELDS.filter(([k]) => !["first", "last"].includes(k)).map(([k, l]) => [t(l), p[k]])]
+      .filter(([, v]) => String(v || "").trim());
+    const copies = items.map(([l, v]) => `<button type="button" class="kcopy" data-copy="${esc(v)}"><small>${esc(l)}</small><span dir="auto">${esc(v)}</span><i class="cl">${esc(t("copy"))}</i></button>`).join("");
+    const letters = kit.letters.length ? `<div class="dletter"><div class="dletterhead"><b>${esc(t("dLetter"))}</b>
+        ${kit.letters.length > 1 ? `<select id="dLetterPick" aria-label="${esc(t("dLetter"))}">${kit.letters.map((l, i) => `<option value="${i}">${esc(l.name)}</option>`).join("")}</select>` : ""}
+        <button type="button" class="ghostbtn" id="dLetterCopy"><span class="cl">${esc(t("copy"))}</span></button></div>
+        <textarea id="dLetterText" rows="7" readonly dir="auto">${esc(fillLetter(kit.letters[0].body, j))}</textarea></div>` : "";
+    return `<section class="dsection dkit"><h3>⚡ ${esc(t("dKit"))}</h3>
+      ${kit.cvs.length ? `<h4>${esc(t("dFit"))}</h4>${fit}` : ""}
+      ${copies ? `<h4>${esc(t("dCopy"))}</h4><p class="hint">${esc(t("dCopyHint"))}</p><div class="kcopies">${copies}</div>` : ""}
+      ${letters}
+      <button type="button" class="linkbtn" data-kitgo>${esc(t("dEditKit"))}</button></section>`;
+  }
+  function kitDrawerClick(e, j) {
+    const c = e.target.closest("[data-copy]");
+    if (c) { copyText(c.dataset.copy, c); track("kit-copy"); return true; }
+    if (e.target.closest("#dLetterCopy")) { copyText($("dLetterText").value, e.target.closest("#dLetterCopy")); track("kit-letter-copy"); return true; }
+    const d = e.target.closest("[data-cvdl]");
+    if (d && d.closest(".dkit")) { downloadCv(d.dataset.cvdl); return true; }
+    if (e.target.closest("[data-kitgo]")) { closeJob(); selectTab("kit"); window.scrollTo({ top: $("kit").offsetTop - 80, behavior: "smooth" }); return true; }
+    return false;
+  }
+
   // ------------------------------------------------------------------ trends (data/trends.json, from the trend marts)
   const sumRange = (arr, from, to) => arr.slice(Math.max(0, from), Math.max(0, to)).reduce((a, b) => a + b, 0);
   const pct = (now, before) => (before > 0 ? Math.round((100 * (now - before)) / before) : null);
@@ -1239,6 +1564,7 @@
         ${navigator.share ? `<button type="button" class="ghostbtn" id="shareJob">${t("shareMore")}</button>` : ""}
         <button type="button" class="ghostbtn" id="copyJob">${t("copyLink")}</button>
       </div>
+      ${kitDrawer(j)}
       <section class="dsection">${match}</section>
       <dl class="dfacts">
         ${fact(t("fWorkMode"), esc(j.w === "Remote" ? (j.ww ? t("remoteWorld") : t("remote")) : j.w))}
@@ -1382,6 +1708,7 @@
     if (id === "insights") renderInsights();
     if (id === "trends") renderTrends();
     if (id === "saved") { renderSaved(); maybeLoadMore(); }
+    if (id === "kit") renderKit();
     if (write) writeHash();
   }
 
@@ -1411,7 +1738,22 @@
     setTimeout(() => { b.textContent = t("share"); }, 2000);
   }
 
+  function bindKit() {
+    const k = $("kit");
+    k.addEventListener("input", kitInput);
+    k.addEventListener("click", kitClick);
+    k.addEventListener("change", (e) => {
+      if (e.target.id === "kitCvFile") { const f = e.target.files[0]; e.target.value = ""; addKitCv(f); }
+      if (e.target.id === "kitImportFile") { const f = e.target.files[0]; e.target.value = ""; if (f) importKit(f); }
+    });
+    $("drawerBody").addEventListener("change", (e) => {
+      if (e.target.id !== "dLetterPick") return;
+      const j = jobs.find((x) => x.id === currentJob), l = kit.letters[+e.target.value];
+      if (j && l) $("dLetterText").value = fillLetter(l.body, j);
+    });
+  }
   function bind() {
+    bindKit();
     FIELDS.forEach((f) => $(f).addEventListener(f === "q" ? "input" : "change", () => update()));
     document.querySelectorAll(".toggle").forEach((b) => b.addEventListener("click", () => {
       quick[b.dataset.flag] = !quick[b.dataset.flag]; syncToggles(); update();
@@ -1492,6 +1834,10 @@
     });
     // a job opens its details panel; Ctrl/Cmd/middle click still opens the original posting
     document.addEventListener("click", (e) => {
+      if (currentJob && e.target.closest("#drawerBody .dkit")) {
+        const j = jobs.find((x) => x.id === currentJob);
+        if (j && kitDrawerClick(e, j)) return;
+      }
       const a = e.target.closest(".job h3 a");
       if (a && !e.metaKey && !e.ctrlKey && !e.shiftKey && e.button === 0) {
         e.preventDefault(); openJob(a.closest(".job").dataset.jid, a); return;

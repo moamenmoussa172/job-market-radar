@@ -93,6 +93,7 @@
       <button role="tab" id="tab-insights" aria-controls="insights" aria-selected="false"><span data-i18n="tabInsights">Skills &amp; pay</span></button>
       <button role="tab" id="tab-trends" aria-controls="trends" aria-selected="false"><span data-i18n="tabTrends">Trends</span></button>
       <button role="tab" id="tab-saved" aria-controls="saved" aria-selected="false"><span data-i18n="tabSaved">Saved</span> <span id="savedCount" class="pill" hidden></span></button>
+      <button role="tab" id="tab-kit" aria-controls="kit" aria-selected="false"><span data-i18n="tabKit">Apply kit</span></button>
       <button role="tab" id="tab-about" aria-controls="about" aria-selected="false"><span data-i18n="tabAbout">How it works</span></button>
       <label class="minisearch" id="miniSearch">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
@@ -264,6 +265,10 @@
       <div class="savedtabs" id="savedTabs" role="group"></div>
       <ol id="savedList" class="joblist"></ol>
       <div id="savedEmpty" class="empty" hidden></div>
+      </section>
+
+      <section id="kit" role="tabpanel" aria-labelledby="tab-kit" hidden>
+      <div id="kitBody" class="kit"></div>
       </section>
 
       <section id="about" role="tabpanel" aria-labelledby="tab-about" hidden>

@@ -1030,3 +1030,151 @@ def test_adzuna_jobs_offer_the_company_site_outside_their_country(browser, base,
     href = note.locator("a").get_attribute("href")
     assert href.startswith("https://www.google.com/search?q=") and "careers" in href
     ctx.close()
+
+
+# --------------------------------------------------------------------------- Apply kit
+CV_DATA = """Ahmed Example - Data Engineer
+Experience
+2019 - Present  Data Engineer at Example Payments, Cairo
+Built batch and streaming pipelines with Python, SQL, Apache Airflow, Apache Spark, dbt and Kafka on AWS.
+Modelled the warehouse in PostgreSQL and Snowflake; CI/CD with Git and Docker.
+Education
+2014 - 2018 Bachelor of Computer Science, Ain Shams University
+"""
+CV_ANALYST = """Ahmed Example - Data Analyst
+Experience
+2020 - Present  Data Analyst at Example Retail
+Dashboards in Power BI and Tableau, reporting in Excel, queries in SQL. Presented insights to managers every week.
+Education
+2015 - 2019 Bachelor of Commerce
+"""
+
+
+def _skill_hits(text, meta):
+    import re as _re
+    out = set()
+    for i, p in enumerate(meta.get("skill_patterns") or []):
+        if p:
+            try:
+                if _re.search(p.replace("(?<!", "(?<!").replace("\\m", "\\b").replace("\\M", "\\b"), text, _re.I):
+                    out.add(i)
+            except _re.error:
+                pass
+    return out
+
+
+def test_apply_kit_end_to_end(browser, base, data, tmp_path):
+    jobs, meta = data["jobs"], data["meta"]
+    de = _skill_hits(CV_DATA, meta)
+    # a data job that the data-engineer CV covers well and the analyst CV doesn't
+    cands = [j for j in jobs if j.get("c") and len(j["k"]) >= 3 and len(set(j["k"]) & de) >= 2 and j["tr"] == "Data & Analytics"]
+    if not cands:
+        pytest.skip("no data job to test with")
+    job = max(cands, key=lambda j: len(set(j["k"]) & de) / len(j["k"]))
+    (tmp_path / "data-engineer.txt").write_text(CV_DATA)
+    (tmp_path / "analyst.txt").write_text(CV_ANALYST)
+
+    ctx = browser.new_context(viewport={"width": 1280, "height": 900}, timezone_id="UTC", accept_downloads=True,
+                              permissions=["clipboard-read", "clipboard-write"])
+    ctx.add_init_script("localStorage.setItem('jr_lang', JSON.stringify('en'));")
+    p = ctx.new_page()
+    errors = []
+    p.on("pageerror", lambda e: errors.append(str(e)))
+
+    # 1. a job before any kit: invitation to set one up
+    p.goto(base + "/#job=" + job["id"])
+    p.wait_for_selector("#drawerBody .dkit", timeout=30000)
+    assert "Set up my apply kit" in p.locator("#drawerBody .dkit").inner_text()
+    p.locator("#drawerBody [data-kitgo]").click()
+    p.wait_for_selector("#kit:not([hidden]) #k-first")
+
+    # 2. details, kept after a reload
+    p.fill("#k-first", "Ahmed"); p.fill("#k-last", "Example"); p.fill("#k-email", "ahmed@example.com")
+    p.fill("#k-phone", "+20 100 000 0000"); p.fill("#k-city", "Cairo"); p.fill("#k-notice", "1 month")
+    p.fill("#k-salary", "40,000 EGP / month")
+    p.wait_for_timeout(600)
+    p.goto(base + "/#tab=kit"); p.reload()
+    p.wait_for_selector("#kit:not([hidden]) #k-first")
+    assert p.input_value("#k-first") == "Ahmed" and p.input_value("#k-salary") == "40,000 EGP / month"
+
+    # 3. two CVs, read on the device
+    for f in ("data-engineer.txt", "analyst.txt"):
+        with p.expect_file_chooser() as fc:
+            p.click("#kitAddCv")
+        fc.value.set_files(str(tmp_path / f))
+        p.wait_for_function("document.querySelectorAll('.kcv').length >= %d" % (1 if f.startswith("data") else 2), timeout=15000)
+    names = p.locator(".kcvname").evaluate_all("els => els.map(e => e.value)")
+    assert names == ["Data Engineer CV", "Data Analyst CV"], names
+    assert p.input_value("#k-years") != ""                      # filled from the CV
+    assert p.locator(".kletter").count() == 1                   # a starter cover letter
+
+    # 4. the job: which CV fits, what's missing, copy-ready answers, a filled letter
+    p.goto(base + "/#job=" + job["id"])
+    p.wait_for_selector("#drawerBody .dfit li", timeout=30000)
+    rows = p.locator("#drawerBody .dfit li")
+    assert rows.count() == 2
+    assert "Data Engineer CV" in rows.nth(0).inner_text() and "best fit" in rows.nth(0).inner_text()
+    pct = [int(re.search(r"(\d+)%", rows.nth(i).inner_text()).group(1)) for i in range(2)]
+    assert pct[0] >= pct[1] and pct[0] > 0
+    p.locator('#drawerBody .kcopy:has-text("Ahmed Example")').click()
+    assert p.evaluate("navigator.clipboard.readText()") == "Ahmed Example"
+    letter = p.input_value("#dLetterText")
+    assert job["c"] in letter and job["t"] in letter and "{company}" not in letter
+    p.click("#dLetterCopy")
+    assert p.evaluate("navigator.clipboard.readText()") == letter
+
+    # 5. applied: the saved list remembers which CV went out
+    p.locator("#drawerBody .applybtn").click()
+    p.keyboard.press("Escape")
+    p.goto(base + "/#tab=saved")
+    p.wait_for_selector("#savedList li")
+    p.locator('#savedTabs button').last.click() if p.locator('#savedTabs button').count() else None
+    assert "Sent with: Data Engineer CV" in p.locator("#saved").inner_text()
+
+    # 6. backup, wipe, restore
+    p.goto(base + "/#tab=kit"); p.wait_for_selector("#kitExport")
+    with p.expect_download() as dl:
+        p.click("#kitExport")
+    backup = tmp_path / "kit.json"
+    dl.value.save_as(backup)
+    saved = json.loads(backup.read_text())
+    assert saved["radarak_kit"] == 1 and len(saved["files"]) == 2 and saved["kit"]["profile"]["first"] == "Ahmed"
+    p.click("#kitWipe"); p.click("#kitWipe")                    # two taps: no accidental wipes
+    p.wait_for_function("!document.querySelector('.kcv') && document.querySelector('#k-first').value === ''")
+    with p.expect_file_chooser() as fc:
+        p.click("#kitImportBtn")
+    fc.value.set_files(str(backup))
+    p.wait_for_function("document.querySelectorAll('.kcv').length === 2")
+    with p.expect_download() as dl2:
+        p.locator("[data-cvdl]").first.click()
+    assert dl2.value.suggested_filename == "data-engineer.txt"
+    out = tmp_path / "back.txt"; dl2.value.save_as(out)
+    assert out.read_text() == CV_DATA
+
+    # 7. Arabic
+    p.click("#lang")
+    assert "ملف التقديم" in p.locator("#tab-kit").inner_text() and "بياناتي" in p.locator("#kit").inner_text()
+    assert not errors, errors
+    ctx.close()
+
+
+def test_apply_kit_on_a_phone(browser, base, data, tmp_path):
+    jobs = [j for j in data["jobs"] if j.get("c") and len(j["k"]) >= 3]
+    if not jobs:
+        pytest.skip("no jobs")
+    (tmp_path / "cv.txt").write_text(CV_DATA)
+    ctx = browser.new_context(viewport={"width": 390, "height": 844}, is_mobile=True, has_touch=True, timezone_id="Africa/Cairo")
+    ctx.add_init_script("localStorage.setItem('jr_lang', JSON.stringify('en'));")
+    p = ctx.new_page()
+    p.goto(base + "/#tab=kit")
+    p.wait_for_selector("#kit:not([hidden]) #k-first", timeout=30000)
+    p.fill("#k-first", "Mona"); p.fill("#k-phone", "+20 111")
+    with p.expect_file_chooser() as fc:
+        p.click("#kitAddCv")
+    fc.value.set_files(str(tmp_path / "cv.txt"))
+    p.wait_for_selector(".kcv")
+    assert p.evaluate("document.documentElement.scrollWidth <= window.innerWidth + 1")      # nothing sticks out sideways
+    p.goto(base + "/#job=" + jobs[0]["id"])
+    p.wait_for_selector("#drawerBody .dfit li", timeout=30000)
+    assert p.locator("#drawerBody .kcopy").count() >= 2
+    ctx.close()

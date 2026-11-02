@@ -257,9 +257,9 @@ h1, h2, h3 { font-family: var(--display); letter-spacing: -.01em; }
 .field select:focus, .sort select:focus { border-color: var(--violet); box-shadow: var(--focus); outline: none; }
 .scrim { display: none; }
 .content { min-width: 0; padding-bottom: 20px; }
-body[data-tab="saved"] .sidebar, body[data-tab="about"] .sidebar,
-body[data-tab="saved"] .skillsbox, body[data-tab="about"] .skillsbox, body[data-tab="trends"] .skillsbox { display: none; }
-body[data-tab="saved"] .layout, body[data-tab="about"] .layout { grid-template-columns: minmax(0, 1fr); }
+body[data-tab="saved"] .sidebar, body[data-tab="about"] .sidebar, body[data-tab="kit"] .sidebar,
+body[data-tab="saved"] .skillsbox, body[data-tab="about"] .skillsbox, body[data-tab="trends"] .skillsbox, body[data-tab="kit"] .skillsbox { display: none; }
+body[data-tab="saved"] .layout, body[data-tab="about"] .layout, body[data-tab="kit"] .layout { grid-template-columns: minmax(0, 1fr); }
 
 /* ---------- CV / skills */
 .skillsbox { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-l); padding: 18px 20px; }
@@ -855,3 +855,58 @@ h1, h2, h3 { letter-spacing: -.02em; }
 .adznote { margin: 12px 0 0; padding: 12px 14px; border-radius: var(--r-m); background: var(--paper); color: var(--ink-2); font-size: 14px; line-height: 1.5; }
 .adznote a { display: inline-block; margin-top: 6px; font-weight: 600; color: var(--violet-ink); }
 .credit a { color: inherit; text-decoration: underline; }
+
+/* ---------------------------------------------------------------- Apply kit */
+.kit { max-width: 860px; }
+.kitintro { font-size: 16px; line-height: 1.6; margin: 4px 0 8px; }
+.kitprivacy { font-size: 14px; color: var(--ink-2); background: var(--paper); border-radius: var(--r-m); padding: 10px 14px; margin: 0 0 8px; }
+.kitwarn { font-size: 14px; color: var(--t-sec); margin: 0 0 8px; }
+.kitsec { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-l); padding: 18px 20px; margin-top: 16px; }
+.kitsec h2 { font-size: 18px; margin: 0 0 12px; }
+.kitsec h2 .muted { font-weight: 500; font-size: 14px; }
+.kgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr)); gap: 12px 16px; }
+.kfield { display: flex; flex-direction: column; gap: 5px; font-size: 13px; color: var(--ink-2); font-weight: 600; min-width: 0; }
+.kfield input, .kcvname, .kletterhead input, .kletter textarea {
+  font: inherit; font-size: 15px; font-weight: 400; color: var(--ink); background: var(--paper); border: 1px solid var(--line);
+  border-radius: var(--r-s); padding: 10px 12px; width: 100%; min-width: 0; }
+.kfield input:focus, .kcvname:focus, .kletterhead input:focus, .kletter textarea:focus { outline: none; border-color: var(--violet); box-shadow: var(--focus); }
+.kitsaved { margin: 10px 0 0; color: var(--mint-ink); }
+.kcvs, .kletters { list-style: none; padding: 0; margin: 0 0 12px; display: grid; gap: 10px; }
+.kcv, .kletter { border: 1px solid var(--line); border-radius: var(--r-m); padding: 12px 14px; display: grid; gap: 8px; }
+.kcvhead { display: flex; flex-direction: column; gap: 4px; }
+.kcvhead small { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kcvfacts { margin: 0; font-size: 13px; color: var(--ink-2); }
+.kcvbtns, .kitrow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.kletterhead { display: flex; gap: 8px; align-items: center; }
+.kletter textarea { resize: vertical; line-height: 1.5; }
+.kitmsg { min-height: 1em; font-size: 14px; color: var(--ink-2); margin: 8px 0 0; }
+.linkbtn.danger { color: var(--t-sec); }
+.linkbtn.danger.sure { font-weight: 700; text-decoration: underline; }
+/* in a job's details */
+.dkit h4 { font-size: 14px; margin: 14px 0 6px; }
+.dfit { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+.dfit li { display: grid; grid-template-columns: minmax(0, 1fr) 90px 44px auto; align-items: center; gap: 10px; font-size: 14px; }
+.dfit .fname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dfit li.best .fname { font-weight: 700; }
+.dfit em { font-style: normal; font-size: 11px; font-weight: 700; color: var(--mint-ink); background: var(--mint-soft); border-radius: 99px; padding: 2px 7px; }
+.dfit .fbar { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.dfit .fbar i { display: block; height: 100%; background: var(--violet); border-radius: 4px; }
+.dfit li.best .fbar i { background: var(--mint-ink); }
+.dfit b { text-align: end; font-variant-numeric: tabular-nums; }
+.kcopies { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(200px, 100%), 1fr)); gap: 8px; }
+.kcopy { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto; text-align: start; gap: 2px 8px;
+  background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-m); padding: 8px 10px; cursor: pointer; font: inherit; color: var(--ink); }
+.kcopy small { grid-column: 1; font-size: 11px; color: var(--muted); }
+.kcopy span { grid-column: 1; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kcopy .cl { grid-column: 2; grid-row: 1 / 3; align-self: center; font-style: normal; font-size: 12px; font-weight: 700; color: var(--violet-ink); }
+.kcopy:hover { border-color: var(--violet); }
+.kcopy.done { border-color: var(--mint-ink); background: var(--mint-soft); }
+.kcopy.done .cl { color: var(--mint-ink); }
+.dletter { margin-top: 14px; }
+.dletterhead { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; flex-wrap: wrap; }
+.dletterhead b { font-size: 14px; margin-inline-end: auto; }
+.dletterhead select { font: inherit; font-size: 14px; padding: 6px 8px; border-radius: var(--r-s); border: 1px solid var(--line); background: var(--surface); color: var(--ink); max-width: 100%; }
+#dLetterText { width: 100%; font: inherit; font-size: 14px; line-height: 1.5; background: var(--paper); color: var(--ink); border: 1px solid var(--line); border-radius: var(--r-m); padding: 10px 12px; resize: vertical; }
+#dLetterCopy.done, .ghostbtn.done { border-color: var(--mint-ink); color: var(--mint-ink); }
+.sentwith { font-size: 12px; color: var(--muted); }
+@media (max-width: 520px) { .dfit li { grid-template-columns: minmax(0, 1fr) 60px 40px; } .dfit li .linkbtn { display: none; } }
