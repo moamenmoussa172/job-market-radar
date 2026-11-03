@@ -41,19 +41,23 @@
       industry: "Industry", skill: "Must-have skill", arabic: "Arabic", any: "Any", arabicReq: "Required",
       arabicNot: "Not required", reset: "Clear all",
       tabKit: "Apply kit",
+      kitTitle: "Your apply kit", kitStep1: "Your details", kitStep2: "Your CV", kitStep3: "Cover letter",
+      kitProgress: (n) => `${n} of 3 steps done`, kitReady: "Your kit is ready. Open any job to see which CV fits it.",
+      kitSeeJobs: "See jobs that fit", kitAddFirstCv: "+ Add your CV", kitEdit: "Edit",
+      kitBackupHint: "A file with your whole kit, to move it to another browser or keep it safe.",
       extGet: "Fill applications in one click", extGetHint: "On a computer, the free Radarak Apply extension fills application forms (Greenhouse, Lever, Ashby, Workable and more) with this kit and attaches the CV that fits best.",
       extGetBtn: "Get the extension (Chrome, Edge, Firefox…)", extOn: "Radarak Apply extension connected.",
       extOnHint: "On an application form, click “Fill with Radarak”. It fills your details, attaches the best CV and adds the cover letter. You check and submit.",
-      kitIntro: "Save your details, CVs and cover letters once. When you open a job, Radarak shows which of your CVs fits it best and gives you every answer ready to copy.",
+      kitIntro: "Fill this once. Then every job shows which of your CVs fits it best, and every answer is ready to copy.",
       kitPrivacy: "🔒 Everything stays on this device. Nothing is uploaded to Radarak or sent anywhere. Use Backup to move it to another phone or browser.",
       kitDetails: "My details", kitCvs: "My CVs", kitLetters: "Cover letters", kitBackup: "Backup",
       kFirst: "First name", kLast: "Last name", kEmail: "Email", kPhone: "Phone (with country code)", kCountry: "Country",
       kCity: "City", kLinkedin: "LinkedIn", kPortfolio: "GitHub / portfolio", kYears: "Years of experience",
       kNotice: "Notice period", kNoticePh: "e.g. 1 month", kSalary: "Expected salary", kSalaryPh: "e.g. 40,000 EGP / month",
       kitSaved: "Saved on this device",
-      kitAddCv: "+ Add a CV", kitCvHint: "PDF, Word (.docx) or text. Up to 5 CVs, for example one per role.",
+      kitAddCv: "+ Add a CV", kitCvHint: "PDF or Word. Up to 5, for example one per role. Read on your device only.",
       kitCvName: "Name of this CV", kitCvSkills: (n) => `${n} skills found`, kitCvYears: (n) => `${n} years`,
-      kitUseCv: "Use for job matching", kitDownload: "Download", kitDelete: "Delete", kitReallyDelete: "Tap again to delete",
+      kitUseCv: "Match jobs with this CV", kitDownload: "Download", kitDelete: "Delete", kitReallyDelete: "Tap again to delete",
       kitCvMax: "You can keep up to 5 CVs. Delete one to add another.", kitCvRead: (f) => `Reading ${f}…`,
       kitCvAdded: (n) => `Added: ${n}`, kitNoCvs: "No CVs yet. Add the CV you send most, then one per role if you have more.",
       kitAddLetter: "+ Add a cover letter", kitLetterName: "Name", kitLetterHelp: "These words fill in by themselves for each job: {company} {job} {first} {last} {years}",
@@ -62,12 +66,17 @@
       kitExport: "Save a backup file", kitImport: "Restore from a backup", kitImported: "Your apply kit is back",
       kitBadFile: "That file isn't a Radarak backup.", kitWipe: "Delete my apply kit", kitWiped: "Your apply kit was deleted from this device",
       kitNoStorage: "This browser can't keep files (private window?). Your CVs will be gone when you close it.",
+      dSend: "Send", dTone_good: "strong match", dTone_ok: "partial match", dTone_low: "weak match",
+      dMissShort: "This job asks for, but your CV doesn't mention:", dMissHint: "Have these skills? Add them to your CV before you send it.",
+      dDownloadCv: "Download this CV", dExtHint: "Then click “Fill with Radarak” on the application form.",
+      dLetterFor: (c) => (c ? `Cover letter for ${c}` : "Cover letter"),
       dKit: "Apply faster", dKitCta: "Save your details and CVs once. Then every job shows which CV fits it and gives you copy-ready answers.",
       dKitBtn: "Set up my apply kit", dFit: "Which of your CVs fits this job", dBest: "best fit",
       dMissing: (n) => `This job asks for ${n} that your best CV doesn't mention. If you have them, add them to the CV before you send it.`,
       dAllThere: "Your best CV mentions every skill this job asks for. 👍", dNoSkills: "This job lists no skills we can compare.",
-      dCopy: "Copy-ready answers", dCopyHint: "Tap to copy, then paste into the application form.", dLetter: "Cover letter",
+      dCopy: "Copy your answers", dCopyHint: "Tap to copy, then paste into the application form.", dLetter: "Cover letter",
       copied: "Copied", copy: "Copy", dEditKit: "Edit my apply kit", dSentWith: (n) => `Sent with: ${n}`,
+      tabJobsS: "Jobs", tabInsightsS: "Pay", tabTrendsS: "Trends", tabSavedS: "Saved", tabKitS: "Apply kit", tabAboutS: "About",
       tabJobs: "Jobs", tabInsights: "Skills & pay", tabSaved: "Saved", tabAbout: "How it works", tabTrends: "Trends",
       weeklyReport: "Weekly report", reportCta: "Get this week's report card",
       weeklyTitle: "New jobs per week", risingTitle: "Skills on the rise", fallingTitle: "Skills cooling down",
@@ -172,19 +181,23 @@
       industry: "المجال", skill: "مهارة لازم تكون مطلوبة", arabic: "العربي", any: "الكل", arabicReq: "مطلوب",
       arabicNot: "مش مطلوب", reset: "امسح الكل",
       tabKit: "ملف التقديم",
+      kitTitle: "ملف التقديم بتاعك", kitStep1: "بياناتك", kitStep2: "الـ CV", kitStep3: "خطاب التقديم",
+      kitProgress: (n) => `${n} من 3 خطوات خلصت`, kitReady: "ملفك جاهز. افتح أي وظيفة وهتعرف أنهي CV الأنسب ليها.",
+      kitSeeJobs: "شوف الوظايف المناسبة", kitAddFirstCv: "+ ضيف الـ CV بتاعك", kitEdit: "تعديل",
+      kitBackupHint: "ملف فيه كل حاجة في ملف التقديم، عشان تنقله لمتصفح تاني أو تحتفظ بيه.",
       extGet: "املى فورم التقديم بضغطة واحدة", extGetHint: "على الكمبيوتر، إضافة Radarak Apply المجانية بتملى فورمات التقديم (Greenhouse وLever وAshby وWorkable وغيرهم) من ملف التقديم ده، وبترفق الـ CV الأنسب.",
       extGetBtn: "نزّل الإضافة (Chrome وEdge وFirefox…)", extOn: "إضافة Radarak Apply متوصلة.",
       extOnHint: "في فورم التقديم، دوس “Fill with Radarak”. هتملى بياناتك وترفق الـ CV الأنسب وتضيف خطاب التقديم. انت تراجع وتبعت.",
-      kitIntro: "احفظ بياناتك والـ CVs وخطابات التقديم مرة واحدة. ولما تفتح أي وظيفة، رادارك هيقولك أنهي CV من بتوعك الأنسب ليها، وهيجهزلك كل الإجابات جاهزة للنسخ.",
+      kitIntro: "املاه مرة واحدة. وبعدها كل وظيفة هتقولك أنهي CV من بتوعك الأنسب ليها، وكل الإجابات هتبقى جاهزة للنسخ.",
       kitPrivacy: "🔒 كل حاجة بتفضل على الجهاز ده بس. مفيش حاجة بتترفع على رادارك أو بتتبعت لأي حد. استخدم النسخة الاحتياطية عشان تنقلها لموبايل أو متصفح تاني.",
       kitDetails: "بياناتي", kitCvs: "الـ CVs بتاعتي", kitLetters: "خطابات التقديم", kitBackup: "نسخة احتياطية",
       kFirst: "الاسم الأول", kLast: "اسم العيلة", kEmail: "الإيميل", kPhone: "الموبايل (بكود الدولة)", kCountry: "الدولة",
       kCity: "المدينة", kLinkedin: "LinkedIn", kPortfolio: "GitHub / بورتفوليو", kYears: "سنين الخبرة",
       kNotice: "فترة الإخطار", kNoticePh: "مثلًا شهر", kSalary: "المرتب المتوقع", kSalaryPh: "مثلًا 40,000 جنيه في الشهر",
       kitSaved: "اتحفظ على الجهاز ده",
-      kitAddCv: "+ ضيف CV", kitCvHint: "PDF أو Word (.docx) أو نص. لحد 5 CVs، مثلًا واحد لكل وظيفة.",
+      kitAddCv: "+ ضيف CV", kitCvHint: "PDF أو Word. لحد 5، مثلًا واحد لكل وظيفة. بيتقري على جهازك بس.",
       kitCvName: "اسم الـ CV ده", kitCvSkills: (n) => `${n} مهارة`, kitCvYears: (n) => `${n} سنين`,
-      kitUseCv: "استخدمه في مطابقة الوظايف", kitDownload: "نزّله", kitDelete: "امسح", kitReallyDelete: "دوس تاني عشان تمسح",
+      kitUseCv: "طابق الوظايف بالـ CV ده", kitDownload: "نزّله", kitDelete: "امسح", kitReallyDelete: "دوس تاني عشان تمسح",
       kitCvMax: "تقدر تحتفظ بـ 5 CVs بس. امسح واحد عشان تضيف غيره.", kitCvRead: (f) => `بنقرا ${f}…`,
       kitCvAdded: (n) => `اتضاف: ${n}`, kitNoCvs: "لسه مفيش CVs. ضيف الـ CV اللي بتبعته أكتر، وبعدين واحد لكل وظيفة لو عندك.",
       kitAddLetter: "+ ضيف خطاب تقديم", kitLetterName: "الاسم", kitLetterHelp: "الكلمات دي بتتملى لوحدها لكل وظيفة: {company} {job} {first} {last} {years}",
@@ -193,12 +206,17 @@
       kitExport: "احفظ ملف نسخة احتياطية", kitImport: "رجّع من نسخة احتياطية", kitImported: "ملف التقديم رجع",
       kitBadFile: "الملف ده مش نسخة احتياطية من رادارك.", kitWipe: "امسح ملف التقديم", kitWiped: "ملف التقديم اتمسح من الجهاز ده",
       kitNoStorage: "المتصفح ده مش بيحتفظ بالملفات (يمكن نافذة خاصة؟). الـ CVs هتتمسح لما تقفله.",
+      dSend: "ابعت", dTone_good: "مناسب جدًا", dTone_ok: "مناسب لحد ما", dTone_low: "مش مناسب قوي",
+      dMissShort: "الوظيفة طالبة دول والـ CV مش ذاكرهم:", dMissHint: "عندك المهارات دي؟ ضيفها للـ CV قبل ما تبعته.",
+      dDownloadCv: "نزّل الـ CV ده", dExtHint: "وبعدين دوس “Fill with Radarak” في فورم التقديم.",
+      dLetterFor: (c) => (c ? `خطاب التقديم لـ ${c}` : "خطاب التقديم"),
       dKit: "قدّم أسرع", dKitCta: "احفظ بياناتك والـ CVs مرة واحدة. وبعدها كل وظيفة هتقولك أنهي CV الأنسب، وهتديك إجابات جاهزة للنسخ.",
       dKitBtn: "جهّز ملف التقديم", dFit: "أنهي CV من بتوعك الأنسب للوظيفة دي", dBest: "الأنسب",
       dMissing: (n) => `الوظيفة دي طالبة ${n} والـ CV الأنسب مش ذاكرها. لو عندك المهارات دي، ضيفها للـ CV قبل ما تبعته.`,
       dAllThere: "الـ CV الأنسب فيه كل المهارات اللي الوظيفة طالباها. 👍", dNoSkills: "الوظيفة دي مش مكتوب فيها مهارات نقدر نقارنها.",
-      dCopy: "إجابات جاهزة للنسخ", dCopyHint: "دوس عشان تنسخ، وبعدين الصق في فورم التقديم.", dLetter: "خطاب التقديم",
+      dCopy: "انسخ إجاباتك", dCopyHint: "دوس عشان تنسخ، وبعدين الصق في فورم التقديم.", dLetter: "خطاب التقديم",
       copied: "اتنسخ", copy: "انسخ", dEditKit: "عدّل ملف التقديم", dSentWith: (n) => `اتبعت بـ: ${n}`,
+      tabJobsS: "الوظايف", tabInsightsS: "المرتبات", tabTrendsS: "الترندات", tabSavedS: "المحفوظة", tabKitS: "التقديم", tabAboutS: "عن الموقع",
       tabJobs: "الوظايف", tabInsights: "المهارات والمرتبات", tabSaved: "المحفوظة", tabAbout: "إزاي بيشتغل", tabTrends: "الترندات",
       weeklyReport: "التقرير الأسبوعي", reportCta: "خد كارت تقرير الأسبوع ده",
       weeklyTitle: "الوظايف الجديدة كل أسبوع", risingTitle: "مهارات طالعة", fallingTitle: "مهارات بتهدى",
@@ -1287,49 +1305,75 @@
     track("kit-cv-download");
   }
 
-  let kitMsg = "";
+  let kitMsg = "", kitJustAdded = null;
+  const HALF = new Set(["first", "last", "country", "city", "years", "notice"]);
+  function kitSteps() {
+    const p = kit.profile;
+    return [
+      ["details", t("kitStep1"), !!(p.first && p.email && p.phone)],
+      ["cvs", t("kitStep2"), kit.cvs.length > 0],
+      ["letters", t("kitStep3"), kit.letters.length > 0],
+    ];
+  }
   function renderKit() {
     const p = kit.profile, el = $("kitBody");
     if (!el) return;
-    const field = ([k, label, type, ac, ph]) => `<label class="kfield"><span>${esc(t(label))}</span>
+    const steps = kitSteps(), done = steps.filter((x) => x[2]).length;
+    const field = ([k, label, type, ac, ph]) => `<label class="kfield${HALF.has(k) ? " half" : ""}"><span>${esc(t(label))}</span>
       <input id="k-${k}" data-kit="${k}" type="${type}" autocomplete="${ac}" ${type === "number" ? 'min="0" max="50" inputmode="numeric"' : ""}
-        ${ph ? `placeholder="${esc(t(ph))}"` : ""} value="${esc(p[k] || "")}" dir="auto"></label>`;
-    const cvs = kit.cvs.map((cv) => `<li class="kcv" data-cv="${esc(cv.id)}">
-        <div class="kcvhead"><input class="kcvname" data-cvname="${esc(cv.id)}" value="${esc(cv.name)}" aria-label="${esc(t("kitCvName"))}" dir="auto">
-          <small>${esc(cv.fileName || "")}</small></div>
-        <p class="kcvfacts">${esc(t("kitCvSkills")(cv.skills.length))}${cv.years ? " · " + esc(t("kitCvYears")(cv.years)) : ""}${cv.role ? " · " + esc(cv.role) : ""}</p>
-        <div class="kcvbtns"><button type="button" class="ghostbtn" data-cvuse="${esc(cv.id)}">${esc(t("kitUseCv"))}</button>
-          <button type="button" class="ghostbtn" data-cvdl="${esc(cv.id)}">${esc(t("kitDownload"))}</button>
-          <button type="button" class="linkbtn danger" data-cvdel="${esc(cv.id)}">${esc(t("kitDelete"))}</button></div></li>`).join("");
-    const letters = kit.letters.map((l) => `<li class="kletter" data-letter="${esc(l.id)}">
-        <div class="kletterhead"><input data-lname="${esc(l.id)}" value="${esc(l.name)}" aria-label="${esc(t("kitLetterName"))}" dir="auto">
-          <button type="button" class="linkbtn danger" data-ldel="${esc(l.id)}">${esc(t("kitDelete"))}</button></div>
-        <textarea data-lbody="${esc(l.id)}" rows="8" dir="auto">${esc(l.body)}</textarea></li>`).join("");
+        ${type === "tel" ? 'inputmode="tel"' : ""} ${ph ? `placeholder="${esc(t(ph))}"` : ""} value="${esc(p[k] || "")}" dir="auto"></label>`;
+    const cvs = kit.cvs.map((cv) => `<li class="kcv${kitJustAdded === cv.id ? " justadded" : ""}" data-cv="${esc(cv.id)}">
+        <span class="kcvicon" aria-hidden="true">📄</span>
+        <div class="kcvmain"><input class="kcvname" data-cvname="${esc(cv.id)}" value="${esc(cv.name)}" aria-label="${esc(t("kitCvName"))}" dir="auto">
+          <p class="kcvfacts">${esc(cv.fileName || "")} · ${esc(t("kitCvSkills")(cv.skills.length))}${cv.years ? " · " + esc(t("kitCvYears")(cv.years)) : ""}</p>
+          <div class="kcvbtns"><button type="button" class="chipbtn" data-cvuse="${esc(cv.id)}">${esc(t("kitUseCv"))}</button>
+            <button type="button" class="chipbtn" data-cvdl="${esc(cv.id)}">${esc(t("kitDownload"))}</button>
+            <button type="button" class="linkbtn danger" data-cvdel="${esc(cv.id)}">${esc(t("kitDelete"))}</button></div></div></li>`).join("");
+    const letters = kit.letters.map((l, i) => `<li class="kletter" data-letter="${esc(l.id)}"><details${i === 0 && kit.letters.length === 1 ? "" : ""}>
+        <summary><span>✉️ ${esc(l.name)}</span><small>${esc(t("kitEdit"))}</small></summary>
+        <div class="kletterbody"><label class="kfield"><span>${esc(t("kitLetterName"))}</span><input data-lname="${esc(l.id)}" value="${esc(l.name)}" dir="auto"></label>
+        <textarea data-lbody="${esc(l.id)}" rows="9" dir="auto" aria-label="${esc(l.name)}">${esc(l.body)}</textarea>
+        <button type="button" class="linkbtn danger" data-ldel="${esc(l.id)}">${esc(t("kitDelete"))}</button></div></details></li>`).join("");
     el.innerHTML = `
-      <p class="kitintro">${esc(t("kitIntro"))}</p>
-      <p class="kitprivacy">${esc(t("kitPrivacy"))}</p>
-      ${cvFiles.persistent ? "" : `<p class="kitwarn">${esc(t("kitNoStorage"))}</p>`}
+      <header class="kithead">
+        <h2>${esc(t("kitTitle"))}</h2>
+        <p>${esc(t("kitIntro"))}</p>
+        <ol class="ksteps" aria-label="${esc(t("kitProgress")(done))}">${steps.map(([id, label, ok], i) =>
+          `<li class="${ok ? "ok" : ""}"><a href="#k-sec-${id}" data-kitjump="${id}"><b>${ok ? "✓" : i + 1}</b><span>${esc(label)}</span></a></li>`).join("")}</ol>
+        ${done === 3 ? `<p class="kready">✓ ${esc(t("kitReady"))} <button type="button" class="linkbtn" data-kitjobs>${esc(t("kitSeeJobs"))} →</button></p>` : ""}
+        <p class="kitprivacy">${esc(t("kitPrivacy"))}</p>
+        ${cvFiles.persistent ? "" : `<p class="kitwarn">${esc(t("kitNoStorage"))}</p>`}
+      </header>
       <div class="kitext">${extOn() ? `<p><b>✓ ${esc(t("extOn"))}</b> ${esc(t("extOnHint"))}</p>`
         : `<p><b>⚡ ${esc(t("extGet"))}</b> ${esc(t("extGetHint"))}</p><a class="ghostbtn" href="extension/" target="_blank" rel="noopener">${esc(t("extGetBtn"))}</a>`}</div>
-      <section class="kitsec"><h2>${esc(t("kitDetails"))}</h2>
+      <section class="kitsec" id="k-sec-details"><h3><b class="knum">1</b>${esc(t("kitDetails"))}</h3>
         <form class="kgrid" id="kitForm" autocomplete="on" onsubmit="return false">${KIT_FIELDS.map(field).join("")}</form>
         <p class="hint kitsaved" id="kitSavedNote" hidden>✓ ${esc(t("kitSaved"))}</p></section>
-      <section class="kitsec"><h2>${esc(t("kitCvs"))} <span class="muted">${kit.cvs.length}/${KIT_MAX_CVS}</span></h2>
-        ${kit.cvs.length ? `<ul class="kcvs">${cvs}</ul>` : `<p class="hint">${esc(t("kitNoCvs"))}</p>`}
-        <button type="button" class="primary" id="kitAddCv" ${kit.cvs.length >= KIT_MAX_CVS ? "disabled" : ""}>${esc(t("kitAddCv"))}</button>
-        <input id="kitCvFile" type="file" accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" hidden>
-        <p class="hint">${esc(kit.cvs.length >= KIT_MAX_CVS ? t("kitCvMax") : t("kitCvHint"))}</p>
-        <p class="kitmsg" id="kitMsg" role="status" aria-live="polite">${esc(kitMsg)}</p></section>
-      <section class="kitsec"><h2>${esc(t("kitLetters"))}</h2>
+      <section class="kitsec" id="k-sec-cvs"><h3><b class="knum">2</b>${esc(t("kitCvs"))} <span class="muted">${kit.cvs.length}/${KIT_MAX_CVS}</span></h3>
+        ${kit.cvs.length ? `<ul class="kcvs">${cvs}</ul>` : ""}
+        ${kitJustAdded ? `<div class="kadded"><span>✓ ${esc(kitMsg)}</span><button type="button" class="primary" data-cvuse="${esc(kitJustAdded)}">${esc(t("kitSeeJobs"))} →</button></div>`
+          : `<p class="kitmsg" id="kitMsg" role="status" aria-live="polite">${esc(kitMsg)}</p>`}
+        ${kit.cvs.length < KIT_MAX_CVS ? `<button type="button" class="kdrop" id="kitAddCv"><b>${esc(kit.cvs.length ? t("kitAddCv") : t("kitAddFirstCv"))}</b>
+          <span>${esc(t("kitCvHint"))}</span></button>` : `<p class="hint">${esc(t("kitCvMax"))}</p>`}
+        <input id="kitCvFile" type="file" accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" hidden></section>
+      <section class="kitsec" id="k-sec-letters"><h3><b class="knum">3</b>${esc(t("kitLetters"))}</h3>
         <p class="hint">${esc(t("kitLetterHelp"))}</p>
         ${kit.letters.length ? `<ul class="kletters">${letters}</ul>` : ""}
-        <button type="button" class="ghostbtn" id="kitAddLetter">${esc(t("kitAddLetter"))}</button></section>
-      <section class="kitsec"><h2>${esc(t("kitBackup"))}</h2>
-        <div class="kitrow"><button type="button" class="ghostbtn" id="kitExport">${esc(t("kitExport"))}</button>
-          <button type="button" class="ghostbtn" id="kitImportBtn">${esc(t("kitImport"))}</button>
+        <button type="button" class="chipbtn" id="kitAddLetter">${esc(t("kitAddLetter"))}</button></section>
+      <section class="kitsec quiet"><h3>${esc(t("kitBackup"))}</h3>
+        <p class="hint">${esc(t("kitBackupHint"))}</p>
+        <div class="kitrow"><button type="button" class="chipbtn" id="kitExport">${esc(t("kitExport"))}</button>
+          <button type="button" class="chipbtn" id="kitImportBtn">${esc(t("kitImport"))}</button>
           <input id="kitImportFile" type="file" accept=".json,application/json" hidden>
           <button type="button" class="linkbtn danger" id="kitWipe">${esc(t("kitWipe"))}</button></div></section>`;
-    kitMsg = "";
+    kitMsg = ""; kitJustAdded = null;
+  }
+  function refreshKitSteps() {        // update the 1-2-3 progress while typing, without redrawing the form
+    const steps = kitSteps();
+    document.querySelectorAll(".ksteps li").forEach((li, i) => {
+      li.classList.toggle("ok", steps[i][2]);
+      const b = li.querySelector("b"); if (b) b.textContent = steps[i][2] ? "✓" : String(i + 1);
+    });
   }
 
   let kitSaveTimer = 0;
@@ -1341,6 +1385,7 @@
     else if (x.dataset.lbody) { const l = kit.letters.find((c) => c.id === x.dataset.lbody); if (l) l.body = x.value; }
     else return;
     clearTimeout(kitSaveTimer);
+    refreshKitSteps();
     kitSaveTimer = setTimeout(() => { saveKit(); const n = $("kitSavedNote"); if (n) { n.hidden = false; setTimeout(() => { n.hidden = true; }, 1500); } }, 300);
   }
 
@@ -1363,6 +1408,7 @@
     saveKit();
     track("kit-cv-add");
     kitMsg = t("kitCvAdded")(kit.cvs[kit.cvs.length - 1].name);
+    kitJustAdded = id;
     renderKit(); refreshDrawer();
   }
 
@@ -1396,8 +1442,12 @@
   }
 
   function kitClick(e) {
+    const jump = e.target.closest("[data-kitjump]");
+    if (jump) { e.preventDefault(); const sec = $("k-sec-" + jump.dataset.kitjump); if (sec) { sec.scrollIntoView({ behavior: "smooth", block: "start" });
+      const f = sec.querySelector("input:not([type=file]), button"); if (f) setTimeout(() => f.focus({ preventScroll: true }), 350); } return; }
     const b = e.target.closest("button");
     if (!b) return;
+    if (b.dataset.kitjobs !== undefined) { const cv = kit.cvs[0]; if (cv) b.dataset.cvuse = cv.id; else { goToJobs(); return; } }
     if (b.id === "kitAddCv") $("kitCvFile").click();
     else if (b.id === "kitAddLetter") {
       kit.letters.push({ id: "l" + Date.now().toString(36), name: t("kitLetterDefaultName"), body: t("kitLetterDefault") });
@@ -1423,36 +1473,42 @@
   }
 
   // the "Apply faster" part of a job's details
+  const wide = () => matchMedia("(min-width: 721px)").matches;
   function kitDrawer(j) {
     if (!kitHasData()) {
-      return `<section class="dsection dkit"><h3>⚡ ${esc(t("dKit"))}</h3><p class="hint">${esc(t("dKitCta"))}</p>
-        <button type="button" class="ghostbtn" data-kitgo>${esc(t("dKitBtn"))}</button></section>`;
+      return `<section class="dsection dkit dkitcta"><div><b>⚡ ${esc(t("dKit"))}</b><p>${esc(t("dKitCta"))}</p></div>
+        <button type="button" class="primary" data-kitgo>${esc(t("dKitBtn"))}</button></section>`;
     }
     const p = kit.profile;
     let fit = "";
-    if (kit.cvs.length) {
-      if (!j.k.length) fit = `<p class="hint">${esc(t("dNoSkills"))}</p>`;
-      else {
-        const rows = kit.cvs.map((cv) => cvFit(cv, j)).sort((a, b) => b.pct - a.pct);
-        const best = rows[0];
-        fit = `<ul class="dfit">${rows.map((r, i) => `<li class="${i === 0 ? "best" : ""}"><span class="fname">📄 ${esc(r.cv.name)}${i === 0 && rows.length > 1 ? ` <em>${esc(t("dBest"))}</em>` : ""}</span>
-            <span class="fbar"><i style="width:${r.pct}%"></i></span><b>${r.pct}%</b>
-            <button type="button" class="linkbtn" data-cvdl="${esc(r.cv.id)}">${esc(t("kitDownload"))}</button></li>`).join("")}</ul>
-          ${best.miss.length ? `<p class="hint">${esc(t("dMissing")(best.miss.slice(0, 6).map((k) => meta.skills[k]).join(", ")
-            + (best.miss.length > 6 ? ` (+${best.miss.length - 6})` : "")))}</p>` : `<p class="hint">${esc(t("dAllThere"))}</p>`}`;
-      }
-    }
+    if (kit.cvs.length && j.k.length) {
+      const rows = kit.cvs.map((cv) => cvFit(cv, j)).sort((a, b) => b.pct - a.pct);
+      const best = rows[0], tone = best.pct >= 70 ? "good" : best.pct >= 40 ? "ok" : "low";
+      const miss = best.miss.map((k) => meta.skills[k]);
+      fit = `<div class="dfitcard ${tone}">
+          <div class="dfithead"><span class="dfitname">📄 ${esc(t("dSend"))} <b>${esc(best.cv.name)}</b></span>
+            <span class="dfitpct">${best.pct}% · ${esc(t("dTone_" + tone))}</span></div>
+          <span class="fbar big"><i style="width:${best.pct}%"></i></span>
+          ${rows.length > 1 ? `<ul class="dfit">${rows.map((r, i) => `<li class="${i === 0 ? "best" : ""}"><span class="fname">${esc(r.cv.name)}${i === 0 ? ` <em>${esc(t("dBest"))}</em>` : ""}</span>
+            <span class="fbar"><i style="width:${r.pct}%"></i></span><b>${r.pct}%</b></li>`).join("")}</ul>` : ""}
+          ${miss.length ? `<p class="dmisslabel">${esc(t("dMissShort"))}</p><div class="chips">${miss.slice(0, 8).map((m) => `<span class="chip ghost">${esc(m)}</span>`).join("")}${miss.length > 8 ? `<span class="chip ghost">+${miss.length - 8}</span>` : ""}</div>
+            <p class="hint">${esc(t("dMissHint"))}</p>` : `<p class="hint">${esc(t("dAllThere"))}</p>`}
+          <div class="dfitbtns"><button type="button" class="chipbtn" data-cvdl="${esc(best.cv.id)}">⬇ ${esc(t("dDownloadCv"))}</button>
+            ${extOn() ? `<span class="hint">⚡ ${esc(t("dExtHint"))}</span>` : ""}</div>
+        </div>`;
+    } else if (kit.cvs.length) fit = `<p class="hint">${esc(t("dNoSkills"))}</p>`;
     const name = [p.first, p.last].filter(Boolean).join(" ");
     const items = [[t("kFirst") + " / " + t("kLast"), name], ...KIT_FIELDS.filter(([k]) => !["first", "last"].includes(k)).map(([k, l]) => [t(l), p[k]])]
       .filter(([, v]) => String(v || "").trim());
     const copies = items.map(([l, v]) => `<button type="button" class="kcopy" data-copy="${esc(v)}"><small>${esc(l)}</small><span dir="auto">${esc(v)}</span><i class="cl">${esc(t("copy"))}</i></button>`).join("");
-    const letters = kit.letters.length ? `<div class="dletter"><div class="dletterhead"><b>${esc(t("dLetter"))}</b>
-        ${kit.letters.length > 1 ? `<select id="dLetterPick" aria-label="${esc(t("dLetter"))}">${kit.letters.map((l, i) => `<option value="${i}">${esc(l.name)}</option>`).join("")}</select>` : ""}
-        <button type="button" class="ghostbtn" id="dLetterCopy"><span class="cl">${esc(t("copy"))}</span></button></div>
-        <textarea id="dLetterText" rows="7" readonly dir="auto">${esc(fillLetter(kit.letters[0].body, j))}</textarea></div>` : "";
-    return `<section class="dsection dkit"><h3>⚡ ${esc(t("dKit"))}</h3>
-      ${kit.cvs.length ? `<h4>${esc(t("dFit"))}</h4>${fit}` : ""}
-      ${copies ? `<h4>${esc(t("dCopy"))}</h4><p class="hint">${esc(t("dCopyHint"))}</p><div class="kcopies">${copies}</div>` : ""}
+    const letters = kit.letters.length ? `<details class="dfold"${wide() ? " open" : ""}><summary>✉️ ${esc(t("dLetterFor")(j.c || ""))}</summary>
+        <div class="dletterhead">${kit.letters.length > 1 ? `<select id="dLetterPick" aria-label="${esc(t("dLetter"))}">${kit.letters.map((l, i) => `<option value="${i}">${esc(l.name)}</option>`).join("")}</select>` : ""}
+          <button type="button" class="chipbtn" id="dLetterCopy"><span class="cl">${esc(t("copy"))}</span></button></div>
+        <textarea id="dLetterText" rows="7" readonly dir="auto">${esc(fillLetter(kit.letters[0].body, j))}</textarea></details>` : "";
+    return `<section class="dsection dkit"><h3 class="dkittitle">⚡ ${esc(t("dKit"))}</h3>
+      ${fit}
+      ${copies ? `<details class="dfold"${wide() ? " open" : ""}><summary>📋 ${esc(t("dCopy"))} <small>${items.length}</small></summary>
+        <p class="hint">${esc(t("dCopyHint"))}</p><div class="kcopies">${copies}</div></details>` : ""}
       ${letters}
       <button type="button" class="linkbtn" data-kitgo>${esc(t("dEditKit"))}</button></section>`;
   }
@@ -1588,12 +1644,12 @@
       </div>
       ${adzunaFar(j) && j.c ? `<p class="adznote">${esc(t("adzNote")((j.co || []).join(", ") || "its country"))}
         <a href="${esc(companySearch(j))}" target="_blank" rel="noopener nofollow">${esc(t("findOnSite")(j.c))}</a></p>` : ""}
+      ${kitDrawer(j)}
       <div class="dshare">
         <a class="wabtn" href="${esc(waLink(j))}" target="_blank" rel="noopener" data-share="${esc(j.id)}">${WA_ICON}<span>${t("shareWa")}</span></a>
         ${navigator.share ? `<button type="button" class="ghostbtn" id="shareJob">${t("shareMore")}</button>` : ""}
         <button type="button" class="ghostbtn" id="copyJob">${t("copyLink")}</button>
       </div>
-      ${kitDrawer(j)}
       <section class="dsection">${match}</section>
       <dl class="dfacts">
         ${fact(t("fWorkMode"), esc(j.w === "Remote" ? (j.ww ? t("remoteWorld") : t("remote")) : j.w))}
@@ -1771,6 +1827,15 @@
     const k = $("kit");
     k.addEventListener("input", kitInput);
     k.addEventListener("click", kitClick);
+    k.addEventListener("dragover", (e) => { const d = e.target.closest(".kdrop"); if (d) { e.preventDefault(); d.classList.add("over"); } });
+    k.addEventListener("dragleave", (e) => { const d = e.target.closest(".kdrop"); if (d) d.classList.remove("over"); });
+    k.addEventListener("drop", (e) => {
+      const d = e.target.closest(".kdrop");
+      if (!d) return;
+      e.preventDefault(); d.classList.remove("over");
+      const f = e.dataTransfer && e.dataTransfer.files[0];
+      if (f) addKitCv(f);
+    });
     k.addEventListener("change", (e) => {
       if (e.target.id === "kitCvFile") { const f = e.target.files[0]; e.target.value = ""; addKitCv(f); }
       if (e.target.id === "kitImportFile") { const f = e.target.files[0]; e.target.value = ""; if (f) importKit(f); }
@@ -1814,7 +1879,15 @@
     });
     $("reset").addEventListener("click", resetFilters);
     $("share").addEventListener("click", share);
-    document.querySelectorAll('[role="tab"]').forEach((b) => b.addEventListener("click", () => selectTab(b.getAttribute("aria-controls"))));
+    document.querySelectorAll('[role="tab"]').forEach((b) => b.addEventListener("click", () => {
+      const id = b.getAttribute("aria-controls"), was = document.body.dataset.tab;
+      selectTab(id);
+      // a new view starts at its top: the page (reading views) or the job list (job views)
+      if (id !== was) {
+        const top = ["saved", "kit", "about", "jobs"].includes(id) ? 0 : Math.max(0, $(id).getBoundingClientRect().top + scrollY - 90);
+        if (scrollY > top) window.scrollTo(0, top);
+      }
+    }));
     $("lang").addEventListener("click", () => {
       lang = lang === "ar" ? "en" : "ar"; store.set("lang", lang); track("language-" + lang); applyLanguage(); readHash(); update(true);
     });

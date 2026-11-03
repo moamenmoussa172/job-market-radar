@@ -343,6 +343,7 @@ body[data-tab="saved"] .layout, body[data-tab="about"] .layout, body[data-tab="k
 .job h3 a:focus-visible::after { box-shadow: inset var(--focus); border-radius: 4px; }
 .where { margin: 3px 0 0; color: var(--muted); font-size: 15px; }
 .where b { color: var(--ink-2); font-weight: 600; margin-inline-end: 8px; }
+.where b, .where span { unicode-bidi: isolate; }   /* Latin names inside Arabic text keep their spacing */
 .locbtn, .save, .sk, .credit { position: relative; z-index: 1; }
 .locbtn { font: 500 14px/1 var(--font); color: var(--violet-ink); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; margin-inline-start: 8px; }
 .locs { position: relative; z-index: 1; margin: 8px 0 0; padding-inline-start: 18px; font-size: 14px; }
@@ -915,3 +916,120 @@ h1, h2, h3 { letter-spacing: -.02em; }
 .kitext p { margin: 0 0 8px; font-size: 14px; line-height: 1.5; }
 .kitext .ghostbtn { display: inline-block; text-decoration: none; }
 @media (hover: hover) and (pointer: fine) and (min-width: 900px) { .kitext { display: block; } }   /* extensions: computers only */
+
+/* ---------------------------------------------------------------- navigation: tabs on computers, a bottom bar on phones */
+.tabs .ti, .tabs .ts { display: none; }
+.tabs .ti { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+/* reading views (Saved, Apply kit, How it works) don't need the job search on top */
+body[data-tab="saved"] .hero, body[data-tab="kit"] .hero, body[data-tab="about"] .hero { display: none; }
+@media (max-width: 720px) {
+  .tabs-wrap {
+    position: fixed; top: auto; bottom: 0; inset-inline: 0; z-index: 40; border-bottom: 0; border-top: 1px solid var(--line);
+    background: color-mix(in srgb, var(--surface) 94%, transparent); padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .tabs { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0; padding: 0 2px; overflow: visible; }
+  .tabs button { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 0 7px; font-size: 10.5px; font-weight: 600;
+    min-width: 0; white-space: nowrap; color: var(--muted); -webkit-tap-highlight-color: transparent; }
+  .tabs button .ti, .tabs button .ts { display: block; }
+  .tabs button .ts { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .tabs button .tl { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .tabs button[aria-selected="true"] { color: var(--violet); }
+  .tabs button[aria-selected="true"]::after { display: none; }
+  .tabs button[aria-selected="true"] .ti { stroke-width: 2.3; }
+  #savedCount { position: absolute; top: 3px; inset-inline-start: calc(50% + 6px); font-size: 10px; min-width: 17px; height: 17px; padding: 0 4px;
+    line-height: 17px; border-radius: 99px; background: var(--violet); color: #fff; text-align: center; }
+  body { padding-bottom: calc(62px + env(safe-area-inset-bottom, 0px)); }
+  .toast { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+  .ioshint { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+}
+
+/* ---------------------------------------------------------------- Apply kit, v2 */
+.chipbtn { font: 600 14px/1 var(--font); color: var(--ink); background: var(--surface); border: 1px solid var(--line-strong);
+  border-radius: 99px; padding: 10px 14px; cursor: pointer; min-height: 40px; }
+.chipbtn:hover { border-color: var(--violet); color: var(--violet-ink); }
+.chipbtn.done { border-color: var(--mint-ink); color: var(--mint-ink); }
+.kithead { padding: 6px 0 4px; }
+.kithead h2 { font: 800 clamp(24px, 4vw, 30px)/1.15 var(--display, var(--font)); letter-spacing: -.3px; margin: 8px 0 6px; }
+.kithead > p { margin: 0 0 14px; color: var(--ink-2); font-size: 16px; line-height: 1.5; max-width: 62ch; }
+.ksteps { list-style: none; padding: 0; margin: 0 0 12px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.ksteps a { display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--ink-2); background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--r-m); padding: 10px 12px; font-size: 14px; font-weight: 600; min-height: 48px; }
+.ksteps a:hover { border-color: var(--violet); }
+.ksteps b { flex: none; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 99px; background: var(--paper);
+  border: 1px solid var(--line-strong); font-size: 13px; color: var(--ink-2); }
+.ksteps span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ksteps li.ok a { color: var(--ink); }
+.ksteps li.ok b { background: var(--mint-ink); border-color: var(--mint-ink); color: #fff; }
+.kready { margin: 0 0 12px; padding: 10px 14px; border-radius: var(--r-m); background: var(--mint-soft); color: var(--mint-ink); font-weight: 600; font-size: 14px; }
+.kready .linkbtn { font-weight: 700; color: inherit; text-decoration: underline; }
+.kithead .kitprivacy { background: none; padding: 0; margin: 0 0 6px; color: var(--muted); font-size: 13px; }
+.kitsec h3 { display: flex; align-items: center; gap: 10px; font-size: 18px; margin: 0 0 14px; }
+.kitsec h3 .muted { font-weight: 500; font-size: 14px; margin-inline-start: auto; }
+.knum { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 99px; background: var(--violet-soft); color: var(--violet-ink); font-size: 13px; }
+.kitsec.quiet { background: transparent; border-style: dashed; }
+.kitsec.quiet h3 { font-size: 16px; }
+.kgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.kgrid .kfield { grid-column: span 2; }
+.kgrid .kfield.half { grid-column: span 1; }
+@media (min-width: 900px) { .kgrid { grid-template-columns: repeat(4, minmax(0, 1fr)); } .kgrid .kfield.half { grid-column: span 1; } .kgrid .kfield:not(.half) { grid-column: span 2; } }
+.kfield input { min-height: 46px; }
+.kdrop { width: 100%; display: grid; gap: 4px; justify-items: center; text-align: center; padding: 22px 16px; border-radius: var(--r-m);
+  border: 2px dashed var(--line-strong); background: var(--paper); color: var(--ink-2); cursor: pointer; font: inherit; }
+.kdrop b { font-size: 16px; color: var(--violet-ink); }
+.kdrop span { font-size: 13px; }
+.kdrop:hover, .kdrop.over { border-color: var(--violet); background: var(--violet-soft); }
+.kcv { grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 12px; }
+.kcvicon { font-size: 26px; line-height: 1; padding-top: 8px; }
+.kcvmain { display: grid; gap: 6px; min-width: 0; }
+.kcv.justadded { border-color: var(--mint-ink); box-shadow: 0 0 0 3px var(--mint-soft); }
+.kadded { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin: 0 0 12px; padding: 12px 14px;
+  border-radius: var(--r-m); background: var(--mint-soft); color: var(--mint-ink); font-weight: 600; font-size: 14px; }
+.kletter { padding: 0; }
+.kletter details > summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; cursor: pointer; font-weight: 600; list-style: none; }
+.kletter details > summary::-webkit-details-marker { display: none; }
+.kletter details > summary small { color: var(--violet-ink); font-size: 13px; }
+.kletter details[open] > summary small { visibility: hidden; }
+.kletterbody { display: grid; gap: 10px; padding: 0 14px 14px; }
+.kletterbody .linkbtn { justify-self: start; }
+/* job details */
+.dkitcta { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
+  background: var(--violet-soft); border: 0; border-radius: var(--r-m); padding: 14px 16px; margin-top: 14px; }
+.dkitcta p { margin: 4px 0 0; font-size: 14px; color: var(--ink-2); max-width: 46ch; }
+.dkitcta .primary { white-space: nowrap; }
+.dkittitle { margin: 0 0 10px; font-size: 16px; }
+.dfitcard { border: 1px solid var(--line); border-radius: var(--r-m); padding: 12px 14px; display: grid; gap: 8px; background: var(--surface); }
+.dfitcard.good { border-color: color-mix(in srgb, var(--mint-ink) 50%, var(--line)); }
+.dfitcard.low { border-color: color-mix(in srgb, var(--amber) 60%, var(--line)); }
+.dfithead { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 15px; }
+.dfitname { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.dfitpct { font-weight: 700; font-size: 14px; white-space: nowrap; }
+.dfitcard.good .dfitpct { color: var(--mint-ink); } .dfitcard.ok .dfitpct { color: var(--violet-ink); }
+.dfitcard.low .dfitpct { color: color-mix(in srgb, var(--amber) 70%, var(--ink)); }
+.fbar.big { display: block; height: 10px; border-radius: 5px; background: var(--line); overflow: hidden; }
+.fbar.big i { display: block; height: 100%; border-radius: 5px; background: var(--violet); }
+.dfitcard.good .fbar.big i { background: var(--mint-ink); } .dfitcard.low .fbar.big i { background: var(--amber); }
+.dfitcard .dfit { margin-top: 2px; }
+.dfitcard .dfit li { grid-template-columns: minmax(0, 1fr) 70px 40px; font-size: 13px; color: var(--ink-2); }
+.dmisslabel { margin: 4px 0 0; font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.dfitcard .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.dfitcard .chip { font-size: 13px; padding: 6px 10px; }
+.dfitcard .hint { margin: 0; }
+.dfitbtns { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.dfold { margin-top: 10px; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--surface); }
+.dfold > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; padding: 12px 14px; font-weight: 600; font-size: 15px; min-height: 48px; }
+.dfold > summary::-webkit-details-marker { display: none; }
+.dfold > summary::after { content: "▾"; margin-inline-start: auto; color: var(--muted); transition: transform .15s; }
+.dfold[open] > summary::after { transform: rotate(180deg); }
+.dfold > summary small { background: var(--paper); border-radius: 99px; padding: 2px 8px; font-size: 12px; color: var(--muted); }
+.dfold > .hint, .dfold > .kcopies, .dfold > .dletterhead, .dfold > textarea { margin-inline: 14px; }
+.dfold > .kcopies { margin-bottom: 14px; }
+.dfold > textarea { width: calc(100% - 28px); margin-bottom: 14px; }
+.dfold .dletterhead { justify-content: flex-end; }
+.dkit > .linkbtn { margin-top: 10px; }
+@media (prefers-reduced-motion: reduce) { .dfold > summary::after { transition: none; } }
+@media (max-width: 520px) {
+  .ksteps a { flex-direction: column; gap: 4px; padding: 10px 6px; text-align: center; font-size: 13px; }
+  .ksteps span { white-space: normal; line-height: 1.2; }
+  .kcvicon { display: none; }
+  .kcv { grid-template-columns: minmax(0, 1fr); }
+}

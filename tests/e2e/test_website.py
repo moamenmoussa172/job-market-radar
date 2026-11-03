@@ -1175,6 +1175,19 @@ def test_apply_kit_on_a_phone(browser, base, data, tmp_path):
     p.wait_for_selector(".kcv")
     assert p.evaluate("document.documentElement.scrollWidth <= window.innerWidth + 1")      # nothing sticks out sideways
     p.goto(base + "/#job=" + jobs[0]["id"])
-    p.wait_for_selector("#drawerBody .dfit li", timeout=30000)
+    p.wait_for_selector("#drawerBody .dfitcard", timeout=30000)
     assert p.locator("#drawerBody .kcopy").count() >= 2
+    assert not p.locator("#drawerBody details.dfold[open]").count()          # folded on a phone: the fit comes first
+    p.locator("#drawerBody details.dfold summary").first.click()
+    assert p.locator("#drawerBody .kcopy").first.is_visible()
+    # the bottom bar: every tab reachable, the kit tab one tap away
+    nav = p.locator(".tabs-wrap")
+    box = nav.bounding_box()
+    assert box["y"] + box["height"] >= 844 - 2                                 # stuck to the bottom of the screen
+    p.keyboard.press("Escape")
+    p.goto(base + "/#tab=jobs")
+    p.wait_for_selector("#jobList li.job")
+    p.locator("#tab-kit").click()
+    p.wait_for_selector("#kit:not([hidden]) .ksteps")
+    assert p.evaluate("scrollY") < 5 and p.locator(".hero").is_hidden()
     ctx.close()
