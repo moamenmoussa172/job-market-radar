@@ -1,0 +1,37 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Machine Learning Engineer @ Acme</title></head>
+<body>
+<div id="root"><h1>Machine Learning Engineer</h1><p>Loading application…</p></div>
+<pre id="state"></pre>
+<script>
+// a small "React-like" form: the app keeps its own state, updated only by input/change events,
+// and re-renders values from that state. Values set without events would be lost.
+const state = {}, files = {};
+const fields = [
+  ["_systemfield_name", "Name", "text"], ["_systemfield_email", "Email", "email"], ["phone", "Phone Number", "tel"],
+  ["linkedin", "LinkedIn Profile URL", "text"], ["location", "Location", "text"], ["salary", "What are your salary expectations?", "text"],
+];
+function render() {
+  const root = document.getElementById("root");
+  root.innerHTML = "<h1>Machine Learning Engineer</h1><form id=f onsubmit='return false'></form>";
+  const f = document.getElementById("f");
+  for (const [id, label, type] of fields) {
+    const w = document.createElement("div"); w.className = "_fieldEntry";
+    w.innerHTML = `<label class="_label" for="${id}">${label}</label>`;
+    const i = document.createElement("input"); i.id = id; i.name = id; i.type = type; i.value = state[id] || "";
+    i.addEventListener("input", (e) => { state[id] = e.target.value; dump(); });
+    w.append(i); f.append(w);
+  }
+  const fw = document.createElement("div"); fw.className = "_fieldEntry";
+  fw.innerHTML = '<label class="_label">Resume</label><button type=button>Upload File</button>';
+  const fi = document.createElement("input"); fi.type = "file"; fi.id = "_systemfield_resume"; fi.style.display = "none";
+  fi.addEventListener("change", (e) => { files.resume = e.target.files[0] && e.target.files[0].name; dump(); });
+  fw.append(fi); f.append(fw);
+  const tw = document.createElement("div"); tw.className = "_fieldEntry";
+  tw.innerHTML = '<label class="_label" for="cl">Cover letter</label>';
+  const ta = document.createElement("textarea"); ta.id = "cl"; ta.addEventListener("input", (e) => { state.cl = e.target.value; dump(); });
+  tw.append(ta); f.append(tw);
+}
+function dump() { document.getElementById("state").textContent = JSON.stringify({ state, files }); }
+setTimeout(render, 800);          // the form appears after the page loads, like a single-page app
+</script>
+</body></html>

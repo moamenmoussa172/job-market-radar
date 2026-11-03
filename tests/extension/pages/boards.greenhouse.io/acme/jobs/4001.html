@@ -1,0 +1,24 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Job Application for Senior Data Engineer at Acme</title></head>
+<body>
+<div id="header"><h1 class="app-title">Senior Data Engineer</h1><span class="company-name">at Acme</span></div>
+<form id="application_form" action="#" onsubmit="return false">
+  <div class="field"><label for="first_name">First Name <span>*</span></label><input type="text" id="first_name" name="job_application[first_name]"></div>
+  <div class="field"><label for="last_name">Last Name <span>*</span></label><input type="text" id="last_name" name="job_application[last_name]"></div>
+  <div class="field"><label for="email">Email <span>*</span></label><input type="text" id="email" name="job_application[email]"></div>
+  <div class="field"><label for="phone">Phone</label><input type="text" id="phone" name="job_application[phone]"></div>
+  <div class="field"><label for="resume">Resume/CV <span>*</span></label><input type="file" id="resume" name="job_application[resume]"></div>
+  <div class="field"><label for="cover_letter">Cover Letter</label><input type="file" id="cover_letter" name="job_application[cover_letter]"></div>
+  <div class="field"><label for="q1">LinkedIn Profile</label><input type="text" id="q1" name="job_application[answers_attributes][0][text_value]"></div>
+  <div class="field"><label for="q2">Website</label><input type="text" id="q2" name="job_application[answers_attributes][1][text_value]"></div>
+  <div class="field"><label for="q3">What is your notice period?</label><input type="text" id="q3" name="job_application[answers_attributes][2][text_value]"></div>
+  <div class="field"><label for="q4">How many years of experience do you have with data pipelines?</label>
+    <select id="q4" name="job_application[answers_attributes][3][answer_selected_options_attributes][0][question_option_id]">
+      <option value="">Please select</option><option value="11">0-1</option><option value="12">2-4</option><option value="13">5-7</option><option value="14">8+</option></select></div>
+  <div class="field"><label for="q5">How did you hear about this job?</label><input type="text" id="q5" name="job_application[answers_attributes][4][text_value]"></div>
+  <div class="field"><label for="q6">Are you legally authorized to work in the country?</label>
+    <select id="q6"><option value="">Please select</option><option value="1">Yes</option><option value="0">No</option></select></div>
+  <div class="field"><label for="q7">Current company</label><input type="text" id="q7" name="job_application[answers_attributes][6][text_value]"></div>
+  <input type="hidden" name="token" value="abc">
+  <input type="submit" value="Submit Application" id="submit_app">
+</form>
+</body></html>

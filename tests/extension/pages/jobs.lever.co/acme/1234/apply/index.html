@@ -1,0 +1,22 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Acme - Data Engineer</title></head>
+<body>
+<div class="posting-headline"><h2>Data Engineer</h2></div>
+<form method="POST" enctype="multipart/form-data" id="application-form" onsubmit="return false">
+  <ul>
+    <li class="application-question resume"><div class="application-label">Resume/CV ✱</div>
+      <div class="application-field"><input type="file" name="resume" id="resume-upload-input" style="display:none"><a class="visible-resume-upload">Attach resume/CV</a></div></li>
+    <li class="application-question"><div class="application-label">Full name ✱</div><div class="application-field"><input type="text" name="name"></div></li>
+    <li class="application-question"><div class="application-label">Email ✱</div><div class="application-field"><input type="email" name="email"></div></li>
+    <li class="application-question"><div class="application-label">Phone</div><div class="application-field"><input type="text" name="phone"></div></li>
+    <li class="application-question"><div class="application-label">Current company</div><div class="application-field"><input type="text" name="org"></div></li>
+  </ul>
+  <h4>Links</h4>
+  <ul>
+    <li class="application-question"><div class="application-label">LinkedIn URL</div><div class="application-field"><input type="text" name="urls[LinkedIn]"></div></li>
+    <li class="application-question"><div class="application-label">GitHub URL</div><div class="application-field"><input type="text" name="urls[GitHub]"></div></li>
+  </ul>
+  <h4>Additional information</h4>
+  <textarea name="comments" placeholder="Add a cover letter or anything else you want to share."></textarea>
+  <button type="submit" id="btn-submit">Submit application</button>
+</form>
+</body></html>

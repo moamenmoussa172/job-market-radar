@@ -1,0 +1,96 @@
+{
+  "manifest_version": 3,
+  "name": "Radarak Apply",
+  "short_name": "Radarak",
+  "version": "1.0.0",
+  "description": "Fill job applications with your Radarak Apply kit: details, the CV that fits the job best, and your cover letter. Nothing leaves your computer.",
+  "homepage_url": "https://radarak.online/extension/",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "action": {
+    "default_title": "Radarak Apply",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png"
+    }
+  },
+  "permissions": [
+    "storage",
+    "unlimitedStorage",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://radarak.online/*",
+    "https://moamenmoussa172.github.io/job-market-radar/*",
+    "https://boards.greenhouse.io/*",
+    "https://job-boards.greenhouse.io/*",
+    "https://job-boards.eu.greenhouse.io/*",
+    "https://jobs.lever.co/*",
+    "https://jobs.eu.lever.co/*",
+    "https://jobs.ashbyhq.com/*",
+    "https://apply.workable.com/*",
+    "https://jobs.smartrecruiters.com/*",
+    "https://*.recruitee.com/*",
+    "https://*.teamtailor.com/*",
+    "https://*.bamboohr.com/*",
+    "https://*.jobs.personio.de/*",
+    "https://*.jobs.personio.com/*",
+    "https://*.breezy.hr/*",
+    "https://*.pinpointhq.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://radarak.online/*",
+        "https://moamenmoussa172.github.io/job-market-radar/*"
+      ],
+      "js": [
+        "src/common.js",
+        "src/radarak.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://boards.greenhouse.io/*",
+        "https://job-boards.greenhouse.io/*",
+        "https://job-boards.eu.greenhouse.io/*",
+        "https://jobs.lever.co/*",
+        "https://jobs.eu.lever.co/*",
+        "https://jobs.ashbyhq.com/*",
+        "https://apply.workable.com/*",
+        "https://jobs.smartrecruiters.com/*",
+        "https://*.recruitee.com/*",
+        "https://*.teamtailor.com/*",
+        "https://*.bamboohr.com/*",
+        "https://*.jobs.personio.de/*",
+        "https://*.jobs.personio.com/*",
+        "https://*.breezy.hr/*",
+        "https://*.pinpointhq.com/*"
+      ],
+      "js": [
+        "src/common.js",
+        "src/fill.js"
+      ],
+      "all_frames": true,
+      "run_at": "document_idle"
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "apply@radarak.online",
+      "strict_min_version": "115.0",
+      "data_collection_permissions": {
+        "required": [
+          "none"
+        ]
+      }
+    }
+  }
+}

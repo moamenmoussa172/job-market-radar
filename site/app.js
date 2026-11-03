@@ -41,6 +41,9 @@
       industry: "Industry", skill: "Must-have skill", arabic: "Arabic", any: "Any", arabicReq: "Required",
       arabicNot: "Not required", reset: "Clear all",
       tabKit: "Apply kit",
+      extGet: "Fill applications in one click", extGetHint: "On a computer, the free Radarak Apply extension fills application forms (Greenhouse, Lever, Ashby, Workable and more) with this kit and attaches the CV that fits best.",
+      extGetBtn: "Get the extension (Chrome, Edge, Firefox…)", extOn: "Radarak Apply extension connected.",
+      extOnHint: "On an application form, click “Fill with Radarak”. It fills your details, attaches the best CV and adds the cover letter. You check and submit.",
       kitIntro: "Save your details, CVs and cover letters once. When you open a job, Radarak shows which of your CVs fits it best and gives you every answer ready to copy.",
       kitPrivacy: "🔒 Everything stays on this device. Nothing is uploaded to Radarak or sent anywhere. Use Backup to move it to another phone or browser.",
       kitDetails: "My details", kitCvs: "My CVs", kitLetters: "Cover letters", kitBackup: "Backup",
@@ -169,6 +172,9 @@
       industry: "المجال", skill: "مهارة لازم تكون مطلوبة", arabic: "العربي", any: "الكل", arabicReq: "مطلوب",
       arabicNot: "مش مطلوب", reset: "امسح الكل",
       tabKit: "ملف التقديم",
+      extGet: "املى فورم التقديم بضغطة واحدة", extGetHint: "على الكمبيوتر، إضافة Radarak Apply المجانية بتملى فورمات التقديم (Greenhouse وLever وAshby وWorkable وغيرهم) من ملف التقديم ده، وبترفق الـ CV الأنسب.",
+      extGetBtn: "نزّل الإضافة (Chrome وEdge وFirefox…)", extOn: "إضافة Radarak Apply متوصلة.",
+      extOnHint: "في فورم التقديم، دوس “Fill with Radarak”. هتملى بياناتك وترفق الـ CV الأنسب وتضيف خطاب التقديم. انت تراجع وتبعت.",
       kitIntro: "احفظ بياناتك والـ CVs وخطابات التقديم مرة واحدة. ولما تفتح أي وظيفة، رادارك هيقولك أنهي CV من بتوعك الأنسب ليها، وهيجهزلك كل الإجابات جاهزة للنسخ.",
       kitPrivacy: "🔒 كل حاجة بتفضل على الجهاز ده بس. مفيش حاجة بتترفع على رادارك أو بتتبعت لأي حد. استخدم النسخة الاحتياطية عشان تنقلها لموبايل أو متصفح تاني.",
       kitDetails: "بياناتي", kitCvs: "الـ CVs بتاعتي", kitLetters: "خطابات التقديم", kitBackup: "نسخة احتياطية",
@@ -1180,7 +1186,28 @@
   const KIT_MAX_CVS = 5;
   let kit = store.get("kit", null) || { profile: {}, cvs: [], letters: [] };
   kit.profile = kit.profile || {}; kit.cvs = kit.cvs || []; kit.letters = kit.letters || [];
-  const saveKit = () => store.set("kit", kit);
+  // The Radarak Apply browser extension (computers) asks the page for the kit with window.postMessage;
+  // the kit and CV files go to the extension in this same browser and nowhere else.
+  const extOn = () => document.documentElement.dataset.radarakExt === "1";
+  async function kitForExtension() {
+    const files = [];
+    for (const cv of kit.cvs) {
+      const rec = await cvFiles.get(cv.id);
+      if (rec && rec.blob) files.push({ id: cv.id, blob: rec.blob, fileName: rec.fileName, type: rec.type });
+    }
+    window.postMessage({ type: "radarak-kit-data", kit, files }, location.origin);
+  }
+  window.addEventListener("message", (e) => {
+    if (e.source === window && e.data && e.data.type === "radarak-ext-hello") {
+      kitForExtension();
+      const k = $("kit"); if (k && !k.hidden) renderKit();
+    }
+  });
+  let extPush = 0;
+  const saveKit = () => {
+    store.set("kit", kit);
+    if (extOn()) { clearTimeout(extPush); extPush = setTimeout(kitForExtension, 400); }
+  };
   const kitHasData = () => kit.cvs.length > 0 || Object.values(kit.profile).some((v) => String(v || "").trim());
 
   // a tiny IndexedDB key-value store for the CV files (localStorage is too small for files)
@@ -1282,6 +1309,8 @@
       <p class="kitintro">${esc(t("kitIntro"))}</p>
       <p class="kitprivacy">${esc(t("kitPrivacy"))}</p>
       ${cvFiles.persistent ? "" : `<p class="kitwarn">${esc(t("kitNoStorage"))}</p>`}
+      <div class="kitext">${extOn() ? `<p><b>✓ ${esc(t("extOn"))}</b> ${esc(t("extOnHint"))}</p>`
+        : `<p><b>⚡ ${esc(t("extGet"))}</b> ${esc(t("extGetHint"))}</p><a class="ghostbtn" href="extension/" target="_blank" rel="noopener">${esc(t("extGetBtn"))}</a>`}</div>
       <section class="kitsec"><h2>${esc(t("kitDetails"))}</h2>
         <form class="kgrid" id="kitForm" autocomplete="on" onsubmit="return false">${KIT_FIELDS.map(field).join("")}</form>
         <p class="hint kitsaved" id="kitSavedNote" hidden>✓ ${esc(t("kitSaved"))}</p></section>
@@ -1552,7 +1581,7 @@
           <div class="facts">${g.pay ? `<span class="fact pay">${payText(g.pay)}</span>` : ""}<span class="fact role">${esc(j.r)}</span>${tags}</div></div>
       </header>
       <div class="dactions">
-        <a class="apply" href="${esc(j.u)}" target="_blank" rel="${linkRel(j)}">${j.by === ADZUNA ? t("openOn")("Adzuna") : t("applyOn")}
+        <a class="apply" href="${esc(j.u)}" target="_blank" rel="${linkRel(j)}"${(() => { const b = bestCv(j); return b ? ` data-cv="${esc(b.cv.id)}"` : ""; })()}>${j.by === ADZUNA ? t("openOn")("Adzuna") : t("applyOn")}
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></a>
         <button type="button" class="save" data-id="${esc(j.id)}" aria-pressed="${!!savedJobs[j.id]}">${BOOKMARK}<span>${savedJobs[j.id] ? t("saved") : t("save")}</span></button>
         <button type="button" class="applybtn" data-applied="${esc(j.id)}" aria-pressed="${!!(savedJobs[j.id] && savedJobs[j.id].a)}">${CHECK}<span>${savedJobs[j.id] && savedJobs[j.id].a ? t("applied") : t("markApplied")}</span></button>

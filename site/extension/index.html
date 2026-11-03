@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Radarak Apply: fill job applications in one click</title>
+  <meta name="description" content="A free browser extension that fills job application forms with your Radarak Apply kit: details, the CV that fits the job best and your cover letter. Nothing leaves your computer.">
+  <link rel="canonical" href="https://radarak.online/extension/">
+  <link rel="icon" href="../icons/icon-192.png">
+  <style>
+    :root { --bg: #F5F5F7; --card: #fff; --ink: #1D1D1F; --ink2: #424245; --muted: #6E6E73; --line: #E5E5EA; --accent: #0071E3; --ok: #1E8E3E; }
+    @media (prefers-color-scheme: dark) { :root { --bg: #000; --card: #1C1C1E; --ink: #F5F5F7; --ink2: #D1D1D6; --muted: #A1A1A6; --line: #3A3A3C; --accent: #0A84FF; --ok: #30D158; } }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+    .w { max-width: 820px; margin: 0 auto; padding: 28px max(16px, env(safe-area-inset-left)) 60px; }
+    a { color: var(--accent); }
+    .top { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 20px; text-decoration: none; color: var(--ink); }
+    .top img { width: 32px; height: 32px; }
+    h1 { font-size: clamp(30px, 5vw, 44px); line-height: 1.1; letter-spacing: -.5px; margin: 28px 0 10px; text-wrap: balance; }
+    h2 { font-size: 22px; margin: 34px 0 10px; }
+    .lead { font-size: 18px; color: var(--ink2); margin: 0 0 18px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 18px 20px; margin: 12px 0; }
+    ol, ul { padding-inline-start: 22px; } li { margin: 6px 0; }
+    .btn { display: inline-block; background: var(--accent); color: #fff; text-decoration: none; font-weight: 600; border-radius: 999px; padding: 12px 20px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr)); gap: 12px; }
+    .muted { color: var(--muted); font-size: 14px; }
+    code { background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; font-size: 14px; }
+    .ok { color: var(--ok); font-weight: 600; }
+    [lang=ar] { font-family: "IBM Plex Sans Arabic", system-ui, sans-serif; }
+  </style>
+</head>
+<body>
+<div class="w">
+  <a class="top" href="../"><img src="../icons/icon-192.png" alt="">Radarak</a>
+  <h1>Radarak Apply: fill job applications in one click</h1>
+  <p class="lead">A free extension for your computer's browser. It fills application forms with your <a href="../#tab=kit">Apply kit</a>: your details, the CV that fits the job best and your cover letter. You check everything and press submit yourself.</p>
+  <p><a class="btn" href="radarak-apply.zip" download>Download Radarak Apply (.zip)</a></p>
+  <p class="muted">Works in Chrome, Edge, Brave, Opera and Firefox on Windows, Mac and Linux. Phones don't support browser extensions; on a phone, use the copy buttons in the Apply kit.</p>
+
+  <h2>How it works</h2>
+  <div class="grid">
+    <div class="card"><b>1. Fill your Apply kit once</b><br>On <a href="../#tab=kit">radarak.online → Apply kit</a>: details, up to 5 CVs and cover letters.</div>
+    <div class="card"><b>2. Open a job and click Apply</b><br>Radarak remembers which of your CVs fits that job best and fills the cover letter with its company and title.</div>
+    <div class="card"><b>3. Click “Fill with Radarak”</b><br>On the application form. Filled fields turn green. Answer the other questions, then submit.</div>
+  </div>
+  <p class="muted">Knows the forms of Greenhouse, Lever, Ashby, Workable, SmartRecruiters, Recruitee, Teamtailor, BambooHR, Personio, Breezy and Pinpoint. On any other site, click the extension's icon → “Fill this page”.</p>
+
+  <h2>Install</h2>
+  <div class="card">
+    <b>Chrome, Edge, Brave, Opera</b>
+    <ol>
+      <li>Download the .zip above and unzip it to a folder you keep (for example <code>Documents\radarak-apply</code>).</li>
+      <li>Open the extensions page: <code>chrome://extensions</code>, <code>edge://extensions</code>, <code>brave://extensions</code> or <code>opera://extensions</code>.</li>
+      <li>Turn on <b>Developer mode</b>, click <b>Load unpacked</b> and choose the unzipped folder.</li>
+      <li>Open <a href="../#tab=kit">radarak.online → Apply kit</a> once. It says <span class="ok">“extension connected”</span>.</li>
+    </ol>
+  </div>
+  <div class="card">
+    <b>Firefox</b>
+    <ol>
+      <li>Open <code>about:debugging#/runtime/this-firefox</code> → <b>Load Temporary Add-on</b> → choose <code>manifest.json</code> in the unzipped folder.</li>
+      <li>Firefox removes temporary add-ons when it closes; the store version will stay installed.</li>
+    </ol>
+  </div>
+  <p class="muted">Store versions (Chrome Web Store, Edge Add-ons, Firefox Add-ons) are on the way and will install with one click.</p>
+
+  <h2 id="privacy">Privacy</h2>
+  <div class="card">
+    <ul>
+      <li>Your details, CVs and letters are copied from radarak.online into the extension's storage <b>on your computer only</b>.</li>
+      <li>The extension has no server and sends nothing anywhere. It reads radarak.online only to copy your kit, and fills forms only when you click.</li>
+      <li>It never submits an application for you.</li>
+      <li>To remove everything: delete your kit in the Apply kit tab, or remove the extension.</li>
+    </ul>
+  </div>
+
+  <div lang="ar" dir="rtl">
+    <h2>بالعربي</h2>
+    <div class="card">
+      <p>Radarak Apply إضافة مجانية للمتصفح على الكمبيوتر. بتملى فورم التقديم من <a href="../#tab=kit">ملف التقديم</a> بتاعك: بياناتك، الـ CV الأنسب للوظيفة، وخطاب التقديم. انت تراجع وتدوس إرسال بنفسك.</p>
+      <p><b>التثبيت (Chrome / Edge / Brave / Opera):</b> نزّل الملف وفكّه، افتح صفحة الإضافات، شغّل Developer mode، ودوس Load unpacked واختار الفولدر. وبعدين افتح radarak.online مرة واحدة.</p>
+      <p>كل حاجة بتفضل على جهازك. الإضافة مش بتبعت أي بيانات لأي حد، ومش بتقدّم بالنيابة عنك.</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>
