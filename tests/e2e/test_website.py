@@ -1191,3 +1191,49 @@ def test_apply_kit_on_a_phone(browser, base, data, tmp_path):
     p.wait_for_selector("#kit:not([hidden]) .ksteps")
     assert p.evaluate("scrollY") < 5 and p.locator(".hero").is_hidden()
     ctx.close()
+
+
+# --------------------------------------------------------------------------- product flows
+def test_one_place_for_cvs_and_helpful_feedback(browser, base, data, tmp_path):
+    (tmp_path / "cv.txt").write_text(CV_DATA)
+    ctx = browser.new_context(viewport={"width": 1280, "height": 900}, timezone_id="UTC")
+    ctx.add_init_script("localStorage.setItem('jr_lang', JSON.stringify('en'));")
+    p = ctx.new_page()
+    errors = []
+    p.on("pageerror", lambda e: errors.append(str(e)))
+    p.goto(base + "/")
+    p.wait_for_selector("#jobList li.job", timeout=30000)
+    # Saved, empty: says what to do and has the button for it
+    p.locator("#tab-saved").click()
+    empty = p.locator("#savedEmpty")
+    assert "Nothing saved yet" in empty.inner_text()
+    empty.locator("[data-gotab=jobs]").click()
+    assert p.locator("#jobs").is_visible()
+    # first save explains where the job went
+    p.locator("#jobList li.job .save").first.click()
+    assert "Saved tab" in p.locator("#toast").inner_text()
+    # a CV read in the skills box goes into the Apply kit in one tap
+    with p.expect_file_chooser() as fc:
+        p.click("#cvBtn")
+    fc.value.set_files(str(tmp_path / "cv.txt"))
+    p.wait_for_selector("#cvToKit", timeout=15000)
+    p.click("#cvToKit")
+    p.wait_for_selector(".cvtokit [data-gokit]")
+    assert p.locator("#kitPick [data-kitcv]").count() == 1 and "Data Engineer CV" in p.inner_text("#kitPick")
+    p.locator(".cvtokit [data-gokit]").click()
+    assert p.locator("#kit .kcv").count() == 1
+    # coming back from the company's site: "Did you apply?"
+    job = next(j for j in data["jobs"] if j.get("c"))
+    p.goto(base + "/#job=" + job["id"])
+    p.wait_for_selector("#drawerBody a.apply")
+    p.locator("#drawerBody a.apply").evaluate("a => { a.target = ''; a.href = 'javascript:void 0'; }")
+    p.locator("#drawerBody a.apply").click()
+    p.evaluate("""() => { const now = Date.now(); Date.now = () => now + 60000; document.dispatchEvent(new Event('visibilitychange')); }""")
+    bar = p.locator("#askBar")
+    bar.wait_for(state="visible")
+    assert job["t"] in bar.inner_text()
+    bar.locator("[data-ask=yes]").click()
+    assert bar.is_hidden()
+    assert p.evaluate(f"JSON.parse(localStorage.getItem('jr_saved'))['{job['id']}'].a") is not None
+    assert not errors, errors
+    ctx.close()

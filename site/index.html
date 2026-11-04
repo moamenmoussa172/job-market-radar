@@ -145,7 +145,8 @@
           </div>
         </div>
         <input id="cvFile" type="file" accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" hidden>
-        <p class="privacy"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span data-i18n="cvPrivacy">Read on your device. Your CV is never uploaded or stored.</span></p>
+        <p class="privacy"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span data-i18n="cvPrivacy">Read on your device. Your CV is never uploaded.</span></p>
+        <div id="kitPick" class="kitpick" hidden></div>
         <div id="cvPasteBox" class="cvpaste" hidden>
           <label for="cvText" class="sr" data-i18n="cvPasteLabel">Your CV text</label>
           <textarea id="cvText" rows="6" data-i18n-placeholder="cvPastePh" placeholder="Paste the text of your CV here"></textarea>
@@ -277,6 +278,7 @@
     </main>
   </div>
 
+  <div class="askbar" id="askBar" role="dialog" aria-live="polite" hidden></div>
   <div class="drawer-scrim" id="drawerScrim" hidden></div>
   <aside class="drawer" id="jobDrawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle" hidden>
     <div class="drawer-bar">

@@ -41,6 +41,12 @@
       industry: "Industry", skill: "Must-have skill", arabic: "Arabic", any: "Any", arabicReq: "Required",
       arabicNot: "Not required", reset: "Clear all",
       tabKit: "Apply kit",
+      askApplied: (job, co) => `Did you apply to ${job}${co ? " at " + co : ""}?`, askYes: "Yes, mark as applied", askNo: "Not yet",
+      tipSaved: "Saved. Find it any time in the Saved tab.", tipApplied: "Marked as applied ✓ It's in Saved → Applied.",
+      savedEmptyTitle: "Nothing saved yet", savedBrowse: "Browse jobs",
+      cvToKit: "Save it to my Apply kit", cvToKitMore: "Add it to my Apply kit", cvToKitDone: "Saved in your Apply kit, on this device.",
+      cvToKitHint: "Keep this CV in your Apply kit: every job will show how well it fits, and you can attach it in one tap.",
+      kitPickLabel: "Your CVs:",
       kitTitle: "Your apply kit", kitStep1: "Your details", kitStep2: "Your CV", kitStep3: "Cover letter",
       kitProgress: (n) => `${n} of 3 steps done`, kitReady: "Your kit is ready. Open any job to see which CV fits it.",
       kitSeeJobs: "See jobs that fit", kitAddFirstCv: "+ Add your CV", kitEdit: "Edit",
@@ -76,7 +82,7 @@
       dAllThere: "Your best CV mentions every skill this job asks for. 👍", dNoSkills: "This job lists no skills we can compare.",
       dCopy: "Copy your answers", dCopyHint: "Tap to copy, then paste into the application form.", dLetter: "Cover letter",
       copied: "Copied", copy: "Copy", dEditKit: "Edit my apply kit", dSentWith: (n) => `Sent with: ${n}`,
-      tabJobsS: "Jobs", tabInsightsS: "Pay", tabTrendsS: "Trends", tabSavedS: "Saved", tabKitS: "Apply kit", tabAboutS: "About",
+      tabJobsS: "Jobs", tabInsightsS: "Skills", tabTrendsS: "Trends", tabSavedS: "Saved", tabKitS: "Apply kit", tabAboutS: "About",
       tabJobs: "Jobs", tabInsights: "Skills & pay", tabSaved: "Saved", tabAbout: "How it works", tabTrends: "Trends",
       weeklyReport: "Weekly report", reportCta: "Get this week's report card",
       weeklyTitle: "New jobs per week", risingTitle: "Skills on the rise", fallingTitle: "Skills cooling down",
@@ -100,7 +106,7 @@
       emptyJobs: "No jobs match all of these filters.", emptyFix: "Clear the extra filters",
       emptyCountry: "Few jobs are open to this country with these filters. Try \"any tech\" or turn off a quick filter.",
       savedHint: "Save jobs and tick the ones you applied to. Everything stays on this device, nothing is sent anywhere.",
-      savedEmpty: "No saved jobs yet. Tap Save on any job to keep it here.",
+      savedEmpty: "Tap Save on a job to keep it here, then tick it when you apply.",
       topSkills: "Skills these jobs ask for", topSkillsHint: "Share of jobs that mention each skill. Tap one to see only jobs that need it.",
       nextSkill: "The next skill to learn",
       nextHintOn: (s) => `Based on your skills (${s}). A job is a match when you have 60% or more of the skills it lists.`,
@@ -114,7 +120,7 @@
       listedOf: (a, b) => `${a} of ${b} tracked jobs are listed here.`,
       loadError: "The job list couldn't be loaded. Check your connection and refresh the page.",
       loadingMore: "loading more jobs…",
-      cvUpload: "Upload your CV", cvPaste: "or paste its text", cvPrivacy: "Read on your device. Your CV is never uploaded or stored.",
+      cvUpload: "Upload your CV", cvPaste: "or paste its text", cvPrivacy: "Read on your device. Your CV is never uploaded.",
       cvPasteLabel: "Your CV text", cvPastePh: "Paste the text of your CV here", cvRead: "Find my skills",
       cvReading: (f) => `Reading ${f}…`, cvTooBig: "That file is over 10 MB. Try a smaller PDF or Word file.",
       cvType: "Use a PDF, Word (.docx) or text file.", cvNoText: "No text could be read from this file. If it's a scanned PDF, paste your CV text instead.",
@@ -181,6 +187,12 @@
       industry: "المجال", skill: "مهارة لازم تكون مطلوبة", arabic: "العربي", any: "الكل", arabicReq: "مطلوب",
       arabicNot: "مش مطلوب", reset: "امسح الكل",
       tabKit: "ملف التقديم",
+      askApplied: (job, co) => `قدّمت على ${job}${co ? " في " + co : ""}؟`, askYes: "أيوه، علّمها إني قدّمت", askNo: "لسه",
+      tipSaved: "اتحفظت. هتلاقيها في المحفوظة في أي وقت.", tipApplied: "اتعلّمت إنك قدّمت ✓ هتلاقيها في المحفوظة ← قدّمت.",
+      savedEmptyTitle: "لسه مفيش حاجة محفوظة", savedBrowse: "شوف الوظايف",
+      cvToKit: "احفظه في ملف التقديم", cvToKitMore: "ضيفه لملف التقديم", cvToKitDone: "اتحفظ في ملف التقديم، على الجهاز ده.",
+      cvToKitHint: "احتفظ بالـ CV ده في ملف التقديم: كل وظيفة هتقولك هو مناسب قد إيه، وتقدر ترفقه بضغطة.",
+      kitPickLabel: "الـ CVs بتاعتك:",
       kitTitle: "ملف التقديم بتاعك", kitStep1: "بياناتك", kitStep2: "الـ CV", kitStep3: "خطاب التقديم",
       kitProgress: (n) => `${n} من 3 خطوات خلصت`, kitReady: "ملفك جاهز. افتح أي وظيفة وهتعرف أنهي CV الأنسب ليها.",
       kitSeeJobs: "شوف الوظايف المناسبة", kitAddFirstCv: "+ ضيف الـ CV بتاعك", kitEdit: "تعديل",
@@ -216,7 +228,7 @@
       dAllThere: "الـ CV الأنسب فيه كل المهارات اللي الوظيفة طالباها. 👍", dNoSkills: "الوظيفة دي مش مكتوب فيها مهارات نقدر نقارنها.",
       dCopy: "انسخ إجاباتك", dCopyHint: "دوس عشان تنسخ، وبعدين الصق في فورم التقديم.", dLetter: "خطاب التقديم",
       copied: "اتنسخ", copy: "انسخ", dEditKit: "عدّل ملف التقديم", dSentWith: (n) => `اتبعت بـ: ${n}`,
-      tabJobsS: "الوظايف", tabInsightsS: "المرتبات", tabTrendsS: "الترندات", tabSavedS: "المحفوظة", tabKitS: "التقديم", tabAboutS: "عن الموقع",
+      tabJobsS: "الوظايف", tabInsightsS: "المهارات", tabTrendsS: "الترندات", tabSavedS: "المحفوظة", tabKitS: "التقديم", tabAboutS: "عن الموقع",
       tabJobs: "الوظايف", tabInsights: "المهارات والمرتبات", tabSaved: "المحفوظة", tabAbout: "إزاي بيشتغل", tabTrends: "الترندات",
       weeklyReport: "التقرير الأسبوعي", reportCta: "خد كارت تقرير الأسبوع ده",
       weeklyTitle: "الوظايف الجديدة كل أسبوع", risingTitle: "مهارات طالعة", fallingTitle: "مهارات بتهدى",
@@ -254,7 +266,7 @@
       listedOf: (a, b) => `${a} من ${b} وظيفة بنتابعها معروضة هنا.`,
       loadError: "مقدرناش نحمّل الوظايف. اتأكد من النت واعمل تحديث للصفحة.",
       loadingMore: "بنحمّل باقي الوظايف…",
-      cvUpload: "ارفع الـ CV بتاعك", cvPaste: "أو الصق النص", cvPrivacy: "بيتقري على جهازك. الـ CV مش بيترفع ولا بيتحفظ في أي مكان.",
+      cvUpload: "ارفع الـ CV بتاعك", cvPaste: "أو الصق النص", cvPrivacy: "بيتقري على جهازك. الـ CV مش بيترفع خالص.",
       cvPasteLabel: "نص الـ CV", cvPastePh: "الصق نص الـ CV هنا", cvRead: "طلّع مهاراتي",
       cvReading: (f) => `بنقرا ${f}…`, cvTooBig: "الملف أكبر من 10 ميجا. جرّب PDF أو Word أصغر.",
       cvType: "استخدم ملف PDF أو Word (.docx) أو نص.", cvNoText: "مقدرناش نقرا نص من الملف ده. لو PDF متصوّر، الصق نص الـ CV بدل كده.",
@@ -676,7 +688,10 @@
         <div class="jside"><button type="button" class="linkbtn" data-unsave="${esc(id)}">${t("removeSaved")}</button></div>${status}</li>`;
     }).join("");
     $("savedEmpty").hidden = list.length > 0;
-    $("savedEmpty").textContent = keep.length ? t("savedNone") : t("savedEmpty");
+    $("savedEmpty").innerHTML = keep.length ? esc(t("savedNone")) : `<div class="emptystate"><span class="eicon" aria-hidden="true">🔖</span>
+      <p><b>${esc(t("savedEmptyTitle"))}</b><br>${esc(t("savedEmpty"))}</p>
+      <div class="erow"><button type="button" class="primary" data-gotab="jobs">${esc(t("savedBrowse"))}</button>
+      ${kit.cvs.length ? "" : `<button type="button" class="chipbtn" data-gotab="kit">${esc(t("dKitBtn"))}</button>`}</div></div>`;
   }
   function toggleSaved(id) {
     const j = jobs.find((x) => x.id === id);
@@ -1127,6 +1142,8 @@
 
   function cvStatus(msg, err) { const el = $("cvStatus"); el.textContent = msg || ""; el.classList.toggle("err", !!err); }
 
+  let lastCv = null;
+  const pastedCv = (text) => new File([text], "my-cv.txt", { type: "text/plain" });          // the CV just read in the skills box, so it can go into the Apply kit in one tap
   function useCvText(text) {
     if (!text || text.trim().length < 80) { cvStatus(t("cvNoText"), true); return; }
     const skills = findSkills(text);
@@ -1161,11 +1178,19 @@
         <div class="chips">${gaps.map((s) => `<button type="button" class="chip add" data-add="${esc(s)}">+ ${esc(s)}</button>`).join("")}</div></div>` : ""}
       <button type="button" class="linkbtn learnjump" id="learnJump">${t("learnTitle")} ↓</button>
       <div class="actions">
-        ${role ? `<button type="button" class="cvbtn" id="cvRoleBtn">${esc(t("cvShowRole")(role))}</button>` : ""}
-        <button type="button" class="primary sharecard" data-sharecard>📸 ${t("shareCard")}</button>
-        <button type="button" class="ghostbtn" id="cvBestBtn">${t("cvShowBest")}</button>
+        <button type="button" class="primary" id="cvBestBtn">${t("cvShowBest")} →</button>
+        ${role ? `<button type="button" class="chipbtn" id="cvRoleBtn">${esc(t("cvShowRole")(role))}</button>` : ""}
+        <button type="button" class="chipbtn sharecard" data-sharecard>📸 ${t("shareCard")}</button>
         <button type="button" class="linkbtn" id="cvClearBtn">${t("cvClear")}</button>
-      </div>`;
+      </div>
+      ${lastCv && !kit.cvs.some((c) => c.fileName === lastCv.name) && kit.cvs.length < KIT_MAX_CVS
+        ? `<div class="cvtokit"><p>⚡ ${esc(t("cvToKitHint"))}</p><button type="button" class="chipbtn" id="cvToKit">${esc(kit.cvs.length ? t("cvToKitMore") : t("cvToKit"))}</button></div>` : ""}`;
+    if ($("cvToKit")) $("cvToKit").addEventListener("click", async (e) => {
+      const b = e.currentTarget; b.disabled = true;
+      await addKitCv(lastCv);
+      b.closest(".cvtokit").innerHTML = `<p>✓ ${esc(t("cvToKitDone"))} <button type="button" class="linkbtn" data-gokit>${esc(t("dEditKit"))} →</button></p>`;
+      track("cv-to-kit");
+    });
     if (role) $("cvRoleBtn").addEventListener("click", () => { track("cv-show-role"); $("role").value = "role:" + role; update(); goToJobs(); });
     $("cvBestBtn").addEventListener("click", goToJobs);
     $("learnJump").addEventListener("click", () => $("learnNext").scrollIntoView({ behavior: "smooth", block: "center" }));
@@ -1184,6 +1209,7 @@
     try {
       const text = kind === "txt" ? await file.text()
         : kind === "pdf" ? await pdfText(await file.arrayBuffer()) : await docxText(await file.arrayBuffer());
+      lastCv = file;
       useCvText(text);
     } catch {
       cvStatus(t("cvFail"), true);
@@ -1224,6 +1250,7 @@
   let extPush = 0;
   const saveKit = () => {
     store.set("kit", kit);
+    renderKitPick();
     if (extOn()) { clearTimeout(extPush); extPush = setTimeout(kitForExtension, 400); }
   };
   const kitHasData = () => kit.cvs.length > 0 || Object.values(kit.profile).some((v) => String(v || "").trim());
@@ -1368,6 +1395,14 @@
           <button type="button" class="linkbtn danger" id="kitWipe">${esc(t("kitWipe"))}</button></div></section>`;
     kitMsg = ""; kitJustAdded = null;
   }
+  // the skills box offers the CVs already in the Apply kit: one CV, one place
+  function renderKitPick() {
+    const el = $("kitPick");
+    if (!el) return;
+    el.hidden = !kit.cvs.length;
+    el.innerHTML = kit.cvs.length ? `<span>${esc(t("kitPickLabel"))}</span>${kit.cvs.map((cv) =>
+      `<button type="button" class="chip" data-kitcv="${esc(cv.id)}">📄 ${esc(cv.name)}</button>`).join("")}` : "";
+  }
   function refreshKitSteps() {        // update the 1-2-3 progress while typing, without redrawing the form
     const steps = kitSteps();
     document.querySelectorAll(".ksteps li").forEach((li, i) => {
@@ -1468,7 +1503,7 @@
       }
     } else if (b.dataset.cvdl) downloadCv(b.dataset.cvdl);
     else if (b.dataset.cvuse) {
-      cvFiles.get(b.dataset.cvuse).then((rec) => { if (rec && rec.text) { useCvText(rec.text); track("kit-cv-use"); goToJobs(); } });
+      cvFiles.get(b.dataset.cvuse).then((rec) => { if (rec && rec.text) { lastCv = null; useCvText(rec.text); track("kit-cv-use"); goToJobs(); } });
     }
   }
 
@@ -1848,6 +1883,7 @@
   }
   function bind() {
     bindKit();
+    renderKitPick();
     FIELDS.forEach((f) => $(f).addEventListener(f === "q" ? "input" : "change", () => update()));
     document.querySelectorAll(".toggle").forEach((b) => b.addEventListener("click", () => {
       quick[b.dataset.flag] = !quick[b.dataset.flag]; syncToggles(); update();
@@ -1899,7 +1935,14 @@
       const box = $("cvPasteBox"); box.hidden = !box.hidden; $("cvPasteBtn").setAttribute("aria-expanded", String(!box.hidden));
       if (!box.hidden) $("cvText").focus();
     });
-    $("cvRead").addEventListener("click", () => useCvText($("cvText").value));
+    $("cvRead").addEventListener("click", () => { lastCv = pastedCv($("cvText").value); useCvText($("cvText").value); });
+    document.addEventListener("click", (e) => {
+      if (e.target.closest("[data-gokit]")) { selectTab("kit"); window.scrollTo(0, 0); }
+      const gt = e.target.closest("[data-gotab]");
+      if (gt) { selectTab(gt.dataset.gotab); window.scrollTo(0, 0); }
+      const k = e.target.closest("[data-kitcv]");
+      if (k) cvFiles.get(k.dataset.kitcv).then((rec) => { if (rec && rec.text) { lastCv = null; useCvText(rec.text); track("kit-cv-use"); } });
+    });
     // drop a CV file anywhere on the skills box
     const box = document.querySelector(".skillsbox");
     box.addEventListener("dragover", (e) => { e.preventDefault(); });
@@ -1909,7 +1952,7 @@
     document.addEventListener("click", (e) => {
       const x = e.target.closest("[data-applied],[data-unsave],[data-saved-view],[data-learn-see],[data-share],#newToggle");
       if (x) {
-        if (x.dataset.applied) { toggleApplied(x.dataset.applied); renderJobs(); renderSaved(); refreshDrawer(); }
+        if (x.dataset.applied) { toggleApplied(x.dataset.applied); if (savedJobs[x.dataset.applied] && savedJobs[x.dataset.applied].a) toast(t("tipApplied")); renderJobs(); renderSaved(); refreshDrawer(); }
         else if (x.dataset.unsave) { delete savedJobs[x.dataset.unsave]; store.set("saved", savedJobs); renderSaved(); }
         else if (x.dataset.savedView) { savedView = x.dataset.savedView; renderSaved(); }
         else if (x.dataset.learnSee) { $("skill").value = x.dataset.learnSee; update(); goToJobs(); track("learn-see"); }
@@ -1924,6 +1967,7 @@
       else if (el.dataset.id) {
         const id = el.dataset.id;
         toggleSaved(id);
+        if (savedJobs[id] && !store.get("tipSaved", false)) { toast(t("tipSaved")); store.set("tipSaved", true); }   // first save: where it went
         el.setAttribute("aria-pressed", String(!!savedJobs[id]));
         el.querySelector("span").textContent = savedJobs[id] ? t("saved") : t("save");
         if (el.closest(".drawer")) { renderJobs(); refreshDrawer(); }
@@ -1948,7 +1992,11 @@
       if (o) { e.preventDefault(); openJob(o.dataset.open, o); return; }
       // which kinds of jobs people apply to (the track only, nothing about the visitor)
       const go = e.target.closest(".drawer .apply, .dlocs a, .locs a");
-      if (go) { const j = jobs.find((x) => x.id === currentJob); track("job-open/" + (j ? j.tr : "unknown")); }
+      if (go) {
+        const j = jobs.find((x) => x.id === currentJob);
+        track("job-open/" + (j ? j.tr : "unknown"));
+        if (j && go.classList.contains("apply") && !(savedJobs[j.id] && savedJobs[j.id].a)) wentToApply = { id: j.id, at: Date.now() };
+      }
     });
     $("drawerClose").addEventListener("click", () => closeJob());
     $("drawerScrim").addEventListener("click", () => closeJob());
@@ -1997,6 +2045,28 @@
   }
 
   let toastTimer = null;
+  // back from the company's site after "Apply": ask once whether to mark the job as applied
+  let wentToApply = null;
+  function askApplied() {
+    if (!wentToApply || document.hidden) return;
+    const { id, at } = wentToApply;
+    wentToApply = null;
+    if (Date.now() - at < 4000 || Date.now() - at > 6 * 3600e3) return;          // a quick tab flick isn't an application
+    const j = jobs.find((x) => x.id === id);
+    if (!j || (savedJobs[id] && savedJobs[id].a)) return;
+    const bar = $("askBar");
+    bar.innerHTML = `<p>${esc(t("askApplied")(j.t, j.c || ""))}</p>
+      <div><button type="button" class="primary" data-ask="yes">${esc(t("askYes"))}</button>
+      <button type="button" class="chipbtn" data-ask="no">${esc(t("askNo"))}</button></div>`;
+    bar.hidden = false;
+    bar.onclick = (e) => {
+      const b = e.target.closest("[data-ask]");
+      if (!b) return;
+      if (b.dataset.ask === "yes") { toggleApplied(id); renderJobs(); renderSaved(); refreshDrawer(); toast(t("tipApplied")); track("ask-applied-yes"); }
+      bar.hidden = true;
+    };
+  }
+  document.addEventListener("visibilitychange", askApplied);
   function toast(msg) {
     const el = $("toast"); el.textContent = msg; el.hidden = false;
     clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.hidden = true; }, 3500);

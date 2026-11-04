@@ -1033,3 +1033,32 @@ body[data-tab="saved"] .hero, body[data-tab="kit"] .hero, body[data-tab="about"]
   .kcvicon { display: none; }
   .kcv { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* ---------------------------------------------------------------- product pass: clarity and feedback */
+/* one place for CVs: the Apply kit's CVs right in the skills box */
+.kitpick { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0 0; font-size: 13px; color: var(--ink-2); }
+.kitpick .chip { font-size: 13px; }
+.cvtokit { margin-top: 12px; padding: 12px 14px; border-radius: var(--r-m); background: var(--violet-soft); display: grid; gap: 8px; }
+.cvtokit p { margin: 0; font-size: 14px; color: var(--ink-2); line-height: 1.5; }
+.cvtokit .chipbtn { justify-self: start; }
+/* empty Saved view: say what to do, and give the button to do it */
+.emptystate { display: grid; justify-items: center; text-align: center; gap: 10px; padding: 34px 16px; }
+.emptystate .eicon { font-size: 34px; }
+.emptystate p { margin: 0; color: var(--ink-2); line-height: 1.6; }
+.emptystate .erow { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+/* sharing is secondary to applying: quieter buttons */
+.dshare .wabtn { background: transparent; color: var(--ink); border: 1px solid var(--line-strong); padding: 10px 14px; }
+.dshare .wabtn:hover { background: var(--paper); }
+.dshare .wabtn svg .wafill, .dshare .wabtn svg path { fill: #1FA855; }
+/* rows that scroll sideways show that there's more */
+@media (max-width: 720px) {
+  .trackpills { -webkit-mask-image: linear-gradient(to right, #000 85%, transparent); mask-image: linear-gradient(to right, #000 85%, transparent); }
+  [dir="rtl"] .trackpills { -webkit-mask-image: linear-gradient(to left, #000 85%, transparent); mask-image: linear-gradient(to left, #000 85%, transparent); }
+}
+/* "Did you apply?" when you come back from the company's site */
+.askbar { position: fixed; z-index: 80; inset-inline: 12px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); max-width: 520px; margin-inline: auto;
+  background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: var(--r-l); padding: 14px 16px;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, .18); display: grid; gap: 10px; }
+.askbar p { margin: 0; font-weight: 600; line-height: 1.4; }
+.askbar div { display: flex; flex-wrap: wrap; gap: 8px; }
+@media (max-width: 720px) { .askbar { bottom: calc(72px + env(safe-area-inset-bottom, 0px)); } }
