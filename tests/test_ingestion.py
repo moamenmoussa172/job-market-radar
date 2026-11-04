@@ -125,14 +125,15 @@ def test_all_sources_registered():
     assert set(sources.SOURCES) == {"remotive", "jobicy", "himalayas", "arbeitnow", "greenhouse", "lever",
                                     "ashby", "jsearch", "jooble", "smartrecruiters", "workable",
                                     "recruitee", "personio", "adzuna", "bundesagentur", "workday", "successfactors",
-                                    "breezy", "teamtailor", "remoteok", "phenom", "oracle", "bamboohr", "pinpoint"}
+                                    "breezy", "teamtailor", "remoteok", "phenom", "oracle", "bamboohr", "pinpoint",
+                                    "francetravail"}
 
 
 def test_optional_sources():
     assert {s for s, spec in sources.SOURCES.items() if not spec.required} == {
         "remotive", "jsearch", "jooble", "smartrecruiters", "workable", "recruitee", "personio", "adzuna",
         "bundesagentur", "workday", "successfactors", "breezy", "teamtailor", "remoteok", "phenom", "oracle",
-        "bamboohr", "pinpoint"}
+        "bamboohr", "pinpoint", "francetravail"}
 
 
 def test_daily_slice_rotates_through_every_pair():
@@ -897,3 +898,57 @@ def test_turkish_boards_match_istanbul_with_a_capital_dotted_i():
 def test_turkey_is_searched_with_egypt_and_the_gulf():
     from jobradar import sources
     assert ("tr", "Turkey") in sources.SEARCH_COUNTRIES and ("tr", "Turkey") not in sources.EXTRA_SEARCH_COUNTRIES
+
+
+# ------------------------------------------------------------------ France Travail
+class _FTResp:
+    def __init__(self, status, body=None):
+        self.status_code, self._body = status, body
+
+    def json(self):
+        return self._body
+
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            raise requests.HTTPError(response=self)
+
+
+def _ft_job(i, title="Développeur Python H/F", rome="M1805"):
+    return {"id": f"20{i:05d}", "intitule": title, "romeCode": rome, "description": "Python, SQL"}
+
+
+def test_france_travail_token_then_pages_by_rome_code(monkeypatch):
+    monkeypatch.setenv("FRANCE_TRAVAIL_CLIENT_ID", "cid")
+    monkeypatch.setenv("FRANCE_TRAVAIL_CLIENT_SECRET", "sec")
+    posted, got = [], []
+
+    def fake_post(url, params=None, data=None, timeout=None):
+        posted.append((url, params, data))
+        return _FTResp(200, {"access_token": "tok", "expires_in": 1499})
+
+    def fake_get(url, headers=None, params=None, timeout=None):
+        got.append((params["codeROME"], params["range"], headers["Authorization"]))
+        if params["codeROME"] == "M1805":
+            start = int(params["range"].split("-")[0])
+            if start == 0:   # a full page: 206 Partial Content, more to come
+                return _FTResp(206, {"resultats": [_ft_job(i) for i in range(150)]})
+            return _FTResp(200, {"resultats": [_ft_job(150), _ft_job(151, "Vendeur en boulangerie", "D1102")]})
+        return _FTResp(204)
+    monkeypatch.setattr(sources.requests, "post", fake_post)
+    monkeypatch.setattr(sources.requests, "get", fake_get)
+    res = sources.extract_francetravail(codes=["M1805", "M1810"], pages=3, pause_seconds=0)
+    assert posted[0][1] == {"realm": "/partenaire"} and posted[0][2]["scope"] == sources.FT_SCOPE
+    assert posted[0][2]["grant_type"] == "client_credentials"
+    assert got == [("M1805", "0-149", "Bearer tok"), ("M1805", "150-299", "Bearer tok"), ("M1810", "0-149", "Bearer tok")]
+    assert len(res.records) == 151                    # the bakery job (not IT, not a tech title) is dropped
+    assert {sources.francetravail_id(r) for r in res.records} >= {"2000000", "2000150"}
+
+
+def test_france_travail_without_keys_or_with_bad_keys(monkeypatch):
+    monkeypatch.delenv("FRANCE_TRAVAIL_CLIENT_ID", raising=False)
+    assert sources.extract_francetravail().warnings[0].startswith("FRANCE_TRAVAIL_CLIENT_ID")
+    monkeypatch.setenv("FRANCE_TRAVAIL_CLIENT_ID", "cid")
+    monkeypatch.setenv("FRANCE_TRAVAIL_CLIENT_SECRET", "bad")
+    monkeypatch.setattr(sources.requests, "post", lambda *a, **k: _FTResp(401, {"error": "invalid_client"}))
+    res = sources.extract_francetravail()
+    assert res.records == [] and "token failed" in res.warnings[0]

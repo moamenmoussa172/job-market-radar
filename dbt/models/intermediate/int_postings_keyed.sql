@@ -62,6 +62,7 @@ keyed as (
             when 'jooble'     then 6   -- snippet only
             when 'adzuna'     then 6   -- snippet only
             when 'bundesagentur' then 7  -- no description at all
+            when 'francetravail' then 4  -- full description (French), employer sometimes hidden
             else 5
         end as source_priority
     from p

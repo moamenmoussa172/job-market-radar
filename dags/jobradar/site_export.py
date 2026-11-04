@@ -36,7 +36,7 @@ SITE_DIR = Path(os.environ.get("SITE_DIR") or Path(__file__).resolve().parents[2
 GITHUB_API = "https://api.github.com"
 SOURCE_CREDITS = {
     "adzuna": "Jobs by Adzuna", "jooble": "via Jooble", "jsearch": "via Google for Jobs (JSearch)",
-    "jobicy": "via Jobicy", "arbeitnow": "via Arbeitnow", "bundesagentur": "via Bundesagentur für Arbeit",
+    "jobicy": "via Jobicy", "arbeitnow": "via Arbeitnow", "bundesagentur": "via Bundesagentur für Arbeit", "francetravail": "via France Travail",
     "remoteok": "via Remote OK",
 }
 # Sources whose terms ask for a normal (followed) link back: their job links drop rel="nofollow".

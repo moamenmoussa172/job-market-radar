@@ -2,10 +2,10 @@
 -- Order of the WHEN branches matters: the first match wins.
 -- role_family -> track mapping lives in seeds/role_tracks.csv (joined in int_postings_tracked).
 -- cls_title: the title with Turkish job words in English (macros/title_en.sql), only for the rules below.
--- Only titles that look Turkish go through the (slower) translation; English titles stay as they are.
+-- Only titles that look Turkish (or French) go through the (slower) translation; English titles stay as they are.
 with p as (
     select u.*,
-           case when u.job_title ~ '[çğışöüÇĞİŞÖÜ]' or u.job_title ~* '\m(veri|yazilim|staj\w*|uzman\w*|mobil|muhendis\w*|kidemli|sistem|proje)\M'
+           case when u.job_title ~ '[çğışöüÇĞİŞÖÜ]' or u.job_title ~* '\m(veri|yazilim|staj\w*|uzman\w*|mobil|muhendis\w*|kidemli|sistem|proje|ing[ée]nieur\w*|d[ée]veloppeu\w*|analyste|chef|administrat\w*|technicien\w*)\M'
                 then {{ title_en('u.job_title') }} else u.job_title end as cls_title
     from {{ ref('int_postings_unioned') }} u
 ),

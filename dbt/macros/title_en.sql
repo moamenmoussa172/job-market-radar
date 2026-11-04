@@ -1,11 +1,21 @@
 {#
   A copy of the job title with common Turkish job words replaced by English ones, used ONLY to classify
   the job (role, seniority). The title people see is never changed.
-  "Kıdemli Yazılım Geliştirme Uzmanı" -> "senior software developer specialist".
+  "Kıdemli Yazılım Geliştirme Uzmanı" -> "senior software developer specialist"; also common French titles
+  from France Travail ("Ingénieur Data" -> "data engineer", "Développeur" -> "developer").
   Character classes cover dotted/dotless i and upper case (İ, I, ı), so "YAZILIM" and "Yazılım" both match.
 #}
 {% macro title_en(col) -%}
 {%- set rules = [
+    ("ing[ée]nieur(e)?\\s+(big\\s+)?data|ing[ée]nieur(e)?\\s+donn[ée]es", "data engineer"),
+    ("analyste\\s+(de\\s+)?donn[ée]es|data\\s+analyste", "data analyst"),
+    ("d[ée]veloppeu(r|se)\\s+full[\\s-]?stack", "full stack developer"),
+    ("d[ée]veloppeu(r|se)", "developer"),
+    ("ing[ée]nieur(e)?\\s+(logiciel|d[ée]veloppement)", "software engineer"),
+    ("ing[ée]nieur(e)?", "engineer"),
+    ("chef(fe)?\\s+de\\s+projets?", "project manager"),
+    ("administrat(eur|rice)\\s+syst[èe]mes?(\\s+et\\s+r[ée]seaux?)?", "system administrator"),
+    ("technicien(ne)?\\s+(support|helpdesk|informatique)", "it support technician"),
     ("mobil\\s+(uygulama\\s+)?geli[sşŞ]tir\\w*", "mobile developer"),
     ("yaz[ıiIİ]l[ıiIİ]m\\s+m[uüÜ]hendis\\w*", "software engineer"),
     ("yaz[ıiIİ]l[ıiIİ]m\\s+geli[sşŞ]tir\\w*(\\s+uzman\\w*)?", "software developer"),
@@ -34,6 +44,7 @@
     ("uzman\\s+yard[ıiIİ]mc[ıiIİ]s[ıiIİ]", "junior"),
     ("uzman\\w*", "specialist"),
     ("y[oöÖ]netici\\w*", "manager"),
+    ("informatiques?", "it"),
 ] -%}
 {#- lower case first (and drop the combining dot "İ" can leave), so "MÜHENDİSİ" reads like "mühendisi" -#}
 {%- set ns = namespace(expr="replace(lower(" ~ col ~ "), U&'\\0307', '')") -%}

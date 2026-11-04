@@ -93,6 +93,17 @@ smartrecruiters,Talabat
 smartrecruiters,Ubisoft2
 smartrecruiters,IKEA
 # Workday: multinationals with offices in Egypt and the Gulf (+ Europe)
+# big engineering employers in Egypt (Nov 2026). Valeo's address came from a real application; the others
+# follow each company's usual Workday address and are confirmed (or dropped) by the daily board check
+workday,valeo.wd3/valeo_jobs,Valeo
+workday,dell.wd1/External,Dell Technologies
+workday,analogdevices.wd1/External,Analog Devices
+workday,marvell.wd1/MarvellCareers,Marvell
+workday,cadence.wd1/External_Careers,Cadence
+workday,amat.wd1/External,Applied Materials
+workday,nxp.wd3/careers,NXP Semiconductors
+workday,pwc.wd3/Global_Experienced_Careers,PwC
+workday,expedia.wd5/search,Expedia Group
 workday,nvidia.wd5/NVIDIAExternalCareerSite,NVIDIA
 workday,salesforce.wd12/External_Career_Site,Salesforce
 workday,mastercard.wd1/CorporateCareers,Mastercard

@@ -1445,6 +1445,70 @@ def bundesagentur_id(record: dict) -> str:
     return str(record["refnr"])
 
 
+# France Travail (France's public employment service, formerly Pôle emploi): official "Offres d'emploi v2"
+# API, free with an account on francetravail.io (client id + secret in .env). OAuth2 client-credentials
+# token, then searches by ROME job code: M18xx is "Informatique et télécommunications". Up to 150 jobs per
+# request; recent jobs only (rotating source, see dbt). Shown as "via France Travail".
+FT_TOKEN_URL = "https://entreprise.francetravail.fr/connexion/oauth2/access_token"
+FT_SEARCH_URL = "https://api.francetravail.io/partenaire/offresdemploi/v2/offres/search"
+FT_SCOPE = "api_offresdemploiv2 o2dsoffre"
+FT_ROME_CODES = ["M1805", "M1806", "M1810", "M1801", "M1802", "M1804", "M1803"]   # dev first, then the rest of IT
+FT_PAGE = 150
+FT_PAGES = int(os.environ.get("FRANCE_TRAVAIL_PAGES_PER_CODE", "3"))
+FT_DAYS = os.environ.get("FRANCE_TRAVAIL_PUBLISHED_DAYS", "3")      # the API accepts 1, 3, 7, 14 or 31
+
+
+def france_travail_token(client_id: str, client_secret: str) -> str:
+    resp = requests.post(FT_TOKEN_URL, params={"realm": "/partenaire"}, timeout=30, data={
+        "grant_type": "client_credentials", "client_id": client_id, "client_secret": client_secret, "scope": FT_SCOPE})
+    resp.raise_for_status()
+    return resp.json()["access_token"]
+
+
+def extract_francetravail(codes: list | None = None, pages: int | None = None,
+                          pause_seconds: float = 0.25) -> ExtractResult:
+    cid = os.environ.get("FRANCE_TRAVAIL_CLIENT_ID", "").strip()
+    secret = os.environ.get("FRANCE_TRAVAIL_CLIENT_SECRET", "").strip()
+    if not cid or not secret:
+        return ExtractResult("francetravail", [], ["FRANCE_TRAVAIL_CLIENT_ID / _SECRET not set - source skipped"])
+    try:
+        token = france_travail_token(cid, secret)
+    except (requests.RequestException, KeyError, ValueError) as exc:
+        return ExtractResult("francetravail", [], [f"france travail token failed: {type(exc).__name__} {exc}"[:300]])
+    keep: dict[str, dict] = {}
+    warnings: list[str] = []
+    for code in codes if codes is not None else FT_ROME_CODES:
+        for page in range(pages or FT_PAGES):
+            start = page * FT_PAGE
+            try:
+                resp = requests.get(FT_SEARCH_URL, timeout=60, headers={"Authorization": f"Bearer {token}", "Accept": "application/json"},
+                                    params={"codeROME": code, "publieeDepuis": FT_DAYS, "sort": 1, "range": f"{start}-{start + FT_PAGE - 1}"})
+            except requests.RequestException as exc:
+                warnings.append(f"france travail {code} {start} failed: {type(exc).__name__}")
+                break
+            if resp.status_code == 204:                 # nothing (more) for this code
+                break
+            if resp.status_code not in (200, 206):
+                warnings.append(f"france travail {code} {start} failed: HTTP {resp.status_code}")
+                if resp.status_code in (401, 403, 429):
+                    return ExtractResult("francetravail", list(keep.values()), warnings)
+                break
+            items = (resp.json() or {}).get("resultats") or []
+            for job in items:
+                title = job.get("intitule")
+                if job.get("id") and (is_tech_role(title) or str(job.get("romeCode") or "").startswith("M18")):
+                    keep[str(job["id"])] = {**job, "search_code": code}
+            if resp.status_code == 200 or len(items) < FT_PAGE:     # 200 = this was the last page
+                break
+            time.sleep(pause_seconds)
+    log.info("francetravail: %s tech jobs", len(keep))
+    return ExtractResult("francetravail", list(keep.values()), warnings)
+
+
+def francetravail_id(record: dict) -> str:
+    return str(record["id"])
+
+
 # Remote OK: public feed of the newest ~100 remote jobs (no search, no paging). Terms (the
 # "legal" field of the feed): link back to the job's Remote OK page with a normal followed link
 # (no nofollow) and name Remote OK as the source; don't use their logo. The site does both
@@ -1502,4 +1566,5 @@ SOURCES: dict[str, SourceSpec] = {
     "jooble": SourceSpec(extract_jooble, jooble_id, required=False),
     "adzuna": SourceSpec(extract_adzuna, adzuna_id, required=False),
     "bundesagentur": SourceSpec(extract_bundesagentur, bundesagentur_id, required=False),
+    "francetravail": SourceSpec(extract_francetravail, francetravail_id, required=False),
 }

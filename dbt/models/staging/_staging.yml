@@ -54,3 +54,5 @@ models:
     columns: *stg_cols
   - name: stg_bundesagentur
     columns: *stg_cols
+  - name: stg_francetravail
+    columns: *stg_cols
