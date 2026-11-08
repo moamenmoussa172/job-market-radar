@@ -79,6 +79,8 @@ def job_radar_ingest():
         """Export today's jobs + stats and push the public website to GitHub Pages."""
         conn = PostgresHook(postgres_conn_id=WAREHOUSE_CONN_ID).get_conn()
         try:
+            from jobradar import closed_reports
+            log.info("closed-job reports: %s", closed_reports.sync(conn))     # visitors' "this job is closed"
             return site_export.publish_from_env(conn)
         except Exception as exc:  # noqa: BLE001 - the website never fails the data run
             log.warning("website not published: %s", exc)

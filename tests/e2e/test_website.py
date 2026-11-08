@@ -398,10 +398,29 @@ def test_report_closed_hides_job(page, data):
     row.locator("h3 a").click()
     p.wait_for_selector("#jobDrawer:not([hidden])")
     p.click("#reportJob")
+    p.click("#repCancel")                                   # cancel puts the button back
+    p.click("#reportJob")
+    p.click("#repGone")
     p.wait_for_timeout(300)
     assert p.locator("#toast").is_visible()
     assert p.locator(f"#jobList > li.job[data-jid='{jid}']").count() == 0
     assert pg.count() <= before
+    no_errors(pg)
+
+
+def test_report_region_block_keeps_job(page, data):
+    pg = page()
+    p = pg.open()
+    row = p.locator("#jobList > li.job").first
+    jid = row.get_attribute("data-jid")
+    row.locator("h3 a").click()
+    p.wait_for_selector("#jobDrawer:not([hidden])")
+    p.click("#reportJob")
+    p.click("#repRegion")
+    assert p.locator("#reportBox .adznote").is_visible()     # explains, offers the company site
+    assert not p.locator("#jobDrawer").is_hidden()
+    p.keyboard.press("Escape")
+    assert p.locator(f"#jobList > li.job[data-jid='{jid}']").count() == 1
     no_errors(pg)
 
 

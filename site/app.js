@@ -133,7 +133,9 @@
       cvShowRole: (r) => `Show ${r} jobs`, showNat: "Showing nationals-only", cvShowBest: "Show my best matches", cvClear: "Forget my CV skills",
       browseJobs: "Jobs by country", browseJobsAll: "Browse tech jobs by country and role",
       navCompanies: "Companies", navJuniors: "Juniors", navSalaries: "Salaries", feedback: "Send feedback",
-      reportClosed: "Job closed or wrong? Tell us", reported: "Thanks! We hid this job for you and will check it.",
+      reportClosed: "Can't apply? Tell us", reported: "Thanks! We hid this job, and it's removed for everyone on the next update.",
+      repAsk: "What does the job page say?", repGone: "Removed, expired or filled", repRegion: "“Not available in your region”",
+      repCancel: "Cancel", repRegionNote: "That's the job board blocking visitors from other countries, not a closed job. Look for the same job on the company's own site:",
       nlTitle: "Radarak Weekly", nlText: "Every Sunday: the week's new tech jobs in Egypt, the Gulf and remote, in one short email.",
       nlEmail: "Your email", nlEmailPh: "you@example.com", nlBtn: "Subscribe", nlThanks: "Check your inbox to confirm.",
       tgPlace: (p) => `New ${p} jobs every morning on Telegram`, tgJoin: "Join on Telegram", tgAny: "New tech jobs every morning on Telegram", tgFoot: "New jobs every day on Telegram:", hideTip: "Hide",
@@ -279,7 +281,9 @@
       cvShowRole: (r) => `اعرض وظايف ${r}`, showNat: "بيعرض وظايف المواطنين فقط", cvShowBest: "اعرض أنسب وظايف ليا", cvClear: "امسح مهارات الـ CV",
       browseJobs: "الوظايف حسب البلد", browseJobsAll: "تصفّح وظايف التك حسب البلد والوظيفة",
       navCompanies: "الشركات", navJuniors: "الجونيور", navSalaries: "المرتبات", feedback: "ابعتلنا رأيك",
-      reportClosed: "الوظيفة اتقفلت أو فيها غلط؟ قولنا", reported: "شكرًا! خبّينا الوظيفة دي عندك وهنراجعها.",
+      reportClosed: "مش عارف تقدّم؟ قولنا", reported: "شكرًا! خبّينا الوظيفة، وهتتشال عند الكل في التحديث الجاي.",
+      repAsk: "صفحة الوظيفة مكتوب فيها إيه؟", repGone: "اتشالت، انتهت أو اتملت", repRegion: "“Not available in your region”",
+      repCancel: "إلغاء", repRegionNote: "ده موقع الوظايف بيمنع الزوار من بلاد تانية، الوظيفة نفسها لسه مفتوحة. دوّر عليها في موقع الشركة نفسها:",
       nlTitle: "نشرة رادارك الأسبوعية", nlText: "كل يوم حد: وظايف التك الجديدة في مصر والخليج والريموت، في إيميل واحد قصير.",
       nlEmail: "الإيميل بتاعك", nlEmailPh: "you@example.com", nlBtn: "اشترك", nlThanks: "شوف الإيميل بتاعك عشان تأكد الاشتراك.",
       tgPlace: (p) => `وظايف ${p} الجديدة كل صبح على تيليجرام`, tgJoin: "اشترك على تيليجرام", tgAny: "وظايف التك الجديدة كل صبح على تيليجرام", tgFoot: "وظايف جديدة كل يوم على تيليجرام:", hideTip: "إخفاء",
@@ -1697,7 +1701,7 @@
       </dl>
       ${g.all.length > 1 ? `<section class="dsection"><h3>${t("alsoIn")}</h3><ul class="dlocs">${g.all.filter((x) => x.id !== j.id).map((x) =>
         `<li><a href="${esc(x.u)}" target="_blank" rel="${linkRel(x)}">${esc(x.l || x.t)}</a></li>`).join("")}</ul></section>` : ""}
-      <p class="dreport"><button type="button" class="linkbtn" id="reportJob">⚑ ${t("reportClosed")}</button></p>
+      <div class="dreport" id="reportBox"><button type="button" class="linkbtn" id="reportJob">⚑ ${t("reportClosed")}</button></div>
       ${similar.length ? `<section class="dsection"><h3>${t("similarTitle")}</h3><ul class="similar">${similar.map((x) =>
         `<li style="${tc(x.tr)}"><button type="button" data-open="${esc(x.id)}"><span class="avatar sm" aria-hidden="true">${esc((x.c || "?").charAt(0).toUpperCase())}</span>
           <span><b>${esc(x.t)}</b><small>${esc(x.c || "")} · ${esc(x.l || "")}</small></span></button></li>`).join("")}</ul></section>` : ""}`;
@@ -2016,11 +2020,27 @@
         navigator.clipboard.writeText(j ? jobLink(j) : location.href).then(() => { b.textContent = t("linkCopied"); setTimeout(() => { b.textContent = t("copyLink"); }, 2000); }).catch(() => {});
         track("job-share/copy");
       }
+      // "Can't apply?": a closed job is hidden (and reported, so the next update drops it for everyone);
+      // "not available in your region" is the board blocking other countries, so we point to the company site instead
       if (e.target.closest("#reportJob")) {
-        const id = currentJob, j = jobs.find((x) => x.id === id);
-        track("report-closed/" + id + (j ? "/" + (j.c || "").replace(/[^\w-]+/g, "-") : ""));
+        $("reportBox").innerHTML = `<p class="repask">${t("repAsk")}</p><div class="repchoices">
+          <button type="button" class="ghostbtn" id="repGone">${t("repGone")}</button>
+          <button type="button" class="ghostbtn" id="repRegion">${t("repRegion")}</button>
+          <button type="button" class="linkbtn" id="repCancel">${t("repCancel")}</button></div>`;
+        $("repGone").focus();
+      }
+      if (e.target.closest("#repCancel")) refreshDrawer();
+      if (e.target.closest("#repGone")) {
+        const id = currentJob;
+        track("closed/" + id);
         hiddenJobs.add(id); store.set("hidden", [...hiddenJobs].slice(-500));
         closeJob(); update(true); toast(t("reported"));
+      }
+      if (e.target.closest("#repRegion")) {
+        const j = jobs.find((x) => x.id === currentJob);
+        track("region-blocked/" + currentJob);
+        $("reportBox").innerHTML = `<p class="adznote">${esc(t("repRegionNote"))}
+          ${j && j.c ? `<a href="${esc(companySearch(j))}" target="_blank" rel="noopener nofollow">${esc(t("findOnSite")(j.c))}</a>` : ""}</p>`;
       }
       if (e.target.closest("#shareJob")) {
         const j = jobs.find((x) => x.id === currentJob);

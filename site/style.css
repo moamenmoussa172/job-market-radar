@@ -528,6 +528,9 @@ button.bar:hover .name { color: var(--violet-ink); }
 .newsletter input { flex: 1 1 auto; width: 0; min-width: 0; font: 400 15px/1.2 var(--font); color: var(--ink); background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--r-s); padding: 12px 14px; }
 .dreport { margin: 18px 0 0; }
 .dreport .linkbtn { font-size: 14px; color: var(--muted); }
+.dreport .repask { margin: 0 0 8px; font-weight: 600; }
+.dreport .repchoices { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.dreport .repchoices .ghostbtn { min-height: 44px; }
 .toast { position: fixed; inset-inline: 0; bottom: 22px; margin: 0 auto; width: max-content; max-width: calc(100vw - 32px); z-index: 70;
   background: var(--night); color: #fff; padding: 12px 18px; border-radius: 99px; font-size: 14px; box-shadow: 0 12px 30px -12px rgba(0,0,0,.5); }
 

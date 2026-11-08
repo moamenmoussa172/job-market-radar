@@ -124,6 +124,9 @@ def export_site_data(conn, generated_at: dt.datetime | None = None) -> dict[str,
     rows = _rows(conn, JOBS_SQL, {"excluded": list(PUBLIC_LIST_EXCLUDED), "limit": MAX_PUBLIC_JOBS,
                                   "stale_days": STALE_POSTING_DAYS})
 
+    from jobradar import closed_reports
+    closed = closed_reports.closed_ids(conn)             # visitors said these were removed / expired
+    rows = [r for r in rows if r[0][:12] not in closed]
     skills = sorted({s for r in rows for s in r[17]}, key=str.lower)
     skill_idx = {s: i for i, s in enumerate(skills)}
     jobs = []
