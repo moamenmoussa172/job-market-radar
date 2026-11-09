@@ -22,7 +22,7 @@ with salaried_listings as (
         upper(trim(salary_currency))                 as currency,
         lower(trim(salary_period))                   as period
     from {{ ref('int_postings_keyed') }}
-    where coalesce(salary_min, salary_max) is not null
+    where coalesce(nullif(salary_min, 0), salary_max) is not null   -- a lone "0" (no max) is no salary
       and salary_currency is not null
     order by job_id, source_priority, last_seen_date desc
 ),
@@ -113,3 +113,4 @@ select
         false)                                                as salary_is_plausible
 from annual
 where cur_per_eur is not null   -- currency the ECB doesn't publish -> can't convert
+  and annual_min_local is not null
