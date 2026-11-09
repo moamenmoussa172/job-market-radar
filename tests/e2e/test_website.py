@@ -1256,3 +1256,55 @@ def test_one_place_for_cvs_and_helpful_feedback(browser, base, data, tmp_path):
     assert p.evaluate(f"JSON.parse(localStorage.getItem('jr_saved'))['{job['id']}'].a") is not None
     assert not errors, errors
     ctx.close()
+
+
+def test_application_stages_and_pipeline(page, data):
+    pg = page()
+    p = pg.open()
+    row = p.locator("#jobList > li.job").first
+    jid = row.get_attribute("data-jid")
+    row.locator("h3 a").click()
+    p.wait_for_selector("#jobDrawer:not([hidden])")
+    p.click(f"#drawerBody [data-applied='{jid}']")
+    p.keyboard.press("Escape")
+    p.evaluate("document.querySelector('[data-tab=saved], #tab-saved').click()")
+    p.wait_for_selector("#pipeline")
+    assert "1" in p.locator("#pipeline").inner_text()
+    p.select_option(f"select[data-stage='{jid}']", "interview")
+    assert p.locator("[data-saved-view='talks']").count() == 1      # Interviews tab appears
+    p.click("[data-saved-view='talks']")
+    assert p.locator("#savedList li.job").count() == 1
+    saved = p.evaluate("JSON.parse(localStorage.getItem('jr_saved'))")
+    assert saved[jid]["st"] == "interview"
+    no_errors(pg)
+
+
+def test_viewed_jobs_are_marked(page, data):
+    pg = page()
+    p = pg.open()
+    row = p.locator("#jobList > li.job").first
+    jid = row.get_attribute("data-jid")
+    row.locator("h3 a").click()
+    p.wait_for_selector("#jobDrawer:not([hidden])")
+    p.keyboard.press("Escape")
+    p.wait_for_timeout(200)
+    assert "seen" in p.locator(f"#jobList > li.job[data-jid='{jid}']").get_attribute("class")
+    no_errors(pg)
+
+
+def test_hide_company_and_undo(page, data):
+    pg = page()
+    p = pg.open()
+    row = p.locator("#jobList > li.job").first
+    company = row.locator(".where b").inner_text().strip()
+    row.locator("h3 a").click()
+    p.wait_for_selector("#jobDrawer:not([hidden])")
+    p.click("#hideCo")
+    p.wait_for_timeout(300)
+    names = [n.strip() for n in p.locator("#jobList > li.job .where b").all_inner_texts()]
+    assert company not in names
+    assert p.locator("#unhideCos").count() == 1
+    p.click("#toast .toastbtn")                                          # undo
+    p.wait_for_timeout(300)
+    assert p.locator("#unhideCos").count() == 0
+    no_errors(pg)

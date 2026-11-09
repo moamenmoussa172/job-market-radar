@@ -152,6 +152,11 @@
       learnKnow: "I know it", learnSee: "See jobs", learnNone: "You already match most jobs here, or they list too few skills to say.",
       applied: "Applied", markApplied: "Mark as applied", appliedOn: (d) => `Applied ${d}`, savedOn: (d) => `Saved ${d}`,
       savedAll: "All", savedTodo: "To apply", savedDone: "Applied", closedTag: "No longer listed", removeSaved: "Remove",
+      savedTalks: "Interviews", stageLabel: "Stage", stApplied: "Applied", stInterview: "Interviewing", stOffer: "Offer 🎉", stRejected: "Not this time", stNone: "↩ Not applied yet", offerToast: "Congrats on the offer! 🎉",
+      pipeApplied: "applied", pipeTalks: "interviews", pipeOffers: "offers", pipeRate: (p) => `${p}% got a reply`,
+      followUp: (d) => `${d} days with no reply. A short, polite follow-up email often helps.`,
+      viewedTag: "Viewed", hideCo: (c) => `Hide jobs from ${c}`, hidCo: (c) => `Jobs from ${c} are hidden.`, undo: "Undo",
+      hiddenCos: (n) => `${n} hidden ${n === 1 ? "company" : "companies"}`,
       savedNone: "Nothing here yet.",
       newTag: "New", newBanner: (n, d) => `<b>${n}</b> new ${n === 1 ? "job" : "jobs"} since your last visit (${d})`,
       newShow: "Show only new", newAll: "Show all jobs", qNew: "New since last visit",
@@ -300,6 +305,11 @@
       learnKnow: "بعرفها", learnSee: "شوف الوظايف", learnNone: "إنت مناسب لأغلب الوظايف هنا، أو مهاراتها المكتوبة قليلة.",
       applied: "قدّمت", markApplied: "قدّمت عليها", appliedOn: (d) => `قدّمت ${d}`, savedOn: (d) => `اتحفظت ${d}`,
       savedAll: "الكل", savedTodo: "لسه هقدّم", savedDone: "قدّمت", closedTag: "مش معروضة دلوقتي", removeSaved: "شيلها",
+      savedTalks: "إنترفيوهات", stageLabel: "المرحلة", stApplied: "قدّمت", stInterview: "في إنترفيو", stOffer: "عرض 🎉", stRejected: "مش المرة دي", stNone: "↩ لسه مقدّمتش", offerToast: "مبروك على العرض! 🎉",
+      pipeApplied: "قدّمت", pipeTalks: "إنترفيو", pipeOffers: "عروض", pipeRate: (p) => `${p}% ردّوا عليك`,
+      followUp: (d) => `${d} يوم من غير رد. إيميل متابعة قصير ومحترم بيفرق كتير.`,
+      viewedTag: "اتفتحت", hideCo: (c) => `خبّي وظايف ${c}`, hidCo: (c) => `خبّينا وظايف ${c}.`, undo: "تراجع",
+      hiddenCos: (n) => `${n} ${n === 1 ? "شركة متخبّية" : "شركات متخبّية"}`,
       savedNone: "مفيش حاجة هنا لسه.",
       newTag: "جديدة", newBanner: (n, d) => `<b>${n}</b> وظيفة جديدة من آخر زيارة ليك (${d})`,
       newShow: "اعرض الجديد بس", newAll: "اعرض كل الوظايف", qNew: "جديدة من آخر زيارة",
@@ -364,7 +374,19 @@
   let morePromise = null;
   let mySkills = new Set(store.get("mySkills", []));
   let savedJobs = store.get("saved", {});               // id -> {t, c, l, u, sv: saved day, a: applied day}
-  let savedView = "all";                                // Saved tab: all | todo | done
+  let savedView = "all";                                // Saved tab: all | todo | done | talks
+  // jobs this visitor already opened (dimmed in the list) and companies they chose to hide - only in this browser
+  const viewedJobs = new Set(store.get("viewed", []));
+  const hiddenCos = new Set(store.get("hiddenCos", []));
+  const coKey = (c) => String(c || "").trim().toLowerCase();
+  function markViewed(id) {
+    if (!id || viewedJobs.has(id)) return;
+    viewedJobs.add(id); store.set("viewed", [...viewedJobs].slice(-1500));
+    document.querySelectorAll("#jobList > li.job").forEach((li) => { if (li.dataset.jid === id) li.classList.add("seen"); });
+  }
+  const STAGES = ["applied", "interview", "offer", "rejected"];
+  const daysSince = (iso) => Math.floor((Date.now() - new Date(iso + "T12:00:00Z").getTime()) / 864e5);
+  const stageOf = (s) => (s && s.a ? (STAGES.includes(s.st) ? s.st : "applied") : "");
   const quick = { remote: false, visa: false, junior: false, pay: false, week: false, hideNat: true, fresh: false };
   const NOT_IN_LINKS = new Set(["fresh"]);              // "new for me" depends on the visitor, so shared links don't carry it
   let newSince = null;                                  // day of the data the visitor saw on their previous visit
@@ -503,6 +525,7 @@
       if (quick.hideNat && (f & FLAG.nationals)) return false;
       if (quick.fresh && !isNew(j)) return false;
       if (hiddenJobs.has(j.id)) return false;
+      if (hiddenCos.size && hiddenCos.has(coKey(j.c))) return false;
       if (ar === "req" && !(f & FLAG.arabic)) return false;
       if (ar === "not" && (f & FLAG.arabic)) return false;
       if (q && !j._text.includes(q)) return false;
@@ -616,6 +639,7 @@
       f & FLAG.arabic ? `<span class="fact ar">${t("arTag")}</span>` : "",
       j.s && j.s !== "Not stated" ? `<span class="fact">${esc(j.s)}</span>` : "",
       `<span class="fact role">${esc(j.r)}</span>`,
+      viewedJobs.has(j.id) && !String(g.key).startsWith("saved:") ? `<span class="fact seentag">${t("viewedTag")}</span>` : "",
     ].join("");
     const ks = [...j.k].sort((a, b) => (mine.has(b) ? 1 : 0) - (mine.has(a) ? 1 : 0));
     const skills = ks.slice(0, SKILLS_SHOWN).map((k) => `<span class="sk${mine.has(k) ? " have" : ""}">${esc(meta.skills[k])}</span>`).join("")
@@ -623,7 +647,8 @@
     const isSaved = !!savedJobs[j.id];
     const locsOpen = openLocs.has(g.key);
     const initial = (j.c || j.t || "?").trim().charAt(0).toUpperCase();
-    return `<li class="job" style="${tc(j.tr)}" data-jid="${esc(j.id)}">
+    const seen = viewedJobs.has(j.id) && !String(g.key).startsWith("saved:");
+    return `<li class="job${seen ? " seen" : ""}" style="${tc(j.tr)}" data-jid="${esc(j.id)}">
       <span class="avatar" aria-hidden="true">${esc(initial)}</span>
       <div class="jmain">
         <h3><a href="${esc(j.u)}" target="_blank" rel="${linkRel(j)}">${esc(j.t)}</a></h3>
@@ -672,18 +697,33 @@
     const known = more === "done" || !(meta && meta.more_jobs);       // until then, a missing job may just be in the other file
     const keep = ids.filter((id) => open.has(id) || (known && savedJobs[id].a));
     const todo = keep.filter((id) => !savedJobs[id].a && open.has(id)), done = keep.filter((id) => savedJobs[id].a);
+    const talks = done.filter((id) => ["interview", "offer"].includes(stageOf(savedJobs[id])));
     $("savedCount").hidden = !todo.length;
     $("savedCount").textContent = todo.length;
     if ($("saved").hidden) return;
-    $("savedTabs").innerHTML = [["all", t("savedAll"), keep.length], ["todo", t("savedTodo"), todo.length], ["done", t("savedDone"), done.length]]
-      .map(([v, label, n]) => `<button type="button" class="stab${savedView === v ? " on" : ""}" data-saved-view="${v}" aria-pressed="${savedView === v}">${esc(label)} <span class="n">${num(n)}</span></button>`).join("");
-    const list = savedView === "todo" ? todo : savedView === "done" ? done : keep;
+    const tabs = [["all", t("savedAll"), keep.length], ["todo", t("savedTodo"), todo.length], ["done", t("savedDone"), done.length]];
+    if (talks.length || savedView === "talks") tabs.push(["talks", t("savedTalks"), talks.length]);
+    // your job hunt at a glance: how many applications, how many turned into interviews and offers
+    const n = (st) => done.filter((id) => stageOf(savedJobs[id]) === st).length;
+    const replied = n("interview") + n("offer") + n("rejected");
+    const pipe = done.length ? `<div class="pipeline" id="pipeline">
+        <span><b>${num(done.length)}</b> ${esc(t("pipeApplied"))}</span>
+        <span class="pi"><b>${num(n("interview") + n("offer"))}</b> ${esc(t("pipeTalks"))}</span>
+        <span class="po"><b>${num(n("offer"))}</b> ${esc(t("pipeOffers"))}</span>
+        ${done.length >= 3 ? `<span class="pr">${esc(t("pipeRate")(Math.round((100 * replied) / done.length)))}</span>` : ""}</div>` : "";
+    $("savedTabs").innerHTML = pipe + `<div class="stabs">` + tabs
+      .map(([v, label, n]) => `<button type="button" class="stab${savedView === v ? " on" : ""}" data-saved-view="${v}" aria-pressed="${savedView === v}">${esc(label)} <span class="n">${num(n)}</span></button>`).join("") + `</div>`;
+    const list = savedView === "todo" ? todo : savedView === "done" ? done : savedView === "talks" ? talks : keep;
     const byDay = (id) => savedJobs[id].a || savedJobs[id].sv || "";
     list.sort((a, b) => (byDay(a) < byDay(b) ? 1 : -1));
     $("savedList").innerHTML = list.map((id) => {
       const s = savedJobs[id], j = open.get(id);
       const status = `<p class="savedmeta">${s.a ? `<span class="fact applied">✓ ${esc(t("appliedOn")(shortDate(s.a)))}</span>${s.cv ? ` <span class="sentwith">${esc(t("dSentWith")(s.cv))}</span>` : ""}` : s.sv ? esc(t("savedOn")(shortDate(s.sv))) : ""}
-        <button type="button" class="applybtn" data-applied="${esc(id)}" aria-pressed="${!!s.a}">${CHECK}<span>${s.a ? t("applied") : t("markApplied")}</span></button></p>`;
+        ${s.a ? "" : `<button type="button" class="applybtn" data-applied="${esc(id)}" aria-pressed="false">${CHECK}<span>${t("markApplied")}</span></button>`}
+        ${s.a ? `<label class="stage st-${stageOf(s)}"><span class="sr">${esc(t("stageLabel"))}</span><select data-stage="${esc(id)}">${STAGES.map((st) =>
+          `<option value="${st}"${stageOf(s) === st ? " selected" : ""}>${esc(t("st" + st[0].toUpperCase() + st.slice(1)))}</option>`).join("")}
+          <option value="none">${esc(t("stNone"))}</option></select></label>` : ""}</p>
+        ${s.a && stageOf(s) === "applied" && daysSince(s.sd || s.a) >= 7 ? `<p class="followup">💬 ${esc(t("followUp")(daysSince(s.sd || s.a)))}</p>` : ""}`;
       if (j) { const row = jobRow({ key: "saved:" + id, job: j, all: [j], pay: j.$ || null, flags: j.f || 0, have: 0, match: -1 }), at = row.lastIndexOf("</li>");
         return row.slice(0, at) + status + row.slice(at); }
       return `<li class="job closed"><span class="avatar" aria-hidden="true">${esc((s.c || s.t || "?").charAt(0).toUpperCase())}</span>
@@ -1701,7 +1741,8 @@
       </dl>
       ${g.all.length > 1 ? `<section class="dsection"><h3>${t("alsoIn")}</h3><ul class="dlocs">${g.all.filter((x) => x.id !== j.id).map((x) =>
         `<li><a href="${esc(x.u)}" target="_blank" rel="${linkRel(x)}">${esc(x.l || x.t)}</a></li>`).join("")}</ul></section>` : ""}
-      <div class="dreport" id="reportBox"><button type="button" class="linkbtn" id="reportJob">⚑ ${t("reportClosed")}</button></div>
+      <div class="dreport" id="reportBox"><button type="button" class="linkbtn" id="reportJob">⚑ ${t("reportClosed")}</button>
+        ${j.c ? `<button type="button" class="linkbtn" id="hideCo">🚫 ${esc(t("hideCo")(j.c))}</button>` : ""}</div>
       ${similar.length ? `<section class="dsection"><h3>${t("similarTitle")}</h3><ul class="similar">${similar.map((x) =>
         `<li style="${tc(x.tr)}"><button type="button" data-open="${esc(x.id)}"><span class="avatar sm" aria-hidden="true">${esc((x.c || "?").charAt(0).toUpperCase())}</span>
           <span><b>${esc(x.t)}</b><small>${esc(x.c || "")} · ${esc(x.l || "")}</small></span></button></li>`).join("")}</ul></section>` : ""}`;
@@ -1723,6 +1764,7 @@
     $("drawerBody").scrollTop = 0;
     $("drawerClose").focus();
     track("job-view/" + j.tr);
+    markViewed(id);
     if (write) writeHash();
   }
   function closeJob(write = true) {
@@ -1750,8 +1792,9 @@
     Object.entries(flagLabel).forEach(([k, label]) => { if (quick[k]) add(t(label), `data-flag-off="${k}"`); });
     if (!quick.hideNat) add(t("showNat"), 'data-flag-on="hideNat"');
     if (quick.fresh) add(t("qNew"), 'data-flag-off="fresh"');
-    $("activeFilters").innerHTML = chips.length > 1 || (chips.length && !$("country").value)
-      ? chips.join("") + `<button type="button" class="linkbtn" id="chipsClear">${t("clearAll")}</button>` : chips.join("");
+    $("activeFilters").innerHTML = (chips.length > 1 || (chips.length && !$("country").value)
+      ? chips.join("") + `<button type="button" class="linkbtn" id="chipsClear">${t("clearAll")}</button>` : chips.join(""))
+      + (hiddenCos.size ? `<button type="button" class="fchip ghost" id="unhideCos" aria-label="${esc(t("hiddenCos")(hiddenCos.size))} ×">${esc(t("hiddenCos")(hiddenCos.size))}<span aria-hidden="true">×</span></button>` : "");
   }
 
   // ------------------------------------------------------------------ track pills + radar
@@ -2030,6 +2073,15 @@
         $("repGone").focus();
       }
       if (e.target.closest("#repCancel")) refreshDrawer();
+      if (e.target.closest("#hideCo")) {
+        const j = jobs.find((x) => x.id === currentJob);
+        if (!j || !j.c) return;
+        const key = coKey(j.c);
+        hiddenCos.add(key); store.set("hiddenCos", [...hiddenCos]);
+        track("hide-company");
+        closeJob(); update(true);
+        toast(t("hidCo")(j.c), t("undo"), () => { hiddenCos.delete(key); store.set("hiddenCos", [...hiddenCos]); update(true); });
+      }
       if (e.target.closest("#repGone")) {
         const id = currentJob;
         track("closed/" + id);
@@ -2047,10 +2099,21 @@
         if (j) navigator.share({ title: j.t, text: t("shareText")(j.t, j.c), url: jobLink(j) }).then(() => track("job-share/native")).catch(() => {});
       }
     });
+    // application stage in Saved
+    document.addEventListener("change", (e) => {
+      const sel = e.target.closest("select[data-stage]");
+      if (!sel || !savedJobs[sel.dataset.stage]) return;
+      if (sel.value === "none") { toggleApplied(sel.dataset.stage); delete savedJobs[sel.dataset.stage].st; store.set("saved", savedJobs); renderJobs(); renderSaved(); return; }
+      savedJobs[sel.dataset.stage].st = sel.value; savedJobs[sel.dataset.stage].sd = today();
+      store.set("saved", savedJobs); track("stage/" + sel.value);
+      if (sel.value === "offer") toast(t("offerToast"));
+      renderSaved();
+    });
     // active filter chips
     $("activeFilters").addEventListener("click", (e) => {
       const b = e.target.closest("button");
       if (!b) return;
+      if (b.id === "unhideCos") { hiddenCos.clear(); store.set("hiddenCos", []); update(); return; }
       if (b.id === "chipsClear") { $("country").value = ""; store.set("country", ""); resetFilters(); return; }
       if (b.dataset.clear) { $(b.dataset.clear).value = ""; if (b.dataset.clear === "country") store.set("country", ""); }
       if (b.dataset.flagOff) quick[b.dataset.flagOff] = false;
@@ -2087,9 +2150,15 @@
     };
   }
   document.addEventListener("visibilitychange", askApplied);
-  function toast(msg) {
+  function toast(msg, actionLabel, action) {
     const el = $("toast"); el.textContent = msg; el.hidden = false;
-    clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.hidden = true; }, 3500);
+    if (actionLabel && action) {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "toastbtn"; b.textContent = actionLabel;
+      b.addEventListener("click", () => { el.hidden = true; action(); });
+      el.append(" ", b);
+    }
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.hidden = true; }, actionLabel ? 6000 : 3500);
   }
   // weekly email (Buttondown): shown only when the publish step filled in the newsletter name
   function setupNewsletter() {

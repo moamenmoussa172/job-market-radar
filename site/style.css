@@ -1065,3 +1065,31 @@ body[data-tab="saved"] .hero, body[data-tab="kit"] .hero, body[data-tab="about"]
 .askbar p { margin: 0; font-weight: 600; line-height: 1.4; }
 .askbar div { display: flex; flex-wrap: wrap; gap: 8px; }
 @media (max-width: 720px) { .askbar { bottom: calc(72px + env(safe-area-inset-bottom, 0px)); } }
+
+/* ---- product pass (Nov 2026): application stages, viewed jobs, hidden companies ---- */
+.savedtabs { display: block; }
+.savedtabs .stabs { display: flex; flex-wrap: wrap; gap: 8px; }
+.pipeline { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: baseline; padding: 12px 14px; margin: 0 0 12px;
+  border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink-2); font-size: 14px; }
+.pipeline b { font-size: 20px; color: var(--ink); font-variant-numeric: tabular-nums; margin-inline-end: 4px; }
+.pipeline .pi b { color: var(--violet-ink, var(--ink)); }
+.pipeline .po b { color: var(--mint-ink); }
+.pipeline .pr { margin-inline-start: auto; color: var(--muted); }
+.stage { display: inline-flex; align-items: center; }
+.stage select { font: 600 13px/1 var(--font); color: var(--ink-2); background: var(--surface); border: 1px solid var(--line-strong);
+  border-radius: 99px; padding: 8px 12px; min-height: 36px; cursor: pointer; }
+.stage.st-interview select { border-color: var(--violet, currentColor); color: var(--violet-ink, var(--ink)); }
+.stage.st-offer select { border-color: var(--mint); color: var(--mint-ink); background: var(--mint-soft); }
+.stage.st-rejected select { color: var(--muted); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.followup { margin: 6px 0 0; font-size: 13px; color: var(--muted); grid-column: 1 / -1; }
+.job.seen h3 a { color: var(--ink-2); font-weight: 500; }
+.fact.seentag { background: transparent; border: 1px dashed var(--line-strong); color: var(--muted); }
+.dreport { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center; }
+.dreport > .repask, .dreport > .repchoices, .dreport > .adznote { flex-basis: 100%; }
+.fchip.ghost { border-style: dashed; color: var(--muted); }
+.toastbtn { margin-inline-start: 10px; font: 700 14px/1 var(--font); color: inherit; background: transparent;
+  border: 1px solid currentColor; border-radius: 99px; padding: 6px 12px; cursor: pointer; }
+.savedmeta .stage { position: relative; z-index: 1; }
+.followup { grid-column: 2 / -1; }
+@media (max-width: 720px) { .followup { grid-column: 1 / -1; } .pipeline .pr { margin-inline-start: 0; flex-basis: 100%; } }
