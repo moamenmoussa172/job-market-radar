@@ -29,11 +29,28 @@ def pages():
 def test_company_pages_only_for_companies_with_enough_jobs():
     f = pages()
     assert "companies/valeo/index.html" in f and "ar/companies/valeo/index.html" in f
-    assert "companies/fawry/index.html" not in f                                  # 2 jobs
+    assert "companies/fawry/index.html" in f                                      # 2 jobs are enough now
+    assert "companies/solo0/index.html" not in f                                  # 1 job
     page = f["companies/valeo/index.html"].decode()
     assert "<title>Valeo tech jobs (4 open) | Radarak</title>" in page and 'href="../../#q=Valeo"' in page
     assert 'href="../../companies/valeo/"' in f["jobs/egypt/index.html"].decode()  # role pages link to companies
     assert "companies/index.html" in f and "Valeo" in f["companies/index.html"].decode()
+
+
+def test_company_page_shows_pace_levels_and_work_mode():
+    jobs = ([job(i, company="Paymob", s="Senior", w="Remote", p="2026-10-20") for i in range(3)]
+            + [job(5, company="Paymob", s="Junior", p="2026-08-01")])
+    f = seo_pages.seo_files(jobs, META, "https://radarak.online/", TODAY)
+    page = f["companies/paymob/index.html"].decode()
+    assert "Hiring fast: 3 new jobs in the last 2 weeks" in page
+    assert "new in the last 30 days" in page
+    assert "Levels they hire" in page and "Senior" in page and "Junior" in page
+    assert "How they work" in page and "Remote" in page and "On-site" in page
+    ar = f["ar/companies/paymob/index.html"].decode()
+    assert "بتوظف بسرعة" in ar and "طريقة الشغل" in ar
+    slow = seo_pages.seo_files([job(i, company="Quiet", p="2026-08-01") for i in range(2)], META,
+                               "https://radarak.online/", TODAY)["companies/quiet/index.html"].decode()
+    assert "Few new jobs lately" in slow
 
 
 def test_juniors_corner_lists_only_entry_level_jobs():

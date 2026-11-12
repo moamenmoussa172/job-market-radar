@@ -1308,3 +1308,46 @@ def test_hide_company_and_undo(page, data):
     p.wait_for_timeout(300)
     assert p.locator("#unhideCos").count() == 0
     no_errors(pg)
+
+
+def test_my_alerts_save_count_and_open(page, data):
+    pg = page()
+    p = pg.open()
+    p.wait_for_selector("#jobList > li.job")
+    p.click("#watchAdd")
+    assert p.locator("#watchAdd").get_attribute("aria-pressed") == "true"
+    assert p.locator("#watchBar .watch").count() == 1
+    w = p.evaluate("JSON.parse(localStorage.getItem('jr_watches'))")
+    assert len(w) == 1 and w[0]["since"]
+    # pretend the last look was long ago: now the alert has new jobs
+    p.evaluate("""(() => { const w = JSON.parse(localStorage.getItem('jr_watches')); w[0].since = '2000-01-01';
+                  localStorage.setItem('jr_watches', JSON.stringify(w)); })()""")
+    p.reload()
+    p.wait_for_selector("#watchBar .watch.hasnew")
+    p.click("#watchBar .wopen")
+    assert p.locator("#watchBar .watchview").is_visible()
+    w = p.evaluate("JSON.parse(localStorage.getItem('jr_watches'))")
+    assert w[0]["since"] > "2000-01-01"                           # opened: counts from today next time
+    p.click("#watchAllBtn")
+    assert p.locator("#watchBar .watchview").count() == 0
+    p.click("#watchBar .wdel")
+    assert p.locator("#watchBar").is_hidden()
+    no_errors(pg)
+
+
+def test_job_links_to_company_page(page, data):
+    pg = page()
+    p = pg.open()
+    has = p.evaluate("""(() => { const c = new Set(Object.keys(window.__meta ? __meta.cpages : {})); return c.size; })()""")
+    p.wait_for_selector("#jobList > li.job")
+    rows = p.locator("#jobList > li.job")
+    for i in range(min(10, rows.count())):
+        rows.nth(i).locator("h3 a").click()
+        p.wait_for_selector("#jobDrawer:not([hidden])")
+        if p.locator("#drawerBody .dcompany a").count():
+            href = p.locator("#drawerBody .dcompany a").get_attribute("href")
+            assert href.startswith("companies/") and href.endswith("/")
+            no_errors(pg)
+            return
+        p.keyboard.press("Escape")
+    assert has == 0 or False, "no job with a company page among the first 10"

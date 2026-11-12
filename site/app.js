@@ -148,14 +148,23 @@
       cardShareText: "Here's what the job market says about my skills. Check yours:", learnTop: (s, n) => `🎯 Learn <b>${s}</b> → <b>+${n}</b> more jobs you match`,
       learnTitle: "What to learn next", learnNow: (m) => `You match <b>${m}</b> jobs right now.`,
       learnHint: "Each step counts the extra jobs you'd match (60%+ of their skills) after learning it and the ones above it.",
-      learnJobs: (n) => `+${n} jobs`, learnTotal: (a, b) => `Learn all ${a === 1 ? "of it" : "three"}: <b>${b}</b> jobs you match`,
+      learnJobs: (n) => `+${n} jobs`, learnPay: (p) => `jobs that ask for it pay ${p}% more`, learnRising: "rising",
+      learnFalling: "cooling", learnPayHint: "Pay compares jobs with a published salary that ask for the skill with similar jobs that don't (same country and level).", learnTotal: (a, b) => `Learn all ${a === 1 ? "of it" : "three"}: <b>${b}</b> jobs you match`,
       learnKnow: "I know it", learnSee: "See jobs", learnNone: "You already match most jobs here, or they list too few skills to say.",
       applied: "Applied", markApplied: "Mark as applied", appliedOn: (d) => `Applied ${d}`, savedOn: (d) => `Saved ${d}`,
       savedAll: "All", savedTodo: "To apply", savedDone: "Applied", closedTag: "No longer listed", removeSaved: "Remove",
       savedTalks: "Interviews", stageLabel: "Stage", stApplied: "Applied", stInterview: "Interviewing", stOffer: "Offer 🎉", stRejected: "Not this time", stNone: "↩ Not applied yet", offerToast: "Congrats on the offer! 🎉",
       pipeApplied: "applied", pipeTalks: "interviews", pipeOffers: "offers", pipeRate: (p) => `${p}% got a reply`,
       followUp: (d) => `${d} days with no reply. A short, polite follow-up email often helps.`,
-      viewedTag: "Viewed", hideCo: (c) => `Hide jobs from ${c}`, hidCo: (c) => `Jobs from ${c} are hidden.`, undo: "Undo",
+      watchAdd: "Alert me", watchOn: "Alert on", watchSaved: "Saved! Each time you open Radarak you'll see how many new jobs match this search.",
+      watchRemoved: "Alert removed.", watchNew: (n) => `${n} new`, watchNone: "no new jobs", watchTitle: "My alerts",
+      watchShowing: (l) => `New jobs for “${l}”`, watchAll: "Show all jobs", watchDel: (l) => `Remove alert “${l}”`,
+      watchAll0: "All tech jobs", watchMax: "You can keep up to 8 alerts. Remove one first.",
+      watchNotify: "🔔 Notify me when new jobs come", watchNotifyOn: "Notifications are on",
+      watchNotifyHint: "Your phone shows a short note when the day's new jobs are in. Nothing about you is sent anywhere.",
+      watchInstall: "Install Radarak as an app to see new jobs as a badge on its icon.",
+      notifyTitle: "New jobs on Radarak", notifyBody: "Today's jobs are in. Open Radarak to see what's new for your alerts.",
+      viewedTag: "Viewed", coPage: (c) => `${c}: all jobs, hiring pace and skills`, hideCo: (c) => `Hide jobs from ${c}`, hidCo: (c) => `Jobs from ${c} are hidden.`, undo: "Undo",
       hiddenCos: (n) => `${n} hidden ${n === 1 ? "company" : "companies"}`,
       savedNone: "Nothing here yet.",
       newTag: "New", newBanner: (n, d) => `<b>${n}</b> new ${n === 1 ? "job" : "jobs"} since your last visit (${d})`,
@@ -301,14 +310,23 @@
       cardShareText: "ده رأي سوق الشغل في مهاراتي. شوف مهاراتك:", learnTop: (s, n) => `🎯 اتعلم <b>${s}</b> ← <b>+${n}</b> وظيفة زيادة مناسبة ليك`,
       learnTitle: "تتعلم إيه بعد كده", learnNow: (m) => `إنت مناسب لـ <b>${m}</b> وظيفة دلوقتي.`,
       learnHint: "كل خطوة بتحسب الوظايف الزيادة اللي هتبقى مناسب لها (60%+ من مهاراتها) لو اتعلمت المهارة دي واللي فوقها.",
-      learnJobs: (n) => `+${n} وظيفة`, learnTotal: (a, b) => `لو اتعلمتهم ${a === 1 ? "" : "التلاتة"}: <b>${b}</b> وظيفة مناسبة ليك`,
+      learnJobs: (n) => `+${n} وظيفة`, learnPay: (p) => `الوظايف اللي بتطلبها مرتبها أعلى ${p}%`, learnRising: "طالعة",
+      learnFalling: "بتهدى", learnPayHint: "المرتب: بنقارن الوظايف اللي كاتبة مرتب وبتطلب المهارة بوظايف شبهها مش بتطلبها (نفس البلد ونفس المستوى).", learnTotal: (a, b) => `لو اتعلمتهم ${a === 1 ? "" : "التلاتة"}: <b>${b}</b> وظيفة مناسبة ليك`,
       learnKnow: "بعرفها", learnSee: "شوف الوظايف", learnNone: "إنت مناسب لأغلب الوظايف هنا، أو مهاراتها المكتوبة قليلة.",
       applied: "قدّمت", markApplied: "قدّمت عليها", appliedOn: (d) => `قدّمت ${d}`, savedOn: (d) => `اتحفظت ${d}`,
       savedAll: "الكل", savedTodo: "لسه هقدّم", savedDone: "قدّمت", closedTag: "مش معروضة دلوقتي", removeSaved: "شيلها",
       savedTalks: "إنترفيوهات", stageLabel: "المرحلة", stApplied: "قدّمت", stInterview: "في إنترفيو", stOffer: "عرض 🎉", stRejected: "مش المرة دي", stNone: "↩ لسه مقدّمتش", offerToast: "مبروك على العرض! 🎉",
       pipeApplied: "قدّمت", pipeTalks: "إنترفيو", pipeOffers: "عروض", pipeRate: (p) => `${p}% ردّوا عليك`,
       followUp: (d) => `${d} يوم من غير رد. إيميل متابعة قصير ومحترم بيفرق كتير.`,
-      viewedTag: "اتفتحت", hideCo: (c) => `خبّي وظايف ${c}`, hidCo: (c) => `خبّينا وظايف ${c}.`, undo: "تراجع",
+      watchAdd: "نبّهني", watchOn: "التنبيه شغال", watchSaved: "اتحفظ! كل ما تفتح رادارك هتشوف كام وظيفة جديدة على البحث ده.",
+      watchRemoved: "شلنا التنبيه.", watchNew: (n) => `${n} جديدة`, watchNone: "مفيش جديد", watchTitle: "تنبيهاتي",
+      watchShowing: (l) => `الوظايف الجديدة لـ «${l}»`, watchAll: "اعرض كل الوظايف", watchDel: (l) => `شيل تنبيه «${l}»`,
+      watchAll0: "كل وظايف التك", watchMax: "تقدر تحتفظ بـ 8 تنبيهات بس. شيل واحد الأول.",
+      watchNotify: "🔔 بلّغني لما تنزل وظايف جديدة", watchNotifyOn: "الإشعارات شغالة",
+      watchNotifyHint: "موبايلك هيظهر إشعار صغير لما وظايف اليوم تنزل. مفيش أي حاجة عنك بتتبعت.",
+      watchInstall: "نزّل رادارك كتطبيق علشان تشوف عدد الوظايف الجديدة على الأيقونة.",
+      notifyTitle: "وظايف جديدة على رادارك", notifyBody: "وظايف النهارده نزلت. افتح رادارك وشوف الجديد في تنبيهاتك.",
+      viewedTag: "اتفتحت", coPage: (c) => `${c}: كل الوظايف وسرعة التوظيف والمهارات`, hideCo: (c) => `خبّي وظايف ${c}`, hidCo: (c) => `خبّينا وظايف ${c}.`, undo: "تراجع",
       hiddenCos: (n) => `${n} ${n === 1 ? "شركة متخبّية" : "شركات متخبّية"}`,
       savedNone: "مفيش حاجة هنا لسه.",
       newTag: "جديدة", newBanner: (n, d) => `<b>${n}</b> وظيفة جديدة من آخر زيارة ليك (${d})`,
@@ -383,6 +401,119 @@
     if (!id || viewedJobs.has(id)) return;
     viewedJobs.add(id); store.set("viewed", [...viewedJobs].slice(-1500));
     document.querySelectorAll("#jobList > li.job").forEach((li) => { if (li.dataset.jid === id) li.classList.add("seen"); });
+  }
+  // ---- "My alerts": saved searches, checked on every visit (only in this browser; nothing is sent)
+  // {id, h: the search as URL params, l: label, since: data date of the last look}
+  let watches = store.get("watches", []);
+  let watchView = null;                                 // {id, since} while showing one alert's new jobs
+  const WATCH_MAX = 8;
+  const searchParams = () => {
+    const h = new URLSearchParams();
+    FIELDS.forEach((f) => { if (f !== "sort" && $(f).value) h.set(f, $(f).value); });
+    Object.entries(quick).forEach(([k, v]) => { if (k !== "fresh" && v !== (k === "hideNat")) h.set(k, v ? "1" : "0"); });
+    h.sort();
+    return h.toString();
+  };
+  function searchLabel() {
+    const parts = [];
+    const role = $("role").value, sel = $("role");
+    if (role) parts.push((sel.options[sel.selectedIndex] || {}).text || role.replace(/^\w+:/, ""));
+    ["q", "skill", "seniority", "workMode"].forEach((f) => { if ($(f).value) parts.push($(f).value); });
+    if ($("country").value) parts.push($("country").value);
+    if (quick.remote) parts.push(t("remote"));
+    if (quick.visa) parts.push("visa");
+    return parts.join(" · ") || t("watchAll0");
+  }
+  // run the normal filters with a saved search, without touching what's on screen
+  function jobsFor(params) {
+    const h = new URLSearchParams(params), keep = {}, keepQ = { ...quick }, keepView = watchView;
+    FIELDS.forEach((f) => { keep[f] = $(f).value; $(f).value = h.get(f) || (f === "sort" ? "new" : ""); });
+    Object.keys(quick).forEach((k) => { quick[k] = h.has(k) ? h.get(k) === "1" : k === "hideNat"; });
+    watchView = null;
+    try { return filtered(); } finally {
+      FIELDS.forEach((f) => { $(f).value = keep[f]; });
+      Object.assign(quick, keepQ); watchView = keepView;
+    }
+  }
+  const dataDay = () => (meta.generated_at || "").slice(0, 10);
+  let watchMemo = { key: "", counts: [] };
+  function watchCounts() {
+    const key = JSON.stringify(watches) + "|" + JSON.stringify(watchView) + "|" + jobs.length + "|" + hiddenCos.size + "|" + hiddenJobs.size;
+    if (key === watchMemo.key) return watchMemo.counts;
+    watchMemo = { key, counts: watchCountsNow() };
+    return watchMemo.counts;
+  }
+  function watchCountsNow() {
+    return watches.map((w) => {
+      const seen = new Set(), since = watchView && watchView.id === w.id ? watchView.since : w.since;
+      jobsFor(w.h).forEach((j) => { if ((j.fs || j.p || "") > since) seen.add(j.t.toLowerCase() + "|" + (j.c || "").toLowerCase()); });
+      return seen.size;
+    });
+  }
+  function renderWatches() {
+    const bar = $("watchBar"), cur = searchParams(), on = watches.some((w) => w.h === cur);
+    $("watchAdd").setAttribute("aria-pressed", String(on));
+    $("watchAddLabel").textContent = on ? t("watchOn") : t("watchAdd");
+    $("watchAdd").title = on ? t("watchOn") : t("watchAdd");
+    if (!watches.length) { bar.hidden = true; setBadge(0); return; }
+    const counts = watchCounts(), total = counts.reduce((a, b) => a + b, 0);
+    setBadge(total);
+    const view = watchView && watches.find((w) => w.id === watchView.id);
+    // background checks only work in the installed app (Chrome / Edge on Android and desktop)
+    const canNotify = standalone() && "serviceWorker" in navigator && "Notification" in window && "PeriodicSyncManager" in window;
+    const notifyOn = canNotify && Notification.permission === "granted" && store.get("notify", false);
+    bar.innerHTML = `<div class="watchhead"><h3>🔔 ${esc(t("watchTitle"))}</h3>
+        ${canNotify && !notifyOn ? `<button type="button" class="linkbtn" id="watchNotify">${esc(t("watchNotify"))}</button>`
+          : notifyOn ? `<span class="muted">✓ ${esc(t("watchNotifyOn"))}</span>`
+          : !standalone() ? `<span class="muted">${esc(t("watchInstall"))}</span>` : ""}</div>
+      <div class="watchlist">${watches.map((w, i) => `<span class="watch${view && view.id === w.id ? " on" : ""}${counts[i] ? " hasnew" : ""}">
+        <button type="button" class="wopen" data-watch="${esc(w.id)}"><b>${esc(w.l)}</b><span class="wn">${counts[i] ? esc(t("watchNew")(num(counts[i]))) : esc(t("watchNone"))}</span></button>
+        <button type="button" class="wdel" data-watch-del="${esc(w.id)}" aria-label="${esc(t("watchDel")(w.l))}" title="${esc(t("watchDel")(w.l))}">×</button></span>`).join("")}</div>
+      ${view ? `<p class="watchview">${esc(t("watchShowing")(view.l))} · <button type="button" class="linkbtn" id="watchAllBtn">${esc(t("watchAll"))}</button></p>` : ""}`;
+    bar.hidden = false;
+  }
+  function setBadge(n) {
+    try {
+      if (n && navigator.setAppBadge) navigator.setAppBadge(n);
+      else if (!n && navigator.clearAppBadge) navigator.clearAppBadge();
+    } catch { /* not supported */ }
+  }
+  function toggleWatch() {
+    const cur = searchParams(), i = watches.findIndex((w) => w.h === cur);
+    if (i >= 0) { watches.splice(i, 1); toast(t("watchRemoved")); }
+    else {
+      if (watches.length >= WATCH_MAX) { toast(t("watchMax")); return; }
+      watches.push({ id: Math.random().toString(36).slice(2, 9), h: cur, l: searchLabel(), since: dataDay() });
+      track("alert-add"); toast(t("watchSaved"));
+    }
+    store.set("watches", watches); renderWatches();
+  }
+  function openWatch(id) {
+    const w = watches.find((x) => x.id === id);
+    if (!w) return;
+    const h = new URLSearchParams(w.h);
+    FIELDS.forEach((f) => { if (f !== "sort") $(f).value = h.get(f) || (f === "country" ? "" : ""); });
+    Object.keys(quick).forEach((k) => { quick[k] = h.has(k) ? h.get(k) === "1" : k === "hideNat"; });
+    syncToggles();
+    watchView = { id: w.id, since: w.since };
+    w.since = dataDay();                               // looked at: next visit counts from today
+    store.set("watches", watches);
+    track("alert-open");
+    update();
+    $("jobs").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  async function turnOnNotify() {
+    try {
+      if (await Notification.requestPermission() !== "granted") return;
+      const reg = await navigator.serviceWorker.ready;
+      await reg.periodicSync.register("radarak-new-jobs", { minInterval: 12 * 60 * 60 * 1000 });
+      store.set("notify", true); track("alert-notify-on");
+    } catch { /* the browser said no (not installed, or not allowed) */ }
+    renderWatches();
+  }
+  // tell the service worker which day's data this visitor has seen, so it only notifies about newer days
+  function markDataSeen() {
+    try { caches.open("radarak-state").then((c) => c.put("seen-day", new Response(dataDay()))); } catch { /* no cache API */ }
   }
   const STAGES = ["applied", "interview", "offer", "rejected"];
   const daysSince = (iso) => Math.floor((Date.now() - new Date(iso + "T12:00:00Z").getTime()) / 864e5);
@@ -524,6 +655,7 @@
       if (quick.week && (j.p < weekAgo || (f & FLAG.longOpen))) return false;
       if (quick.hideNat && (f & FLAG.nationals)) return false;
       if (quick.fresh && !isNew(j)) return false;
+      if (watchView && (j.fs || j.p || "") <= watchView.since) return false;
       if (hiddenJobs.has(j.id)) return false;
       if (hiddenCos.size && hiddenCos.has(coKey(j.c))) return false;
       if (ar === "req" && !(f & FLAG.arabic)) return false;
@@ -783,6 +915,32 @@
     }
     return { start, end: matched, steps };
   }
+  // extra facts for a skill in the plan: does it pay more, is demand going up (trends.json, when loaded)
+  function skillPayLift(skill) {
+    // compared inside each place (and level), so "US jobs pay more" doesn't look like "this skill pays more"
+    const k = meta.skills.indexOf(skill), groupsBy = new Map();
+    current.forEach((j) => {
+      if (!j.$) return;
+      const key = (j.w === "Remote" ? "Remote" : (j.co || [])[0] || "?") + "|" + (j.s || "");
+      if (!groupsBy.has(key)) groupsBy.set(key, { w: [], o: [] });
+      groupsBy.get(key)[j.k.includes(k) ? "w" : "o"].push((j.$[0] + j.$[1]) / 2);
+    });
+    let weight = 0, sum = 0;
+    groupsBy.forEach((g) => {
+      if (g.w.length < 3 || g.o.length < 3) return;
+      sum += g.w.length * (median(g.w) / median(g.o)); weight += g.w.length;
+    });
+    if (weight < 12) return null;
+    const lift = Math.round(100 * (sum / weight - 1));
+    return lift >= 5 ? Math.min(lift, 60) : null;     // only when clearly more; never shout huge numbers
+  }
+  function skillMove(skill) {
+    if (!trends || !trends.skills) return 0;
+    const sk = trends.skills.All || {};
+    if ((sk.rising || []).slice(0, 25).some((r) => r[0] === skill)) return 1;
+    if ((sk.falling || []).slice(0, 25).some((r) => r[0] === skill)) return -1;
+    return 0;
+  }
   function renderLearn() {
     const box = $("learnNext"), plan = learnPlan();
     box.hidden = !plan;
@@ -791,13 +949,15 @@
     box.innerHTML = `<div class="learnhead"><h3>🎯 ${t("learnTitle")}</h3><p>${t("learnNow")(num(plan.start))}</p></div>
       ${plan.steps.length ? `<ol class="learnsteps">${plan.steps.map((s, i) => `<li>
           <span class="lnum">${i + 1}</span>
-          <div class="lmain"><b>${esc(s.skill)}</b><span class="lbar"><i style="width:${Math.round((100 * s.gain) / top)}%"></i></span></div>
+          <div class="lmain"><b>${esc(s.skill)}${(() => { const m = skillMove(s.skill); return m ? ` <span class="ltrend ${m > 0 ? "up" : "down"}">${m > 0 ? "↑ " + t("learnRising") : "↓ " + t("learnFalling")}</span>` : ""; })()}</b>
+            <span class="lbar"><i style="width:${Math.round((100 * s.gain) / top)}%"></i></span>
+            ${(() => { const lift = skillPayLift(s.skill); return lift ? `<span class="lpay">💰 ${esc(t("learnPay")(lift))}</span>` : ""; })()}</div>
           <span class="lgain">${t("learnJobs")(num(s.gain))}</span>
           <span class="lbtns"><button type="button" class="linkbtn" data-learn-see="${esc(s.skill)}">${t("learnSee")}</button>
             <button type="button" class="chip add" data-add="${esc(s.skill)}">+ ${t("learnKnow")}</button></span></li>`).join("")}</ol>
         <p class="learntotal">${t("learnTotal")(plan.steps.length, `${num(plan.start)} → ${num(plan.end)}`)}
           <span class="up">+${plan.start ? Math.round((100 * (plan.end - plan.start)) / plan.start) + "%" : num(plan.end - plan.start)}</span></p>
-        <p class="hint">${t("learnHint")}</p>` : `<p class="hint">${t("learnNone")}</p>`}
+        <p class="hint">${t("learnHint")}${plan.steps.some((s) => skillPayLift(s.skill)) ? " " + t("learnPayHint") : ""}</p>` : `<p class="hint">${t("learnNone")}</p>`}
       <button type="button" class="primary sm sharecard" data-sharecard>📸 ${t("shareCard")}</button>`;
   }
 
@@ -1723,6 +1883,7 @@
       </div>
       ${adzunaFar(j) && j.c ? `<p class="adznote">${esc(t("adzNote")((j.co || []).join(", ") || "its country"))}
         <a href="${esc(companySearch(j))}" target="_blank" rel="noopener nofollow">${esc(t("findOnSite")(j.c))}</a></p>` : ""}
+      ${j.c && meta.cpages && meta.cpages[j.c] ? `<p class="dcompany"><a href="${lang === "ar" ? "ar/" : ""}companies/${esc(meta.cpages[j.c])}/" data-copage>🏢 ${esc(t("coPage")(j.c))} →</a></p>` : ""}
       ${kitDrawer(j)}
       <div class="dshare">
         <a class="wabtn" href="${esc(waLink(j))}" target="_blank" rel="noopener" data-share="${esc(j.id)}">${WA_ICON}<span>${t("shareWa")}</span></a>
@@ -1835,6 +1996,10 @@
 
   // ------------------------------------------------------------------ wiring
   function update(keepPage) {
+    if (watchView) {                                   // changed the search: leave the alert's "new only" view
+      const w = watches.find((x) => x.id === watchView.id);
+      if (!w || w.h !== searchParams()) watchView = null;
+    }
     current = filtered();
     groups = group(current);
     if (!keepPage) shown = PAGE;
@@ -1854,6 +2019,7 @@
     renderLearn();
     renderNewBanner();
     renderAlerts();
+    renderWatches();
     document.querySelector(".skillsbox").classList.toggle("has", mySkills.size > 0);
     renderJobs();
     if (currentJob) { const g = groupFor(currentJob), j = jobs.find((x) => x.id === currentJob); if (g && j) renderDrawer(g, j); }
@@ -2210,6 +2376,20 @@
     if (row.innerHTML !== html) row.innerHTML = html;
     row.hidden = false;
   }
+  function setupWatches() {
+    $("watchAdd").addEventListener("click", toggleWatch);
+    $("watchBar").addEventListener("click", (e) => {
+      const o = e.target.closest("[data-watch]"), d = e.target.closest("[data-watch-del]");
+      if (o) openWatch(o.dataset.watch);
+      else if (d) {
+        watches = watches.filter((w) => w.id !== d.dataset.watchDel);
+        if (watchView && watchView.id === d.dataset.watchDel) watchView = null;
+        store.set("watches", watches); toast(t("watchRemoved")); update(true);
+      } else if (e.target.closest("#watchAllBtn")) { watchView = null; update(); }
+      else if (e.target.closest("#watchNotify")) turnOnNotify();
+    });
+    markDataSeen();
+  }
   function setupTelegram() {
     const chans = meta.telegram || [];
     $("alertRow").addEventListener("click", (e) => {
@@ -2293,6 +2473,7 @@
     fetch("data/trends.json").then((r) => (r.ok ? r.json() : null)).catch(() => null).then((tr) => {
       trends = tr;
       if (meta && !$("trends").hidden) renderTrends();
+      if (meta && tr && mySkills.size) renderLearn();
     });
     try {
       const [m, j] = await Promise.all([
@@ -2313,6 +2494,7 @@
     jobs.forEach(prepJob);
     applyLanguage();
     setupTelegram();
+    setupWatches();
     document.addEventListener("click", (e) => { if (e.target.closest("[data-sharecard]")) shareCard(); });
     $("jobList").addEventListener("click", onInsightClick);
     $("skillsHandBtn").addEventListener("click", () => {

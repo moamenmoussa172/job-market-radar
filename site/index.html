@@ -168,11 +168,15 @@
       </section>
 
       <section id="jobs" role="tabpanel" aria-labelledby="tab-jobs">
+        <div class="watchbar" id="watchBar" hidden></div>
         <div class="newbanner" id="newBanner" role="status" hidden></div>
         <div class="activefilters" id="activeFilters" aria-label="Active filters"></div>
         <div class="resultsbar" id="results">
           <p id="resultSummary" class="summary"></p>
           <div class="resultsctl">
+            <button id="watchAdd" class="watchadd" type="button" aria-pressed="false">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10 20a2 2 0 0 0 4 0"/></svg><span id="watchAddLabel" data-i18n="watchAdd">Alert me</span>
+            </button>
             <button id="filterOpen" class="filterbtn" type="button" aria-controls="sidebar" aria-expanded="false">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg><span id="filterSummary" data-i18n="filters">Filters</span>
             </button>

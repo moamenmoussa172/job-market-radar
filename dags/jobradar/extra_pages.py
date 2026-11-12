@@ -1,7 +1,8 @@
 """More static pages built from the same daily export: company pages, the juniors corner and the
 salary guide (English and Arabic). Rendering helpers are shared with seo_pages.
 
-* /companies/<company>/ : open roles, countries, skills, pay and jobs for one company (3+ open jobs)
+* /companies/<company>/ : open roles, countries, skills, pay, hiring pace, levels and work mode for one company
+                          (2+ open jobs)
 * /juniors/             : intern and junior jobs, where they are, what they ask for, who hires juniors
 * /salaries/ and /salaries/<place>/ : median pay by role, only where enough jobs publish pay
 """
@@ -15,8 +16,8 @@ from urllib.parse import quote
 from jobradar.seo_pages import (REMOTE, T, _date, _e, _median_pay, _num, _shell, _top_skills, _unique, job_list,
                                 place_name, slug)
 
-MIN_COMPANY_JOBS = 3
-COMPANIES_LISTED = 400
+MIN_COMPANY_JOBS = 2       # people search Google for "<company> careers": every company with 2+ jobs gets a page
+COMPANIES_LISTED = 3000
 JUNIOR_LEVELS = ("Intern / Student", "Junior")
 MIN_SALARY_JOBS = 5        # a role needs this many jobs with published pay in a place
 MIN_SALARY_PLACE = 15      # a place needs this many jobs with published pay for its own page
@@ -31,8 +32,12 @@ E = {
         "c_where": " in {places}", "c_sub": "{n} open {jobs} · updated {d}",
         "c_places": "Hiring in", "c_roles": "Open roles", "c_cta": "See all {c} jobs in Radarak",
         "s_places": "countries", "s_visa": "offer visa / relocation",
+        "s_new30": "new in the last 30 days", "c_pace": "Hiring pace", "c_levels": "Levels they hire",
+        "c_modes": "How they work", "pace_fast": "Hiring fast: {n} new jobs in the last 2 weeks",
+        "pace_steady": "Hiring steadily: {n} new jobs in the last 30 days", "pace_slow": "Few new jobs lately: the newest was posted {d}",
+        "mode_Remote": "Remote", "mode_Hybrid": "Hybrid", "mode_Onsite": "On-site",
         "c_idx_title": "Companies hiring tech talent | Radarak", "c_idx_h": "Companies hiring tech talent",
-        "c_idx_sub": "{k} companies with 3 or more open tech jobs · updated {d}", "industry": "Industry",
+        "c_idx_sub": "{k} companies with 2 or more open tech jobs · updated {d}", "industry": "Industry",
         "j_title": "Junior & intern tech jobs ({n} open) | Radarak", "j_h": "Juniors corner: tech jobs for 0–2 years",
         "j_desc": "{n} open intern and junior tech jobs at {c} companies, updated {d}.{sk} Free, no sign-up.",
         "j_sub": "{n} intern and junior jobs at {c} companies · updated {d}",
@@ -63,8 +68,12 @@ E = {
         "c_where": " في {places}", "c_sub": "{n} {jobs} متاحة · آخر تحديث {d}",
         "c_places": "بتوظّف في", "c_roles": "الوظايف المتاحة", "c_cta": "شوف كل وظايف {c} في رادارك",
         "s_places": "دولة", "s_visa": "بتوفر فيزا / انتقال",
+        "s_new30": "جديدة في آخر 30 يوم", "c_pace": "سرعة التوظيف", "c_levels": "المستويات اللي بيوظفوها",
+        "c_modes": "طريقة الشغل", "pace_fast": "بتوظف بسرعة: {n} وظيفة جديدة في آخر أسبوعين",
+        "pace_steady": "بتوظف باستمرار: {n} وظيفة جديدة في آخر 30 يوم", "pace_slow": "وظايف جديدة قليلة الفترة دي: آخر وظيفة نزلت {d}",
+        "mode_Remote": "ريموت", "mode_Hybrid": "هايبرد", "mode_Onsite": "من المكتب",
         "c_idx_title": "شركات بتوظف في التك | رادارك", "c_idx_h": "شركات بتوظف في التك",
-        "c_idx_sub": "{k} شركة عندها 3 وظايف تك أو أكتر · آخر تحديث {d}", "industry": "المجال",
+        "c_idx_sub": "{k} شركة عندها وظيفتين تك أو أكتر · آخر تحديث {d}", "industry": "المجال",
         "j_title": "وظايف تك للجونيور والتدريب ({n} متاحة) | رادارك", "j_h": "ركن الجونيور: وظايف تك من 0 لـ 2 سنة",
         "j_desc": "{n} وظيفة تدريب وجونيور في {c} شركة، آخر تحديث {d}.{sk} مجاني ومن غير تسجيل.",
         "j_sub": "{n} وظيفة تدريب وجونيور في {c} شركة · آخر تحديث {d}",
@@ -105,6 +114,7 @@ CSS = """
 .clist li b{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .clist .m{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .clist .cnt{font:700 13px/1 var(--font);color:var(--violet-ink);background:var(--violet-soft);border-radius:99px;padding:6px 9px;white-space:nowrap}
+.pace{margin:0;font-size:15px;line-height:1.5}
 .intro{font-size:16px;line-height:1.7;max-width:860px}
 .seonav{display:flex;gap:4px 14px;flex-wrap:wrap;align-items:center}
 .seonav a.navlink{color:var(--ink-2);text-decoration:none;font-weight:500;font-size:14px}
@@ -199,6 +209,18 @@ def _company_page(name: str, cslug: str, jobs: list[dict], lang: str, meta: dict
         stats.append((f"{round(100 * visa / n)}%", x["s_visa"]))
     if pay:
         stats.append((f"${pay}k", t["s_pay"]))
+    new30, new14, newest = _hiring_pace(uj, today)
+    if new30:
+        stats.insert(1, (_num(new30), x["s_new30"]))
+    if new14 >= 3:
+        pace = x["pace_fast"].format(n=_num(new14))
+    elif new30:
+        pace = x["pace_steady"].format(n=_num(new30))
+    else:
+        pace = x["pace_slow"].format(d=_date(newest, lang)) if newest else ""
+    levels = Counter(j.get("s") for j in uj if j.get("s") and j.get("s") != "Not stated")
+    modes = Counter(j.get("w") for j in uj if j.get("w") in ("Remote", "Hybrid", "Onsite"))
+    mode_chips = [(x["mode_" + m], None, k) for m, k in modes.most_common()]
     industry = next((j.get("i") for j in uj if j.get("i") and j.get("i") != "Not identified"), None)
     place_chips = [(place_name(p, lang), (rel + place_pages[p]) if p in place_pages else None, k)
                    for p, k in places.most_common(12)]
@@ -215,12 +237,29 @@ def _company_page(name: str, cslug: str, jobs: list[dict], lang: str, meta: dict
       {job_list(uj, rel, lang, today, meta.get('skills', []), cap=COMPANY_CAP, app=app, total=n)}</section>
       <aside class="side">
         {_skills_panel(t['skills'], top)}
+        {f'<div class="panel"><h2>{_e(x["c_pace"])}</h2><p class="pace">{_e(pace)}</p></div>' if pace else ''}
         <div class="panel"><h2>{_e(x['c_roles'])}</h2>{_chips([(r, None, k) for r, k in roles.most_common(12)])}</div>
+        {f'<div class="panel"><h2>{_e(x["c_levels"])}</h2>{_chips([(lv, None, k) for lv, k in levels.most_common()])}</div>' if levels else ''}
+        {f'<div class="panel"><h2>{_e(x["c_modes"])}</h2>{_chips(mode_chips)}</div>' if mode_chips else ''}
       </aside>
     </div>
     {f'<section><h2>{_e(x["c_places"])}</h2>{_chips(place_chips)}</section>' if place_chips else ''}"""
     crumbs = [(t["home"], ""), (E[lang]["nav_companies"], ("ar/" if lang == "ar" else "") + "companies/"), (name, None)]
     return path, _page(lang, path, base, x["c_title"].format(c=name, n=_num(n)), desc, body, crumbs)
+
+
+def _hiring_pace(jobs: list[dict], today: dt.date) -> tuple[int, int, dt.date | None]:
+    """(new in the last 30 days, new in the last 14 days, newest date) from first-seen / posted dates."""
+    days = []
+    for j in jobs:
+        d = (j.get("fs") or j.get("p") or "")[:10]
+        try:
+            days.append(dt.date.fromisoformat(d))
+        except ValueError:
+            continue
+    new30 = sum(1 for d in days if (today - d).days <= 30)
+    new14 = sum(1 for d in days if (today - d).days <= 14)
+    return new30, new14, max(days) if days else None
 
 
 def _companies_index(lang: str, slugs: dict[str, str], by_company: dict[str, list[dict]], base: str, today: dt.date) -> tuple[str, str]:

@@ -36,3 +36,33 @@ self.addEventListener("fetch", (e) => {
   if (/\/(fonts|icons|vendor)\//.test(url.pathname)) { e.respondWith(cacheFirst(req)); return; }
   e.respondWith(networkFirst(req));
 });
+
+// "My alerts" notifications (only after the visitor turns them on in the installed app): about twice a day the
+// browser wakes this worker; if the site has a newer day of data than the visitor last saw, show one short note.
+// The worker only reads this site's own meta.json; nothing about the visitor is sent anywhere.
+const STATE = "radarak-state";
+async function checkNewJobs() {
+  const state = await caches.open(STATE);
+  const seen = await state.match("seen-day").then((r) => (r ? r.text() : ""));
+  const notified = await state.match("notified-day").then((r) => (r ? r.text() : ""));
+  const meta = await fetch("data/meta.json", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  const day = meta && (meta.generated_at || "").slice(0, 10);
+  if (!day || day <= seen || day === notified) return;
+  await state.put("notified-day", new Response(day));
+  const ar = (self.navigator.language || "").startsWith("ar");
+  await self.registration.showNotification(ar ? "وظايف جديدة على رادارك" : "New jobs on Radarak", {
+    body: ar ? "وظايف النهارده نزلت. افتح رادارك وشوف الجديد في تنبيهاتك." : "Today's jobs are in. Open Radarak to see what's new for your alerts.",
+    icon: "icons/icon-192.png", badge: "icons/icon-192.png", tag: "radarak-new-jobs", data: { url: "./" },
+  });
+  if (self.navigator.setAppBadge) self.navigator.setAppBadge().catch(() => {});
+}
+self.addEventListener("periodicsync", (e) => {
+  if (e.tag === "radarak-new-jobs") e.waitUntil(checkNewJobs());
+});
+self.addEventListener("notificationclick", (e) => {
+  e.notification.close();
+  e.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
+    const open = list.find((c) => "focus" in c);
+    return open ? open.focus() : self.clients.openWindow((e.notification.data && e.notification.data.url) || "./");
+  }));
+});
