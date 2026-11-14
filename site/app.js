@@ -96,7 +96,7 @@
       statTopSkill: "skill rising fastest", statDaysOpen: "days a job typically stays open",
       trendsSoon: "Trends need a few weeks of data. New numbers arrive every morning, so check back soon.",
       pts: (v) => `${v > 0 ? "+" : ""}${v} pts`, soFar: "so far", newTrack: "new",
-      sortBy: "Sort by", sortNew: "Newest", sortMatch: "Best match for my skills", sortPay: "Highest pay",
+      sortBy: "Sort by", sortNew: "Newest", sortMatch: "Best match, newest first", sortPay: "Highest pay",
       summary: (jobs, companies) => `<b>${jobs}</b> jobs at <b>${companies}</b> companies`,
       remote: "Remote", remoteWorld: "Remote, worldwide", visaTag: "Visa / relocation", natTag: "Nationals only",
       arTag: "Arabic required", longOpen: "Open for a while", today: "Today", yesterday: "Yesterday",
@@ -258,7 +258,7 @@
       statTopSkill: "أسرع مهارة طالعة", statDaysOpen: "يوم بتفضل الوظيفة مفتوحة عادةً",
       trendsSoon: "الترندات محتاجة كام أسبوع بيانات. أرقام جديدة بتيجي كل يوم الصبح، فارجع تاني قريب.",
       pts: (v) => `${v > 0 ? "+" : ""}${v} نقطة`, soFar: "لحد دلوقتي", newTrack: "جديد",
-      sortBy: "رتّب حسب", sortNew: "الأحدث", sortMatch: "الأنسب لمهاراتي", sortPay: "الأعلى مرتب",
+      sortBy: "رتّب حسب", sortNew: "الأحدث", sortMatch: "الأنسب لمهاراتي، الأحدث الأول", sortPay: "الأعلى مرتب",
       summary: (jobs, companies) => `<b>${jobs}</b> وظيفة في <b>${companies}</b> شركة`,
       remote: "ريموت", remoteWorld: "ريموت من أي مكان", visaTag: "فيزا / انتقال", natTag: "للمواطنين بس",
       arTag: "العربي مطلوب", longOpen: "مفتوحة من فترة", today: "النهارده", yesterday: "امبارح",
@@ -688,7 +688,10 @@
     }
     const sort = $("sort").value;
     const byNew = (a, b) => (a.job.p < b.job.p ? 1 : a.job.p > b.job.p ? -1 : 0);
-    if (sort === "match") out.sort((a, b) => b.match - a.match || b.have - a.have || byNew(a, b));
+    // best match: jobs in the same match level (strong / good / some / little) are listed newest first,
+    // so a fresh good match comes before an old one that differs by a single skill
+    const band = (g) => (g.match >= 0.75 ? 3 : g.match >= 0.5 ? 2 : g.match >= 0.3 ? 1 : 0);
+    if (sort === "match") out.sort((a, b) => band(b) - band(a) || byNew(a, b) || b.match - a.match);
     else if (sort === "pay") out.sort((a, b) => ((b.pay ? b.pay[0] + b.pay[1] : -1) - (a.pay ? a.pay[0] + a.pay[1] : -1)) || byNew(a, b));
     else { out.sort(byNew); return spreadCompanies(out); }
     return out;

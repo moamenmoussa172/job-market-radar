@@ -1351,3 +1351,26 @@ def test_job_links_to_company_page(page, data):
             return
         p.keyboard.press("Escape")
     assert has == 0 or False, "no job with a company page among the first 10"
+
+
+def test_best_match_lists_newest_first_within_each_match_level(page, data):
+    pg = page()
+    p = pg.open()
+    p.evaluate("""(() => { localStorage.setItem('jr_mySkills', JSON.stringify(['SQL', 'Python', 'Spark', 'Airflow']));})()""")
+    p.reload()
+    p.wait_for_selector("#jobList > li.job")
+    p.select_option("#sort", "match")
+    p.wait_for_timeout(300)
+    rows = p.evaluate("""(async () => {
+      const meta = await (await fetch('data/meta.json')).json();
+      const all = [...await (await fetch('data/jobs.json')).json(), ...await (await fetch('data/jobs-more.json')).json()];
+      const idx = new Set(['SQL','Python','Spark','Airflow'].map((s) => meta.skills.indexOf(s)));
+      return [...document.querySelectorAll('#jobList > li.job')].slice(0, 40).map((li) => {
+        const j = all.find((x) => x.id === li.dataset.jid);
+        const have = j.k.filter((k) => idx.has(k)).length, m = j.k.length ? have / Math.max(j.k.length, 4) : -1;
+        return [m >= 0.75 ? 3 : m >= 0.5 ? 2 : m >= 0.3 ? 1 : 0, j.p];
+      }); })()""")
+    assert rows
+    for (b1, p1), (b2, p2) in zip(rows, rows[1:]):
+        assert b1 > b2 or (b1 == b2 and p1 >= p2), (b1, p1, b2, p2)
+    no_errors(pg)

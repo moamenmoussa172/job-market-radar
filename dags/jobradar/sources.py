@@ -1380,7 +1380,7 @@ def extract_adzuna(pairs: list | None = None, pause_seconds: float = 2.5) -> Ext
         try:
             payload = _get_json(ADZUNA_URL.format(country=country), params={
                 "app_id": app_id, "app_key": app_key, "what": role,
-                "results_per_page": 50, "max_days_old": 30, "content-type": "application/json"})
+                "results_per_page": 50, "max_days_old": 21, "content-type": "application/json"})
         except requests.RequestException as exc:
             code = exc.response.status_code if exc.response is not None else "?"
             warnings.append(f"adzuna '{role}' in {country} failed: HTTP {code}")

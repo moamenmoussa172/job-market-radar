@@ -7,11 +7,11 @@
                   'smartrecruiters', 'workable', 'recruitee', 'personio', 'breezy', 'teamtailor', 'workday', 'successfactors', 'phenom', 'oracle', 'bamboohr', 'pinpoint', 'jsearch', 'jooble', 'adzuna', 'bundesagentur', 'francetravail'] %}
 {% set rotating_sources = ['jsearch', 'jooble', 'adzuna', 'bundesagentur', 'francetravail', 'remoteok'] %}  {# remoteok: feed shows only the newest ~100 #}
 {% set rotating_active_days = 21 %}  {# > one full search cycle (JSearch: ~16 days) #}
-{#- Adzuna goes through all its searches in ~5 days, so 10 days = two full rounds without seeing the job. -#}
-{% set short_window = {'adzuna': 10} %}
+{#- Adzuna goes through all its searches in ~5 days: not seen for 7 days = missed in a full round, likely gone. -#}
+{% set short_window = {'adzuna': 7} %}
 {#- Search sites keep showing old ads long after the company closed them; past this age we drop them. -#}
 {% set search_sources = ['jsearch', 'jooble', 'adzuna', 'remoteok'] %}
-{% set search_max_age_days = 30 %}
+{% set search_max_age_days = 21 %}  {# visitors kept finding 3-4 week old search-site ads already filled #}
 
 with unioned as (
     {% for s in sources %}
