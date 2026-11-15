@@ -55,7 +55,7 @@
       extGetBtn: "Get the extension (Chrome, Edge, Firefox…)", extOn: "Radarak Apply extension connected.",
       extOnHint: "On an application form, click “Fill with Radarak”. It fills your details, attaches the best CV and adds the cover letter. You check and submit.",
       kitIntro: "Fill this once. Then every job shows which of your CVs fits it best, and every answer is ready to copy.",
-      kitPrivacy: "🔒 Everything stays on this device. Nothing is uploaded to Radarak or sent anywhere. Use Backup to move it to another phone or browser.",
+      kitPrivacy: "Everything stays on this device. Nothing is uploaded to Radarak or sent anywhere. Use Backup to move it to another phone or browser.",
       kitDetails: "My details", kitCvs: "My CVs", kitLetters: "Cover letters", kitBackup: "Backup",
       kFirst: "First name", kLast: "Last name", kEmail: "Email", kPhone: "Phone (with country code)", kCountry: "Country",
       kCity: "City", kLinkedin: "LinkedIn", kPortfolio: "GitHub / portfolio", kYears: "Years of experience",
@@ -160,7 +160,7 @@
       watchRemoved: "Alert removed.", watchNew: (n) => `${n} new`, watchNone: "no new jobs", watchTitle: "My alerts",
       watchShowing: (l) => `New jobs for “${l}”`, watchAll: "Show all jobs", watchDel: (l) => `Remove alert “${l}”`,
       watchAll0: "All tech jobs", watchMax: "You can keep up to 8 alerts. Remove one first.",
-      watchNotify: "🔔 Notify me when new jobs come", watchNotifyOn: "Notifications are on",
+      watchNotify: "Notify me when new jobs come", watchNotifyOn: "Notifications are on",
       watchNotifyHint: "Your phone shows a short note when the day's new jobs are in. Nothing about you is sent anywhere.",
       watchInstall: "Install Radarak as an app to see new jobs as a badge on its icon.",
       notifyTitle: "New jobs on Radarak", notifyBody: "Today's jobs are in. Open Radarak to see what's new for your alerts.",
@@ -217,7 +217,7 @@
       extGetBtn: "نزّل الإضافة (Chrome وEdge وFirefox…)", extOn: "إضافة Radarak Apply متوصلة.",
       extOnHint: "في فورم التقديم، دوس “Fill with Radarak”. هتملى بياناتك وترفق الـ CV الأنسب وتضيف خطاب التقديم. انت تراجع وتبعت.",
       kitIntro: "املاه مرة واحدة. وبعدها كل وظيفة هتقولك أنهي CV من بتوعك الأنسب ليها، وكل الإجابات هتبقى جاهزة للنسخ.",
-      kitPrivacy: "🔒 كل حاجة بتفضل على الجهاز ده بس. مفيش حاجة بتترفع على رادارك أو بتتبعت لأي حد. استخدم النسخة الاحتياطية عشان تنقلها لموبايل أو متصفح تاني.",
+      kitPrivacy: "كل حاجة بتفضل على الجهاز ده بس. مفيش حاجة بتترفع على رادارك أو بتتبعت لأي حد. استخدم النسخة الاحتياطية عشان تنقلها لموبايل أو متصفح تاني.",
       kitDetails: "بياناتي", kitCvs: "الـ CVs بتاعتي", kitLetters: "خطابات التقديم", kitBackup: "نسخة احتياطية",
       kFirst: "الاسم الأول", kLast: "اسم العيلة", kEmail: "الإيميل", kPhone: "الموبايل (بكود الدولة)", kCountry: "الدولة",
       kCity: "المدينة", kLinkedin: "LinkedIn", kPortfolio: "GitHub / بورتفوليو", kYears: "سنين الخبرة",
@@ -322,7 +322,7 @@
       watchRemoved: "شلنا التنبيه.", watchNew: (n) => `${n} جديدة`, watchNone: "مفيش جديد", watchTitle: "تنبيهاتي",
       watchShowing: (l) => `الوظايف الجديدة لـ «${l}»`, watchAll: "اعرض كل الوظايف", watchDel: (l) => `شيل تنبيه «${l}»`,
       watchAll0: "كل وظايف التك", watchMax: "تقدر تحتفظ بـ 8 تنبيهات بس. شيل واحد الأول.",
-      watchNotify: "🔔 بلّغني لما تنزل وظايف جديدة", watchNotifyOn: "الإشعارات شغالة",
+      watchNotify: "بلّغني لما تنزل وظايف جديدة", watchNotifyOn: "الإشعارات شغالة",
       watchNotifyHint: "موبايلك هيظهر إشعار صغير لما وظايف اليوم تنزل. مفيش أي حاجة عنك بتتبعت.",
       watchInstall: "نزّل رادارك كتطبيق علشان تشوف عدد الوظايف الجديدة على الأيقونة.",
       notifyTitle: "وظايف جديدة على رادارك", notifyBody: "وظايف النهارده نزلت. افتح رادارك وشوف الجديد في تنبيهاتك.",
@@ -462,8 +462,8 @@
     // background checks only work in the installed app (Chrome / Edge on Android and desktop)
     const canNotify = standalone() && "serviceWorker" in navigator && "Notification" in window && "PeriodicSyncManager" in window;
     const notifyOn = canNotify && Notification.permission === "granted" && store.get("notify", false);
-    bar.innerHTML = `<div class="watchhead"><h3>🔔 ${esc(t("watchTitle"))}</h3>
-        ${canNotify && !notifyOn ? `<button type="button" class="linkbtn" id="watchNotify">${esc(t("watchNotify"))}</button>`
+    bar.innerHTML = `<div class="watchhead"><h3>${ic("bell")} ${esc(t("watchTitle"))}</h3>
+        ${canNotify && !notifyOn ? `<button type="button" class="linkbtn" id="watchNotify">${ic("bell")} ${esc(t("watchNotify"))}</button>`
           : notifyOn ? `<span class="muted">✓ ${esc(t("watchNotifyOn"))}</span>`
           : !standalone() ? `<span class="muted">${esc(t("watchInstall"))}</span>` : ""}</div>
       <div class="watchlist">${watches.map((w, i) => `<span class="watch${view && view.id === w.id ? " on" : ""}${counts[i] ? " hasnew" : ""}">
@@ -515,6 +515,23 @@
   function markDataSeen() {
     try { caches.open("radarak-state").then((c) => c.put("seen-day", new Response(dataDay()))); } catch { /* no cache API */ }
   }
+  // small line icons used in the interface (instead of emoji, which look different on every phone)
+  const ICONS = {
+    bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10 20a2 2 0 0 0 4 0"/>',
+    chat: '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 21l1.9-5.4A8 8 0 1 1 21 12z"/>',
+    target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
+    coin: '<circle cx="12" cy="12" r="9"/><path d="M14.5 9.5c-.5-1-1.5-1.5-2.5-1.5-1.5 0-2.5.8-2.5 2s1 1.7 2.5 2 2.5.8 2.5 2-1 2-2.5 2c-1 0-2-.5-2.5-1.5M12 6.5V8M12 16v1.5"/>',
+    camera: '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
+    chart: '<path d="M5 20V10M12 20V4M19 20v-7"/>',
+    sparkle: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>',
+    bolt: '<path d="M13 3 4 14h7l-1 7 9-11h-7z"/>',
+    file: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>',
+    building: '<path d="M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16M15 9h4a1 1 0 0 1 1 1v11M3 21h18M8 8h3M8 12h3M8 16h3"/>',
+    flag: '<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',
+    eyeoff: '<path d="M3 3l18 18M10.6 6.1A9.5 9.5 0 0 1 12 6c5 0 9 6 9 6a15 15 0 0 1-3 3.4M6.1 7.9A15 15 0 0 0 3 12s4 6 9 6a9 9 0 0 0 4-1M9.9 10a3 3 0 0 0 4.1 4.1"/>',
+    lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+  };
+  const ic = (name) => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name]}</svg>`;
   const STAGES = ["applied", "interview", "offer", "rejected"];
   const daysSince = (iso) => Math.floor((Date.now() - new Date(iso + "T12:00:00Z").getTime()) / 864e5);
   const stageOf = (s) => (s && s.a ? (STAGES.includes(s.st) ? s.st : "applied") : "");
@@ -810,7 +827,20 @@
     list.removeAttribute("aria-busy");
     const rows = groups.slice(0, shown).map(jobRow);
     if (insightsData && insightsData.items.length && rows.length >= 6) rows.splice(4, 0, insightCard());
+    const wasInList = !!document.querySelector("#cvSlot .skillsbox");
+    tgRowHome();
+    cvBoxHome();                                       // take the CV box out before the list is redrawn
+    const inList = cvBoxInList() && rows.length >= 3;
+    if (wasInList && !inList) requestAnimationFrame(() => document.querySelector(".skillsbox").scrollIntoView({ block: "start" }));
+    if (inList) rows.splice(Math.min(3, rows.length), 0, `<li class="cvslot" id="cvSlot"></li>`);
     list.innerHTML = rows.join("");
+    if ($("cvSlot")) $("cvSlot").append(document.querySelector(".skillsbox"));
+    // the Telegram invite goes after the first jobs on phones too, so jobs come first
+    if (phoneMq.matches && rows.length >= 8) {
+      const at = list.children[Math.min(7, list.children.length - 1)];
+      const li = document.createElement("li"); li.className = "cvslot"; li.id = "tgSlot";
+      at.after(li); li.append($("alertRow"));
+    }
     const companies = new Set(current.map((j) => (j.c || "").toLowerCase()).filter(Boolean)).size;
     $("resultSummary").innerHTML = t("summary")(num(groups.length), num(companies));
     const empty = $("empty");
@@ -825,6 +855,25 @@
     $("more").textContent = t("more")(Math.min(PAGE, left));
   }
 
+  // On phones, a first-time visitor sees jobs first: the "Match jobs to your skills" box moves below the
+  // first three jobs until they add skills or a CV (then it goes back on top, where its results show).
+  let cvBoxSpot = null;
+  const phoneMq = window.matchMedia("(max-width: 720px)");
+  const cvBoxInList = () => phoneMq.matches && !mySkills.size && $("cvResult").hidden && $("cvPasteBox").hidden
+    && !(document.activeElement && document.activeElement.closest && document.activeElement.closest(".skillsbox"));
+  function cvBoxHome() {
+    const box = document.querySelector(".skillsbox");
+    if (!box) return;
+    if (!cvBoxSpot) cvBoxSpot = { parent: box.parentNode, next: box.nextSibling };
+    if (box.parentNode !== cvBoxSpot.parent) cvBoxSpot.parent.insertBefore(box, cvBoxSpot.next);
+  }
+  let tgSpot = null;
+  function tgRowHome() {
+    const row = $("alertRow");
+    if (!tgSpot) tgSpot = { parent: row.parentNode, next: row.nextSibling };
+    if (row.parentNode !== tgSpot.parent) tgSpot.parent.insertBefore(row, tgSpot.next);
+  }
+  phoneMq.addEventListener("change", () => update(true));
   function renderSaved() {
     const open = new Map(jobs.map((j) => [j.id, j]));
     const ids = Object.keys(savedJobs);
@@ -858,7 +907,7 @@
         ${s.a ? `<label class="stage st-${stageOf(s)}"><span class="sr">${esc(t("stageLabel"))}</span><select data-stage="${esc(id)}">${STAGES.map((st) =>
           `<option value="${st}"${stageOf(s) === st ? " selected" : ""}>${esc(t("st" + st[0].toUpperCase() + st.slice(1)))}</option>`).join("")}
           <option value="none">${esc(t("stNone"))}</option></select></label>` : ""}</p>
-        ${s.a && stageOf(s) === "applied" && daysSince(s.sd || s.a) >= 7 ? `<p class="followup">💬 ${esc(t("followUp")(daysSince(s.sd || s.a)))}</p>` : ""}`;
+        ${s.a && stageOf(s) === "applied" && daysSince(s.sd || s.a) >= 7 ? `<p class="followup">${ic("chat")} ${esc(t("followUp")(daysSince(s.sd || s.a)))}</p>` : ""}`;
       if (j) { const row = jobRow({ key: "saved:" + id, job: j, all: [j], pay: j.$ || null, flags: j.f || 0, have: 0, match: -1 }), at = row.lastIndexOf("</li>");
         return row.slice(0, at) + status + row.slice(at); }
       return `<li class="job closed"><span class="avatar" aria-hidden="true">${esc((s.c || s.t || "?").charAt(0).toUpperCase())}</span>
@@ -949,19 +998,19 @@
     box.hidden = !plan;
     if (!plan) return;
     const top = Math.max(1, ...plan.steps.map((s) => s.gain));
-    box.innerHTML = `<div class="learnhead"><h3>🎯 ${t("learnTitle")}</h3><p>${t("learnNow")(num(plan.start))}</p></div>
+    box.innerHTML = `<div class="learnhead"><h3>${ic("target")} ${t("learnTitle")}</h3><p>${t("learnNow")(num(plan.start))}</p></div>
       ${plan.steps.length ? `<ol class="learnsteps">${plan.steps.map((s, i) => `<li>
           <span class="lnum">${i + 1}</span>
           <div class="lmain"><b>${esc(s.skill)}${(() => { const m = skillMove(s.skill); return m ? ` <span class="ltrend ${m > 0 ? "up" : "down"}">${m > 0 ? "↑ " + t("learnRising") : "↓ " + t("learnFalling")}</span>` : ""; })()}</b>
             <span class="lbar"><i style="width:${Math.round((100 * s.gain) / top)}%"></i></span>
-            ${(() => { const lift = skillPayLift(s.skill); return lift ? `<span class="lpay">💰 ${esc(t("learnPay")(lift))}</span>` : ""; })()}</div>
+            ${(() => { const lift = skillPayLift(s.skill); return lift ? `<span class="lpay">${ic("coin")} ${esc(t("learnPay")(lift))}</span>` : ""; })()}</div>
           <span class="lgain">${t("learnJobs")(num(s.gain))}</span>
           <span class="lbtns"><button type="button" class="linkbtn" data-learn-see="${esc(s.skill)}">${t("learnSee")}</button>
             <button type="button" class="chip add" data-add="${esc(s.skill)}">+ ${t("learnKnow")}</button></span></li>`).join("")}</ol>
         <p class="learntotal">${t("learnTotal")(plan.steps.length, `${num(plan.start)} → ${num(plan.end)}`)}
           <span class="up">+${plan.start ? Math.round((100 * (plan.end - plan.start)) / plan.start) + "%" : num(plan.end - plan.start)}</span></p>
         <p class="hint">${t("learnHint")}${plan.steps.some((s) => skillPayLift(s.skill)) ? " " + t("learnPayHint") : ""}</p>` : `<p class="hint">${t("learnNone")}</p>`}
-      <button type="button" class="primary sm sharecard" data-sharecard>📸 ${t("shareCard")}</button>`;
+      <button type="button" class="primary sm sharecard" data-sharecard>${ic("camera")} ${t("shareCard")}</button>`;
   }
 
   // ------------------------------------------------------------------ insight of the day (a card in the job list)
@@ -970,14 +1019,14 @@
     const items = insightsData.items, n = items.length, ins = items[((insIdx % n) + n) % n];
     const bars = ins.bars.map((b) => `<li><span>${esc(L(b.l))}</span><span class="ib"><i style="width:${Math.max(2, Math.round(b.v * 100))}%"></i></span><b>${esc(b.t)}</b></li>`).join("");
     return `<li class="insight" id="insight" aria-label="${esc(t("insKicker"))}">
-      <p class="ins-k">📊 ${esc(t("insKicker"))} · ${esc(shortDate(insightsData.date))}</p>
+      <p class="ins-k">${ic("chart")} ${esc(t("insKicker"))} · ${esc(shortDate(insightsData.date))}</p>
       <div class="ins-main"><b class="ins-big">${esc(ins.big)}</b><div><h3>${esc(L(ins.title))}</h3><p>${esc(L(ins.big_label))}</p></div></div>
       <ul class="ins-bars">${bars}</ul>
       <p class="ins-note">${esc(L(ins.note))}</p>
       <div class="ins-act">
         <span class="ins-nav"><button type="button" data-ins="prev" aria-label="${esc(t("insPrev"))}">‹</button><span>${(((insIdx % n) + n) % n) + 1} / ${n}</span><button type="button" data-ins="next" aria-label="${esc(t("insNext"))}">›</button></span>
         ${ins.link ? `<a class="linkbtn" href="${esc(ins.link)}" data-ins="go">${esc(t("insSee"))} →</a>` : ""}
-        <button type="button" class="ghostbtn sm" data-ins="img">📸 ${esc(t("insImg"))}</button>
+        <button type="button" class="ghostbtn sm" data-ins="img">${ic("camera")} ${esc(t("insImg"))}</button>
       </div></li>`;
   }
   function onInsightClick(e) {
@@ -1155,7 +1204,7 @@
     quick.fresh = was;
     el.hidden = !n && !was;
     if (el.hidden) return;
-    el.innerHTML = `<span class="spark" aria-hidden="true">✨</span><p>${t("newBanner")(num(n), shortDate(newSince))}</p>
+    el.innerHTML = `<span class="spark" aria-hidden="true">${ic("sparkle")}</span><p>${t("newBanner")(num(n), shortDate(newSince))}</p>
       <button type="button" class="${was ? "linkbtn" : "primary sm"}" id="newToggle">${was ? t("newAll") : t("newShow")}</button>`;
   }
 
@@ -1387,11 +1436,11 @@
       <div class="actions">
         <button type="button" class="primary" id="cvBestBtn">${t("cvShowBest")} →</button>
         ${role ? `<button type="button" class="chipbtn" id="cvRoleBtn">${esc(t("cvShowRole")(role))}</button>` : ""}
-        <button type="button" class="chipbtn sharecard" data-sharecard>📸 ${t("shareCard")}</button>
+        <button type="button" class="chipbtn sharecard" data-sharecard>${ic("camera")} ${t("shareCard")}</button>
         <button type="button" class="linkbtn" id="cvClearBtn">${t("cvClear")}</button>
       </div>
       ${lastCv && !kit.cvs.some((c) => c.fileName === lastCv.name) && kit.cvs.length < KIT_MAX_CVS
-        ? `<div class="cvtokit"><p>⚡ ${esc(t("cvToKitHint"))}</p><button type="button" class="chipbtn" id="cvToKit">${esc(kit.cvs.length ? t("cvToKitMore") : t("cvToKit"))}</button></div>` : ""}`;
+        ? `<div class="cvtokit"><p>${ic("bolt")} ${esc(t("cvToKitHint"))}</p><button type="button" class="chipbtn" id="cvToKit">${esc(kit.cvs.length ? t("cvToKitMore") : t("cvToKit"))}</button></div>` : ""}`;
     if ($("cvToKit")) $("cvToKit").addEventListener("click", async (e) => {
       const b = e.currentTarget; b.disabled = true;
       await addKitCv(lastCv);
@@ -1557,7 +1606,7 @@
       <input id="k-${k}" data-kit="${k}" type="${type}" autocomplete="${ac}" ${type === "number" ? 'min="0" max="50" inputmode="numeric"' : ""}
         ${type === "tel" ? 'inputmode="tel"' : ""} ${ph ? `placeholder="${esc(t(ph))}"` : ""} value="${esc(p[k] || "")}" dir="auto"></label>`;
     const cvs = kit.cvs.map((cv) => `<li class="kcv${kitJustAdded === cv.id ? " justadded" : ""}" data-cv="${esc(cv.id)}">
-        <span class="kcvicon" aria-hidden="true">📄</span>
+        <span class="kcvicon" aria-hidden="true">${ic("file")}</span>
         <div class="kcvmain"><input class="kcvname" data-cvname="${esc(cv.id)}" value="${esc(cv.name)}" aria-label="${esc(t("kitCvName"))}" dir="auto">
           <p class="kcvfacts">${esc(cv.fileName || "")} · ${esc(t("kitCvSkills")(cv.skills.length))}${cv.years ? " · " + esc(t("kitCvYears")(cv.years)) : ""}</p>
           <div class="kcvbtns"><button type="button" class="chipbtn" data-cvuse="${esc(cv.id)}">${esc(t("kitUseCv"))}</button>
@@ -1575,11 +1624,11 @@
         <ol class="ksteps" aria-label="${esc(t("kitProgress")(done))}">${steps.map(([id, label, ok], i) =>
           `<li class="${ok ? "ok" : ""}"><a href="#k-sec-${id}" data-kitjump="${id}"><b>${ok ? "✓" : i + 1}</b><span>${esc(label)}</span></a></li>`).join("")}</ol>
         ${done === 3 ? `<p class="kready">✓ ${esc(t("kitReady"))} <button type="button" class="linkbtn" data-kitjobs>${esc(t("kitSeeJobs"))} →</button></p>` : ""}
-        <p class="kitprivacy">${esc(t("kitPrivacy"))}</p>
+        <p class="kitprivacy">${ic("lock")} ${esc(t("kitPrivacy"))}</p>
         ${cvFiles.persistent ? "" : `<p class="kitwarn">${esc(t("kitNoStorage"))}</p>`}
       </header>
       <div class="kitext">${extOn() ? `<p><b>✓ ${esc(t("extOn"))}</b> ${esc(t("extOnHint"))}</p>`
-        : `<p><b>⚡ ${esc(t("extGet"))}</b> ${esc(t("extGetHint"))}</p><a class="ghostbtn" href="extension/" target="_blank" rel="noopener">${esc(t("extGetBtn"))}</a>`}</div>
+        : `<p><b>${ic("bolt")} ${esc(t("extGet"))}</b> ${esc(t("extGetHint"))}</p><a class="ghostbtn" href="extension/" target="_blank" rel="noopener">${esc(t("extGetBtn"))}</a>`}</div>
       <section class="kitsec" id="k-sec-details"><h3><b class="knum">1</b>${esc(t("kitDetails"))}</h3>
         <form class="kgrid" id="kitForm" autocomplete="on" onsubmit="return false">${KIT_FIELDS.map(field).join("")}</form>
         <p class="hint kitsaved" id="kitSavedNote" hidden>✓ ${esc(t("kitSaved"))}</p></section>
@@ -1608,7 +1657,7 @@
     if (!el) return;
     el.hidden = !kit.cvs.length;
     el.innerHTML = kit.cvs.length ? `<span>${esc(t("kitPickLabel"))}</span>${kit.cvs.map((cv) =>
-      `<button type="button" class="chip" data-kitcv="${esc(cv.id)}">📄 ${esc(cv.name)}</button>`).join("")}` : "";
+      `<button type="button" class="chip" data-kitcv="${esc(cv.id)}">${ic("file")} ${esc(cv.name)}</button>`).join("")}` : "";
   }
   function refreshKitSteps() {        // update the 1-2-3 progress while typing, without redrawing the form
     const steps = kitSteps();
@@ -1718,7 +1767,7 @@
   const wide = () => matchMedia("(min-width: 721px)").matches;
   function kitDrawer(j) {
     if (!kitHasData()) {
-      return `<section class="dsection dkit dkitcta"><div><b>⚡ ${esc(t("dKit"))}</b><p>${esc(t("dKitCta"))}</p></div>
+      return `<section class="dsection dkit dkitcta"><div><b>${ic("bolt")} ${esc(t("dKit"))}</b><p>${esc(t("dKitCta"))}</p></div>
         <button type="button" class="primary" data-kitgo>${esc(t("dKitBtn"))}</button></section>`;
     }
     const p = kit.profile;
@@ -1728,7 +1777,7 @@
       const best = rows[0], tone = best.pct >= 70 ? "good" : best.pct >= 40 ? "ok" : "low";
       const miss = best.miss.map((k) => meta.skills[k]);
       fit = `<div class="dfitcard ${tone}">
-          <div class="dfithead"><span class="dfitname">📄 ${esc(t("dSend"))} <b>${esc(best.cv.name)}</b></span>
+          <div class="dfithead"><span class="dfitname">${ic("file")} ${esc(t("dSend"))} <b>${esc(best.cv.name)}</b></span>
             <span class="dfitpct">${best.pct}% · ${esc(t("dTone_" + tone))}</span></div>
           <span class="fbar big"><i style="width:${best.pct}%"></i></span>
           ${rows.length > 1 ? `<ul class="dfit">${rows.map((r, i) => `<li class="${i === 0 ? "best" : ""}"><span class="fname">${esc(r.cv.name)}${i === 0 ? ` <em>${esc(t("dBest"))}</em>` : ""}</span>
@@ -1736,7 +1785,7 @@
           ${miss.length ? `<p class="dmisslabel">${esc(t("dMissShort"))}</p><div class="chips">${miss.slice(0, 8).map((m) => `<span class="chip ghost">${esc(m)}</span>`).join("")}${miss.length > 8 ? `<span class="chip ghost">+${miss.length - 8}</span>` : ""}</div>
             <p class="hint">${esc(t("dMissHint"))}</p>` : `<p class="hint">${esc(t("dAllThere"))}</p>`}
           <div class="dfitbtns"><button type="button" class="chipbtn" data-cvdl="${esc(best.cv.id)}">⬇ ${esc(t("dDownloadCv"))}</button>
-            ${extOn() ? `<span class="hint">⚡ ${esc(t("dExtHint"))}</span>` : ""}</div>
+            ${extOn() ? `<span class="hint">${ic("bolt")} ${esc(t("dExtHint"))}</span>` : ""}</div>
         </div>`;
     } else if (kit.cvs.length) fit = `<p class="hint">${esc(t("dNoSkills"))}</p>`;
     const name = [p.first, p.last].filter(Boolean).join(" ");
@@ -1747,7 +1796,7 @@
         <div class="dletterhead">${kit.letters.length > 1 ? `<select id="dLetterPick" aria-label="${esc(t("dLetter"))}">${kit.letters.map((l, i) => `<option value="${i}">${esc(l.name)}</option>`).join("")}</select>` : ""}
           <button type="button" class="chipbtn" id="dLetterCopy"><span class="cl">${esc(t("copy"))}</span></button></div>
         <textarea id="dLetterText" rows="7" readonly dir="auto">${esc(fillLetter(kit.letters[0].body, j))}</textarea></details>` : "";
-    return `<section class="dsection dkit"><h3 class="dkittitle">⚡ ${esc(t("dKit"))}</h3>
+    return `<section class="dsection dkit"><h3 class="dkittitle">${ic("bolt")} ${esc(t("dKit"))}</h3>
       ${fit}
       ${copies ? `<details class="dfold"${wide() ? " open" : ""}><summary>📋 ${esc(t("dCopy"))} <small>${items.length}</small></summary>
         <p class="hint">${esc(t("dCopyHint"))}</p><div class="kcopies">${copies}</div></details>` : ""}
@@ -1886,7 +1935,7 @@
       </div>
       ${adzunaFar(j) && j.c ? `<p class="adznote">${esc(t("adzNote")((j.co || []).join(", ") || "its country"))}
         <a href="${esc(companySearch(j))}" target="_blank" rel="noopener nofollow">${esc(t("findOnSite")(j.c))}</a></p>` : ""}
-      ${j.c && meta.cpages && meta.cpages[j.c] ? `<p class="dcompany"><a href="${lang === "ar" ? "ar/" : ""}companies/${esc(meta.cpages[j.c])}/" data-copage>🏢 ${esc(t("coPage")(j.c))} →</a></p>` : ""}
+      ${j.c && meta.cpages && meta.cpages[j.c] ? `<p class="dcompany"><a href="${lang === "ar" ? "ar/" : ""}companies/${esc(meta.cpages[j.c])}/" data-copage>${ic("building")} ${esc(t("coPage")(j.c))} →</a></p>` : ""}
       ${kitDrawer(j)}
       <div class="dshare">
         <a class="wabtn" href="${esc(waLink(j))}" target="_blank" rel="noopener" data-share="${esc(j.id)}">${WA_ICON}<span>${t("shareWa")}</span></a>
@@ -1905,8 +1954,8 @@
       </dl>
       ${g.all.length > 1 ? `<section class="dsection"><h3>${t("alsoIn")}</h3><ul class="dlocs">${g.all.filter((x) => x.id !== j.id).map((x) =>
         `<li><a href="${esc(x.u)}" target="_blank" rel="${linkRel(x)}">${esc(x.l || x.t)}</a></li>`).join("")}</ul></section>` : ""}
-      <div class="dreport" id="reportBox"><button type="button" class="linkbtn" id="reportJob">⚑ ${t("reportClosed")}</button>
-        ${j.c ? `<button type="button" class="linkbtn" id="hideCo">🚫 ${esc(t("hideCo")(j.c))}</button>` : ""}</div>
+      <div class="dreport" id="reportBox"><button type="button" class="linkbtn" id="reportJob">${ic("flag")} ${t("reportClosed")}</button>
+        ${j.c ? `<button type="button" class="linkbtn" id="hideCo">${ic("eyeoff")} ${esc(t("hideCo")(j.c))}</button>` : ""}</div>
       ${similar.length ? `<section class="dsection"><h3>${t("similarTitle")}</h3><ul class="similar">${similar.map((x) =>
         `<li style="${tc(x.tr)}"><button type="button" data-open="${esc(x.id)}"><span class="avatar sm" aria-hidden="true">${esc((x.c || "?").charAt(0).toUpperCase())}</span>
           <span><b>${esc(x.t)}</b><small>${esc(x.c || "")} · ${esc(x.l || "")}</small></span></button></li>`).join("")}</ul></section>` : ""}`;

@@ -1374,3 +1374,35 @@ def test_best_match_lists_newest_first_within_each_match_level(page, data):
     for (b1, p1), (b2, p2) in zip(rows, rows[1:]):
         assert b1 > b2 or (b1 == b2 and p1 >= p2), (b1, p1, b2, p2)
     no_errors(pg)
+
+
+def test_phone_shows_jobs_first_and_big_tap_targets(page, data):
+    pg = page(width=375, height=812, mobile=True)
+    p = pg.open()
+    p.wait_for_selector("#jobList > li.job")
+    first = p.evaluate("document.querySelector('#jobList > li.job').getBoundingClientRect().top")
+    assert first < 760, f"first job starts at {first}px, below the fold"
+    # new visitor: the CV box waits after the first three jobs
+    assert p.evaluate("!!document.querySelector('#jobList > li.cvslot .skillsbox')")
+    assert p.evaluate("[...document.querySelectorAll('#jobList > li')].indexOf(document.getElementById('cvSlot'))") == 3
+    small = p.evaluate("""[...document.querySelectorAll('#jobList .save, #jobList .wa')]
+        .filter((e) => { const r = e.getBoundingClientRect(); return r.height && r.height < 44; }).length""")
+    assert small == 0
+    # once they have skills, the box goes back on top (where its results are)
+    p.evaluate("""(() => { localStorage.setItem('jr_mySkills', JSON.stringify(['Python'])); })()""")
+    p.reload()
+    p.wait_for_selector("#jobList > li.job")
+    assert p.evaluate("!document.querySelector('#jobList .skillsbox')")
+    no_errors(pg)
+
+
+def test_job_details_keep_apply_in_reach(page, data):
+    pg = page(width=375, height=812, mobile=True)
+    p = pg.open()
+    p.locator("#jobList > li.job h3 a").first.click()
+    p.wait_for_selector("#jobDrawer:not([hidden])")
+    p.evaluate("document.getElementById('drawerBody').scrollTop = 2000")
+    p.wait_for_timeout(200)
+    top = p.evaluate("document.querySelector('#drawerBody .apply').getBoundingClientRect().top")
+    assert 0 <= top < 160, top
+    no_errors(pg)
