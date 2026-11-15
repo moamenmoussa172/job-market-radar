@@ -47,7 +47,7 @@
       cvToKit: "Save it to my Apply kit", cvToKitMore: "Add it to my Apply kit", cvToKitDone: "Saved in your Apply kit, on this device.",
       cvToKitHint: "Keep this CV in your Apply kit: every job will show how well it fits, and you can attach it in one tap.",
       kitPickLabel: "Your CVs:",
-      kitTitle: "Your apply kit", kitStep1: "Your details", kitStep2: "Your CV", kitStep3: "Cover letter",
+      kitTitle: "Your Apply kit", kitStep1: "Your details", kitStep2: "Your CV", kitStep3: "Cover letter",
       kitProgress: (n) => `${n} of 3 steps done`, kitReady: "Your kit is ready. Open any job to see which CV fits it.",
       kitSeeJobs: "See jobs that fit", kitAddFirstCv: "+ Add your CV", kitEdit: "Edit",
       kitBackupHint: "A file with your whole kit, to move it to another browser or keep it safe.",
@@ -63,25 +63,25 @@
       kitSaved: "Saved on this device",
       kitAddCv: "+ Add a CV", kitCvHint: "PDF or Word. Up to 5, for example one per role. Read on your device only.",
       kitCvName: "Name of this CV", kitCvSkills: (n) => `${n} skills found`, kitCvYears: (n) => `${n} years`,
-      kitUseCv: "Match jobs with this CV", kitDownload: "Download", kitDelete: "Delete", kitReallyDelete: "Tap again to delete",
+      kitUseCv: "Match jobs with this CV", kitDownload: "Download", kitDelete: "Delete", kitReallyDelete: "Press again to delete",
       kitCvMax: "You can keep up to 5 CVs. Delete one to add another.", kitCvRead: (f) => `Reading ${f}…`,
       kitCvAdded: (n) => `Added: ${n}`, kitNoCvs: "No CVs yet. Add the CV you send most, then one per role if you have more.",
       kitAddLetter: "+ Add a cover letter", kitLetterName: "Name", kitLetterHelp: "These words fill in by themselves for each job: {company} {job} {first} {last} {years}",
       kitLetterDefaultName: "Short letter",
       kitLetterDefault: "Dear {company} hiring team,\n\nI'm applying for the {job} role. I have {years} years of experience, and the skills in this job match the work I do every day.\n\nI'd be happy to talk about how I can help your team.\n\nBest regards,\n{first} {last}",
-      kitExport: "Save a backup file", kitImport: "Restore from a backup", kitImported: "Your apply kit is back",
-      kitBadFile: "That file isn't a Radarak backup.", kitWipe: "Delete my apply kit", kitWiped: "Your apply kit was deleted from this device",
+      kitExport: "Save a backup file", kitImport: "Restore from a backup", kitImported: "Your Apply kit is back",
+      kitBadFile: "That file isn't a Radarak backup.", kitWipe: "Delete my Apply kit", kitWiped: "Your Apply kit was deleted from this device",
       kitNoStorage: "This browser can't keep files (private window?). Your CVs will be gone when you close it.",
       dSend: "Send", dTone_good: "strong match", dTone_ok: "partial match", dTone_low: "weak match",
       dMissShort: "This job asks for, but your CV doesn't mention:", dMissHint: "Have these skills? Add them to your CV before you send it.",
       dDownloadCv: "Download this CV", dExtHint: "Then click “Fill with Radarak” on the application form.",
       dLetterFor: (c) => (c ? `Cover letter for ${c}` : "Cover letter"),
       dKit: "Apply faster", dKitCta: "Save your details and CVs once. Then every job shows which CV fits it and gives you copy-ready answers.",
-      dKitBtn: "Set up my apply kit", dFit: "Which of your CVs fits this job", dBest: "best fit",
+      dKitBtn: "Set up my Apply kit", dFit: "Which of your CVs fits this job", dBest: "best fit",
       dMissing: (n) => `This job asks for ${n} that your best CV doesn't mention. If you have them, add them to the CV before you send it.`,
       dAllThere: "Your best CV mentions every skill this job asks for. 👍", dNoSkills: "This job lists no skills we can compare.",
       dCopy: "Copy your answers", dCopyHint: "Tap to copy, then paste into the application form.", dLetter: "Cover letter",
-      copied: "Copied", copy: "Copy", dEditKit: "Edit my apply kit", dSentWith: (n) => `Sent with: ${n}`,
+      copied: "Copied", copy: "Copy", dEditKit: "Edit my Apply kit", dSentWith: (n) => `Sent with: ${n}`,
       tabJobsS: "Jobs", tabInsightsS: "Skills", tabTrendsS: "Trends", tabSavedS: "Saved", tabKitS: "Apply kit", tabAboutS: "About",
       tabJobs: "Jobs", tabInsights: "Skills & pay", tabSaved: "Saved", tabAbout: "How it works", tabTrends: "Trends",
       weeklyReport: "Weekly report", reportCta: "Get this week's report card",
@@ -156,11 +156,11 @@
       savedTalks: "Interviews", stageLabel: "Stage", stApplied: "Applied", stInterview: "Interviewing", stOffer: "Offer 🎉", stRejected: "Not this time", stNone: "↩ Not applied yet", offerToast: "Congrats on the offer! 🎉",
       pipeApplied: "applied", pipeTalks: "interviews", pipeOffers: "offers", pipeRate: (p) => `${p}% got a reply`,
       followUp: (d) => `${d} days with no reply. A short, polite follow-up email often helps.`,
-      watchAdd: "Alert me", watchOn: "Alert on", watchSaved: "Saved! Each time you open Radarak you'll see how many new jobs match this search.",
+      watchAdd: "Alert me", watchOn: "Alert saved", watchSaved: "Saved! Each time you open Radarak you'll see how many new jobs match this search.",
       watchRemoved: "Alert removed.", watchNew: (n) => `${n} new`, watchNone: "no new jobs", watchTitle: "My alerts",
       watchShowing: (l) => `New jobs for “${l}”`, watchAll: "Show all jobs", watchDel: (l) => `Remove alert “${l}”`,
       watchAll0: "All tech jobs", watchMax: "You can keep up to 8 alerts. Remove one first.",
-      watchNotify: "Notify me when new jobs come", watchNotifyOn: "Notifications are on",
+      watchNotify: "Notify me about new jobs", watchNotifyOn: "Notifications are on",
       watchNotifyHint: "Your phone shows a short note when the day's new jobs are in. Nothing about you is sent anywhere.",
       watchInstall: "Install Radarak as an app to see new jobs as a badge on its icon.",
       notifyTitle: "New jobs on Radarak", notifyBody: "Today's jobs are in. Open Radarak to see what's new for your alerts.",
@@ -1965,6 +1965,24 @@
     const g = groupFor(currentJob), j = jobs.find((x) => x.id === currentJob);
     if (g && j) { const top = $("drawerBody").scrollTop; renderDrawer(g, j); $("drawerBody").scrollTop = top; }
   }
+  // keep Tab inside an open dialog (job details, filter sheet on phones), as aria-modal promises (WCAG 2.4.3)
+  const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  function openDialog() {
+    if (!$("jobDrawer").hidden) return $("jobDrawer");
+    if (document.body.classList.contains("sheet-open")) return $("sidebar");
+    return null;
+  }
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Tab") return;
+    const box = openDialog();
+    if (!box) return;
+    const items = [...box.querySelectorAll(FOCUSABLE)].filter((el) => el.offsetParent !== null || el === document.activeElement);
+    if (!items.length) return;
+    const first = items[0], last = items[items.length - 1];
+    if (!box.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+    else if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
   function openJob(id, opener, write = true) {
     currentJobWanted = id;
     const g = groupFor(id), j = jobs.find((x) => x.id === id);
@@ -2159,6 +2177,9 @@
       document.body.classList.toggle("sheet-open", open);
       $("scrim").hidden = !open;
       $("filterOpen").setAttribute("aria-expanded", String(open));
+      // on phones the filters open as a dialog sheet: say so to screen readers while it is open
+      if (open) { $("sidebar").setAttribute("role", "dialog"); $("sidebar").setAttribute("aria-modal", "true"); }
+      else { $("sidebar").removeAttribute("role"); $("sidebar").removeAttribute("aria-modal"); }
       if (open) $("sheetClose").focus(); else $("filterOpen").focus();
     };
     $("filterOpen").addEventListener("click", () => sheet(true));

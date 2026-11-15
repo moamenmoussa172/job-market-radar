@@ -1103,7 +1103,7 @@ def test_apply_kit_end_to_end(browser, base, data, tmp_path):
     # 1. a job before any kit: invitation to set one up
     p.goto(base + "/#job=" + job["id"])
     p.wait_for_selector("#drawerBody .dkit", timeout=30000)
-    assert "Set up my apply kit" in p.locator("#drawerBody .dkit").inner_text()
+    assert "Set up my Apply kit" in p.locator("#drawerBody .dkit").inner_text()
     p.locator("#drawerBody [data-kitgo]").click()
     p.wait_for_selector("#kit:not([hidden]) #k-first")
 
@@ -1405,4 +1405,19 @@ def test_job_details_keep_apply_in_reach(page, data):
     p.wait_for_timeout(200)
     top = p.evaluate("document.querySelector('#drawerBody .apply').getBoundingClientRect().top")
     assert 0 <= top < 160, top
+    no_errors(pg)
+
+
+def test_dialogs_keep_keyboard_focus_inside(page, data):
+    pg = page()
+    p = pg.open()
+    p.locator("#jobList > li.job h3 a").first.focus()
+    p.keyboard.press("Enter")
+    p.wait_for_selector("#jobDrawer:not([hidden])")
+    for i in range(40):
+        p.keyboard.press("Shift+Tab" if i % 5 == 0 else "Tab")
+        assert p.evaluate("document.getElementById('jobDrawer').contains(document.activeElement)"), f"focus left the dialog at tab {i}"
+    p.keyboard.press("Escape")
+    p.wait_for_timeout(200)
+    assert p.evaluate("document.activeElement.closest('#jobList') !== null")   # back where it was opened
     no_errors(pg)
