@@ -355,6 +355,10 @@ def all_site_files(conn) -> dict[str, bytes]:
     from jobradar import insights
     data["data/insights.json"] = json.dumps(insights.all_insights(jobs, meta), ensure_ascii=False,
                                             separators=(",", ":")).encode("utf-8")
+    from jobradar import referrals
+    offers = referrals.offers_from_env([t["name"] for t in meta.get("tracks", [])])
+    data["data/referrals.json"] = json.dumps(offers, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    meta["referrals"] = {"n": len(offers), "form": os.environ.get("REFERRALS_FORM_URL", "").strip()}
     data["data/meta.json"] = json.dumps(meta, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     return version_assets({**site_files(), **data, **add_newsletter(add_analytics(seo))})
 

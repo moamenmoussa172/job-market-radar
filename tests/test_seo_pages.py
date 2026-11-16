@@ -87,3 +87,16 @@ def test_published_pages_get_analytics_and_the_base_url(monkeypatch):
     f = site_export.all_site_files(conn=None)
     assert b"goatcounter" in f["jobs/egypt/index.html"] and b"https://radarak.online/jobs/egypt/" in f["jobs/egypt/index.html"]
     assert "sitemap.xml" in f and "index.html" in f and f["CNAME"] == b"radarak.online\n"
+
+
+def test_published_site_carries_approved_referrals(monkeypatch):
+    from jobradar import referrals
+    monkeypatch.setenv("REFERRALS_FORM_URL", "https://forms.gle/radarak")
+    monkeypatch.setattr(site_export, "export_site_data", lambda conn: {
+        "data/jobs.json": site_export.json.dumps(JOBS).encode(), "data/meta.json": site_export.json.dumps(META).encode()})
+    offer = {"id": "x", "n": "Sara", "c": "Paymob", "ck": "paymob", "li": "https://www.linkedin.com/in/sara"}
+    monkeypatch.setattr(referrals, "offers_from_env", lambda tracks: [offer])
+    f = site_export.all_site_files(conn=None)
+    meta = site_export.json.loads(f["data/meta.json"])
+    assert meta["referrals"] == {"n": 1, "form": "https://forms.gle/radarak"}
+    assert site_export.json.loads(f["data/referrals.json"]) == [offer]

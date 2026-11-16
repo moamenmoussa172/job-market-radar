@@ -164,6 +164,17 @@
       watchNotifyHint: "Your phone shows a short note when the day's new jobs are in. Nothing about you is sent anywhere.",
       watchInstall: "Install Radarak as an app to see new jobs as a badge on its icon.",
       notifyTitle: "New jobs on Radarak", notifyBody: "Today's jobs are in. Open Radarak to see what's new for your alerts.",
+      refTag: "Referral available", qRef: "Has a referral", refTitle: "Get referred",
+      refIntro: (c) => `People at ${c} offered to refer job seekers. Write to them on LinkedIn, say which job you want, and send your CV there.`,
+      refLinkedin: "Message on LinkedIn", refCopy: "Copy a message", refCopied: "Message copied. Paste it on LinkedIn.",
+      refLevels: "Can refer", refAreas: "For",
+      refSafe: "Referrals on Radarak are free. Never pay anyone for a referral, and never share passwords or ID documents.",
+      refReport: "Report", refReported: "Thanks. We'll check this referral offer.",
+      refOffer: (c) => `Work at ${c}? Offer to refer people`, refOfferAny: "Offer to refer people at your company",
+      refOfferTitle: "Can you refer people at your company?",
+      refOfferText: "Many companies hire faster through referrals. Add yourself once: we show your name, title and LinkedIn on your company's jobs, and job seekers write to you there. You choose who to refer. It's free, and you can be removed anytime.",
+      refListTitle: (n) => `${n} ${n === 1 ? "person" : "people"} can refer you`,
+      refMsg: (o, j) => `Hi ${o.n.split(" ")[0]}, I found on Radarak that you're open to referring people at ${o.c}. I'm interested in the ${j.t} role${j.u ? ` (${j.u})` : ""}. I think my experience fits it well, and I'd be grateful if you could refer me. I can send you my CV here. Thank you!`,
       viewedTag: "Viewed", coPage: (c) => `${c}: all jobs, hiring pace and skills`, hideCo: (c) => `Hide jobs from ${c}`, hidCo: (c) => `Jobs from ${c} are hidden.`, undo: "Undo",
       hiddenCos: (n) => `${n} hidden ${n === 1 ? "company" : "companies"}`,
       savedNone: "Nothing here yet.",
@@ -326,6 +337,17 @@
       watchNotifyHint: "موبايلك هيظهر إشعار صغير لما وظايف اليوم تنزل. مفيش أي حاجة عنك بتتبعت.",
       watchInstall: "نزّل رادارك كتطبيق علشان تشوف عدد الوظايف الجديدة على الأيقونة.",
       notifyTitle: "وظايف جديدة على رادارك", notifyBody: "وظايف النهارده نزلت. افتح رادارك وشوف الجديد في تنبيهاتك.",
+      refTag: "فيه ترشيح", qRef: "فيها حد يرشّحك", refTitle: "اترشّح للوظيفة",
+      refIntro: (c) => `ناس شغالين في ${c} عرضوا يرشّحوا الباحثين عن شغل. ابعتلهم على لينكدإن، قول الوظيفة اللي عايزها، وابعت السي في هناك.`,
+      refLinkedin: "ابعت رسالة على لينكدإن", refCopy: "انسخ رسالة جاهزة", refCopied: "الرسالة اتنسخت. الصقها على لينكدإن.",
+      refLevels: "بيرشّح", refAreas: "في",
+      refSafe: "الترشيحات على رادارك ببلاش. أوعى تدفع فلوس لحد علشان يرشّحك، ومتبعتش باسوردات أو صور بطاقة.",
+      refReport: "بلّغ", refReported: "شكرًا. هنراجع عرض الترشيح ده.",
+      refOffer: (c) => `بتشتغل في ${c}؟ اعرض إنك ترشّح ناس`, refOfferAny: "اعرض إنك ترشّح ناس في شركتك",
+      refOfferTitle: "تقدر ترشّح ناس في شركتك؟",
+      refOfferText: "شركات كتير بتوظّف أسرع عن طريق الترشيحات. سجّل نفسك مرة واحدة: هنعرض اسمك ووظيفتك ولينكدإن بتاعك على وظايف شركتك، والناس هتكلمك هناك. إنت اللي بتختار ترشّح مين. ببلاش، وتقدر تتشال في أي وقت.",
+      refListTitle: (n) => `${n} ${n === 1 ? "شخص يقدر يرشّحك" : "أشخاص يقدروا يرشّحوك"}`,
+      refMsg: (o, j) => `أهلًا ${o.n.split(" ")[0]}، لقيتك على رادارك وإنك بترشّح ناس في ${o.c}. أنا مهتم بوظيفة ${j.t}${j.u ? ` (${j.u})` : ""}، وشايف إن خبرتي مناسبة ليها، وهكون ممتن لو تقدر ترشّحني. أقدر أبعتلك السي في هنا. شكرًا جدًا!`,
       viewedTag: "اتفتحت", coPage: (c) => `${c}: كل الوظايف وسرعة التوظيف والمهارات`, hideCo: (c) => `خبّي وظايف ${c}`, hidCo: (c) => `خبّينا وظايف ${c}.`, undo: "تراجع",
       hiddenCos: (n) => `${n} ${n === 1 ? "شركة متخبّية" : "شركات متخبّية"}`,
       savedNone: "مفيش حاجة هنا لسه.",
@@ -529,13 +551,59 @@
     building: '<path d="M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16M15 9h4a1 1 0 0 1 1 1v11M3 21h18M8 8h3M8 12h3M8 16h3"/>',
     flag: '<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',
     eyeoff: '<path d="M3 3l18 18M10.6 6.1A9.5 9.5 0 0 1 12 6c5 0 9 6 9 6a15 15 0 0 1-3 3.4M6.1 7.9A15 15 0 0 0 3 12s4 6 9 6a9 9 0 0 0 4-1M9.9 10a3 3 0 0 0 4.1 4.1"/>',
+    handshake: '<path d="M8 12l3 3 7-7"/><path d="M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0"/>',
+    users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/>',
     lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
   };
   const ic = (name) => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name]}</svg>`;
+  // ---- Referrals: people at a company who offered to refer job seekers (data/referrals.json, approved by hand).
+  // Seekers write to them on LinkedIn; nothing about the seeker goes through Radarak.
+  let refByCo = new Map();
+  const COMPANY_SUFFIX = /[,.]?\s+(inc|llc|ltd|limited|gmbh|s\.?a\.?e?|plc|co|corp|corporation|group|holding|egypt|ksa|uae|mena|middle east)\.?$/i;
+  function companyKey(name) {
+    let k = String(name || "").trim().toLowerCase().replace(/\s+/g, " ");
+    for (let i = 0; i < 3; i++) k = k.replace(COMPANY_SUFFIX, "").trim();
+    return k;
+  }
+  function refsFor(j) {
+    if (!refByCo.size || !j.c) return [];
+    const offers = refByCo.get(companyKey(j.c)) || [];
+    return offers.filter((o) => (!o.tr.length || o.tr.includes(j.tr))
+      && (!o.lv.length || !j.s || j.s === "Not stated" || o.lv.includes(j.s)))
+      .sort((a, b) => (b.job && b.job === j.u) - (a.job && a.job === j.u));
+  }
+  function setReferrals(list) {
+    refByCo = new Map();
+    (list || []).forEach((o) => { if (!refByCo.has(o.ck)) refByCo.set(o.ck, []); refByCo.get(o.ck).push(o); });
+    document.querySelectorAll('.toggle[data-flag="ref"]').forEach((b) => { b.hidden = !refByCo.size; });
+  }
+  const refForm = () => (meta && meta.referrals && meta.referrals.form) || "";
+  function refCard(j) {
+    const offers = refsFor(j).slice(0, 3);
+    if (!offers.length) {
+      return j.c && refForm() ? `<p class="refoffer"><a href="${esc(refForm())}" target="_blank" rel="noopener" data-refoffer>${ic("users")} ${esc(t("refOffer")(j.c))}</a></p>` : "";
+    }
+    const lvName = (v) => v;
+    return `<section class="refcard" aria-labelledby="refTitle">
+      <h3 id="refTitle">${ic("users")} ${esc(t("refTitle"))}</h3>
+      <p class="hint">${esc(t("refIntro")(j.c))}</p>
+      <ul class="reflist">${offers.map((o) => `<li class="ref" data-ref="${esc(o.id)}">
+        <div class="refwho"><b>${esc(o.n)}</b><span>${esc(o.t)}${o.t ? " · " : ""}${esc(o.c)}${o.loc ? " · " + esc(o.loc) : ""}</span></div>
+        ${o.lv.length || o.tr.length ? `<p class="refmeta">${o.lv.length ? `${esc(t("refLevels"))}: ${o.lv.map((v) => esc(lvName(v))).join(", ")}` : ""}${o.lv.length && o.tr.length ? " · " : ""}${o.tr.length ? `${esc(t("refAreas"))}: ${o.tr.map(esc).join(", ")}` : ""}</p>` : ""}
+        ${o.note ? `<p class="refnote">“${esc(o.note)}”</p>` : ""}
+        <div class="refacts">
+          <a class="primary sm" href="${esc(o.li)}" target="_blank" rel="noopener nofollow" data-reflink="${esc(o.id)}">${esc(t("refLinkedin"))}</a>
+          <button type="button" class="ghostbtn sm" data-refcopy="${esc(o.id)}">${esc(t("refCopy"))}</button>
+          <button type="button" class="linkbtn" data-refreport="${esc(o.id)}">${ic("flag")} ${esc(t("refReport"))}</button>
+        </div></li>`).join("")}</ul>
+      <p class="refsafe">${ic("lock")} ${esc(t("refSafe"))}</p>
+      ${refForm() ? `<p class="refoffer"><a href="${esc(refForm())}" target="_blank" rel="noopener" data-refoffer>${ic("users")} ${esc(t("refOffer")(j.c))}</a></p>` : ""}
+    </section>`;
+  }
   const STAGES = ["applied", "interview", "offer", "rejected"];
   const daysSince = (iso) => Math.floor((Date.now() - new Date(iso + "T12:00:00Z").getTime()) / 864e5);
   const stageOf = (s) => (s && s.a ? (STAGES.includes(s.st) ? s.st : "applied") : "");
-  const quick = { remote: false, visa: false, junior: false, pay: false, week: false, hideNat: true, fresh: false };
+  const quick = { remote: false, visa: false, junior: false, pay: false, week: false, hideNat: true, fresh: false, ref: false };
   const NOT_IN_LINKS = new Set(["fresh"]);              // "new for me" depends on the visitor, so shared links don't carry it
   let newSince = null;                                  // day of the data the visitor saw on their previous visit
   const hiddenJobs = new Set(store.get("hidden", []));  // jobs this visitor reported as closed
@@ -599,6 +667,12 @@
 
   function sizeHero() { /* the search console has fixed-width fields */ }
 
+  // How it works, plus the invitation to offer referrals (when the referral form is set up)
+  function renderAbout() {
+    const offer = refForm() ? `<div class="refinvite"><h2>${ic("users")} ${esc(t("refOfferTitle"))}</h2><p>${esc(t("refOfferText"))}</p>
+      <p><a class="primary" href="${esc(refForm())}" target="_blank" rel="noopener" data-refoffer>${esc(t("refOfferAny"))}</a></p></div>` : "";
+    $("aboutText").innerHTML = offer + ABOUT[lang];
+  }
   function applyLanguage() {
     document.documentElement.lang = lang;
     document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
@@ -610,7 +684,7 @@
     const btn = $("lang");
     btn.textContent = lang === "ar" ? "English" : "العربية";
     btn.lang = lang === "ar" ? "en" : "ar";
-    $("aboutText").innerHTML = ABOUT[lang];
+    renderAbout();
     if ($("kit") && !$("kit").hidden) renderKit();
     document.querySelectorAll(".langpath").forEach((a) => { a.href = (lang === "ar" ? "ar/" : "") + a.dataset.path; });
     if (meta) {
@@ -670,6 +744,7 @@
       if (quick.junior && !JUNIOR.has(j.s)) return false;
       if (quick.pay && !j.$) return false;
       if (quick.week && (j.p < weekAgo || (f & FLAG.longOpen))) return false;
+      if (quick.ref && !refsFor(j).length) return false;
       if (quick.hideNat && (f & FLAG.nationals)) return false;
       if (quick.fresh && !isNew(j)) return false;
       if (watchView && (j.fs || j.p || "") <= watchView.since) return false;
@@ -791,6 +866,7 @@
       f & FLAG.arabic ? `<span class="fact ar">${t("arTag")}</span>` : "",
       j.s && j.s !== "Not stated" ? `<span class="fact">${esc(j.s)}</span>` : "",
       `<span class="fact role">${esc(j.r)}</span>`,
+      refsFor(j).length ? `<span class="fact reftag">${ic("users")} ${t("refTag")}</span>` : "",
       viewedJobs.has(j.id) && !String(g.key).startsWith("saved:") ? `<span class="fact seentag">${t("viewedTag")}</span>` : "",
     ].join("");
     const ks = [...j.k].sort((a, b) => (mine.has(b) ? 1 : 0) - (mine.has(a) ? 1 : 0));
@@ -1936,6 +2012,7 @@
       ${adzunaFar(j) && j.c ? `<p class="adznote">${esc(t("adzNote")((j.co || []).join(", ") || "its country"))}
         <a href="${esc(companySearch(j))}" target="_blank" rel="noopener nofollow">${esc(t("findOnSite")(j.c))}</a></p>` : ""}
       ${j.c && meta.cpages && meta.cpages[j.c] ? `<p class="dcompany"><a href="${lang === "ar" ? "ar/" : ""}companies/${esc(meta.cpages[j.c])}/" data-copage>${ic("building")} ${esc(t("coPage")(j.c))} →</a></p>` : ""}
+      ${refCard(j)}
       ${kitDrawer(j)}
       <div class="dshare">
         <a class="wabtn" href="${esc(waLink(j))}" target="_blank" rel="noopener" data-share="${esc(j.id)}">${WA_ICON}<span>${t("shareWa")}</span></a>
@@ -2019,7 +2096,7 @@
     ["seniority", "workMode", "industry", "skill", "arabic"].forEach((f) => {
       if ($(f).value) add(f === "arabic" ? `${t("arabic")}: ${$(f).selectedOptions[0].text}` : $(f).selectedOptions[0].text, `data-clear="${f}"`);
     });
-    const flagLabel = { remote: "qRemote", visa: "qVisa", junior: "qJunior", pay: "qPay", week: "qWeek" };
+    const flagLabel = { remote: "qRemote", visa: "qVisa", junior: "qJunior", pay: "qPay", week: "qWeek", ref: "qRef" };
     Object.entries(flagLabel).forEach(([k, label]) => { if (quick[k]) add(t(label), `data-flag-off="${k}"`); });
     if (!quick.hideNat) add(t("showNat"), 'data-flag-on="hideNat"');
     if (quick.fresh) add(t("qNew"), 'data-flag-off="fresh"');
@@ -2312,6 +2389,13 @@
         $("repGone").focus();
       }
       if (e.target.closest("#repCancel")) refreshDrawer();
+      const rc = e.target.closest("[data-refcopy]"), rr = e.target.closest("[data-refreport]"), rl = e.target.closest("[data-reflink]");
+      if (rc || rr || rl) {
+        const j = jobs.find((x) => x.id === currentJob), o = j && refsFor(j).find((x) => x.id === (rc || rr || rl).dataset[rc ? "refcopy" : rr ? "refreport" : "reflink"]);
+        if (o && rc) { copyText(t("refMsg")(o, j), rc).then(() => toast(t("refCopied"))); track("referral-copy"); }
+        if (o && rr) { track("report-referral/" + o.id); toast(t("refReported")); rr.disabled = true; }
+        if (o && rl) track("referral-open");
+      }
       if (e.target.closest("#hideCo")) {
         const j = jobs.find((x) => x.id === currentJob);
         if (!j || !j.c) return;
@@ -2449,6 +2533,7 @@
     if (row.innerHTML !== html) row.innerHTML = html;
     row.hidden = false;
   }
+  document.addEventListener("click", (e) => { if (e.target.closest("[data-refoffer]")) track("referral-offer-click"); });
   function setupWatches() {
     $("watchAdd").addEventListener("click", toggleWatch);
     $("watchBar").addEventListener("click", (e) => {
@@ -2562,6 +2647,13 @@
       return;
     }
     meta.countries.forEach((c) => { regionOf[c.name] = c.region; });
+    // referral offers: small and optional, they arrive after the first jobs are on screen
+    if (meta.referrals && meta.referrals.n) {
+      fetch("data/referrals.json").then((r) => (r.ok ? r.json() : [])).catch(() => []).then((list) => {
+        setReferrals(list);
+        if (refByCo.size) { update(true); renderAbout(); }
+      });
+    }
     initVisit();
     meta.tracks.forEach((tr) => tr.roles.forEach((r) => { trackOfRole[r] = tr.name; }));
     jobs.forEach(prepJob);

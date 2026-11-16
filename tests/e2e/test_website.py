@@ -1421,3 +1421,57 @@ def test_dialogs_keep_keyboard_focus_inside(page, data):
     p.wait_for_timeout(200)
     assert p.evaluate("document.activeElement.closest('#jobList') !== null")   # back where it was opened
     no_errors(pg)
+
+
+def _with_referrals(pg, offers, form="https://forms.gle/radarak-test"):
+    """Serve meta.json with referrals switched on and a given data/referrals.json."""
+    def meta(route):
+        resp = route.fetch()
+        m = resp.json()
+        m["referrals"] = {"n": len(offers), "form": form}
+        route.fulfill(response=resp, body=json.dumps(m), headers={**resp.headers, "content-type": "application/json"})
+    pg.ctx.route("**/data/meta.json*", meta)
+    pg.ctx.route("**/data/referrals.json*", lambda r: r.fulfill(status=200, content_type="application/json",
+                                                                 body=json.dumps(offers)))
+
+
+def test_referrals_show_on_company_jobs(page, data):
+    job = next(j for j in data["jobs"] if j.get("c") and j.get("tr") and (j.get("s") in (None, "", "Not stated", "Senior", "Mid")))
+    co = job["c"]
+    from jobradar.referrals import company_key
+    key = company_key(co)
+    offer = {"id": "abc1234567", "n": "Sara Ahmed", "c": co, "ck": key, "t": "Senior Data Engineer",
+             "li": "https://www.linkedin.com/in/sara-ahmed-test", "tr": [job["tr"]], "lv": [], "loc": "Cairo",
+             "job": "", "note": "Happy to help juniors and seniors.", "d": "2026-11-15"}
+    pg = page()
+    _with_referrals(pg, [offer])
+    p = pg.open()
+    p.wait_for_selector('.toggle[data-flag="ref"]:not([hidden])')
+    # "Has a referral" shows only jobs at that company
+    p.evaluate("""document.querySelector('.toggle[data-flag="ref"]').click()""")
+    p.wait_for_timeout(300)
+    names = {n.strip() for n in p.locator("#jobList > li.job .where b").all_inner_texts()}
+    assert names == {co}, names
+    assert p.locator("#jobList > li.job .reftag").count() >= 1
+    p.locator("#jobList > li.job h3 a").first.click()
+    p.wait_for_selector("#jobDrawer:not([hidden]) .refcard")
+    card = p.locator("#drawerBody .refcard")
+    assert "Sara Ahmed" in card.inner_text() and "Never pay" in card.inner_text()
+    assert card.locator("a[data-reflink]").get_attribute("href") == offer["li"]
+    card.locator("[data-refcopy]").click()
+    p.wait_for_timeout(300)
+    msg = p.evaluate("navigator.clipboard.readText()")
+    assert "Sara" in msg and co in msg
+    # the invitation to offer referrals is on the How it works tab
+    p.keyboard.press("Escape")
+    p.click("#tab-about")
+    assert p.locator("#aboutText .refinvite a").get_attribute("href") == "https://forms.gle/radarak-test"
+    no_errors(pg)
+
+
+def test_no_referrals_keeps_filter_hidden(page, data):
+    pg = page()
+    p = pg.open()
+    assert p.locator('.toggle[data-flag="ref"]').is_hidden()
+    assert p.locator("#aboutText .refinvite").count() == 0
+    no_errors(pg)

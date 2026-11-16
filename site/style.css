@@ -1184,3 +1184,28 @@ html { scroll-padding-top: 72px; scroll-padding-bottom: 24px; }
 /* the search box segments show a solid ring when focused (the pale fill alone was not enough to see) */
 .seg:focus-within { box-shadow: inset 0 0 0 2px var(--violet); }
 .seg select:focus-visible, .seg input:focus-visible, .minisearch input:focus-visible { box-shadow: none; }
+
+/* ---- Referrals (update 89) ---- */
+.fact.reftag { background: var(--mint-soft); color: var(--mint-ink); display: inline-flex; align-items: center; gap: 4px; font-weight: 600; }
+.refcard { margin: 16px 0; padding: 16px; border: 1px solid var(--mint); border-radius: var(--r-m); background: color-mix(in srgb, var(--mint-soft) 45%, var(--surface)); }
+.refcard h3 { margin: 0 0 4px; font-size: 17px; display: flex; align-items: center; gap: 8px; }
+.refcard .hint { margin: 0 0 12px; }
+.reflist { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.ref { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-s); padding: 12px 14px; }
+.refwho { display: flex; flex-direction: column; gap: 2px; }
+.refwho b { font-size: 15px; }
+.refwho span, .refmeta { font-size: 13.5px; color: var(--ink-2); }
+.refmeta { margin: 6px 0 0; }
+.refnote { margin: 8px 0 0; font-size: 14px; color: var(--ink); font-style: italic; }
+.refacts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 10px; }
+.refacts .linkbtn { font-size: 13px; color: var(--muted); }
+.refsafe { margin: 12px 0 0; font-size: 13px; color: var(--ink-2); display: flex; gap: 6px; align-items: flex-start; }
+.refsafe .ico { margin-top: 2px; }
+.refoffer { margin: 12px 0 0; font-size: 14px; }
+.refoffer a { color: var(--violet-ink); font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+.refoffer a:hover { text-decoration: underline; }
+.refinvite { border: 1px solid var(--line); border-radius: var(--r-l); padding: 20px; margin: 0 0 24px; background: var(--surface); }
+.refinvite h2 { display: flex; align-items: center; gap: 8px; margin-top: 0; }
+.refcard a.primary, .refinvite a.primary { text-decoration: none; color: #fff; display: inline-flex; align-items: center; justify-content: center; }
+.refinvite h2 { align-items: center; font-size: 22px; line-height: 1.25; }
+.refinvite h2 .ico { width: 24px; height: 24px; }
