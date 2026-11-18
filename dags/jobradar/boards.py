@@ -189,6 +189,15 @@ def validate_board(ats: str, token: str) -> tuple[str, int | None]:
             data = sources._workday_post(list_url, {"appliedFacets": {}, "limit": sources.WORKDAY_PAGE,
                                                     "offset": 0, "searchText": ""})
             return "active", int(data.get("total") or 0)
+        if ats == "eightfold":  # big sites: one search request proves the board answers
+            host, _, domain = token.partition("|")
+            _, total = sources._eightfold_page(host, domain, None, 0)
+            return "active", total
+        if ats == "amazon":
+            data = sources._get_json(sources.AMAZON_URL, params={"result_limit": 1, "offset": 0})
+            if not isinstance(data, dict) or "jobs" not in data:
+                raise ValueError("amazon.jobs did not answer a job search")
+            return "active", int(data.get("hits") or 0)
         jobs = sources.ATS_FETCHERS[ats](token)
     except requests.HTTPError as exc:
         code = exc.response.status_code if exc.response is not None else None
@@ -384,6 +393,15 @@ def probe_board(ats: str, token: str, country: str | None) -> tuple[str, str | N
             head = sources._get_json(sources.SMARTRECRUITERS_URL.format(token=token), params={"limit": 1})
             if isinstance(head, dict) and not (head.get("totalFound") or head.get("content")):
                 return "dead", "no postings (SmartRecruiters answers for any name)"
+        if ats == "eightfold":  # big sites: one search request proves the board answers
+            host, _, domain = token.partition("|")
+            _, total = sources._eightfold_page(host, domain, None, 0)
+            return "active", total
+        if ats == "amazon":
+            data = sources._get_json(sources.AMAZON_URL, params={"result_limit": 1, "offset": 0})
+            if not isinstance(data, dict) or "jobs" not in data:
+                raise ValueError("amazon.jobs did not answer a job search")
+            return "active", int(data.get("hits") or 0)
         jobs = sources.ATS_FETCHERS[ats](token)
     except requests.HTTPError as exc:
         code = exc.response.status_code if exc.response is not None else None

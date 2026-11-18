@@ -18,6 +18,10 @@ models:
     columns: *stg_cols
   - name: stg_oracle
     columns: *stg_cols
+  - name: stg_eightfold
+    columns: *stg_cols
+  - name: stg_amazon
+    columns: *stg_cols
   - name: stg_arbeitnow
     columns: *stg_cols
   - name: stg_greenhouse

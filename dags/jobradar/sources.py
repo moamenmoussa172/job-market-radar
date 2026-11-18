@@ -184,7 +184,7 @@ PROBE_ATS = ("greenhouse", "lever", "ashby", "smartrecruiters", "workable", "rec
              "breezy", "teamtailor", "bamboohr", "pinpoint")
 # + enterprise platforms (big corporates, banks, telcos, oil & gas): their board ids can't be guessed,
 # they come from company_boards.csv or from job links that point to them (harvest).
-BOARD_ATS = PROBE_ATS + ("workday", "successfactors", "phenom", "oracle")
+BOARD_ATS = PROBE_ATS + ("workday", "successfactors", "phenom", "oracle", "eightfold", "amazon")
 # SmartRecruiters company identifiers are case-sensitive (e.g. "BoschGroup"); so are Workday site names.
 CASE_SENSITIVE_ATS = ("smartrecruiters", "workday", "lever")   # Lever: jobs.lever.co/Bosta, /Yassir
 
@@ -211,6 +211,12 @@ def normalize_board_token(ats: str, token: str) -> str:
     if ats == "oracle":          # Oracle Recruiting Cloud: "<host>/<site>", e.g. ehjd.fa.em2.oraclecloud.com/fabCareers
         m = _ORACLE_RE.match(token)
         return f"{m.group(1).lower()}/{m.group(2) or 'CX_1'}" if m else ""
+    if ats == "eightfold":       # "<career site host>|<company domain>", e.g. apply.careers.microsoft.com|microsoft.com
+        host, _, domain = token.lower().partition("|")
+        host = re.sub(r"^https?://", "", host).split("/")[0]
+        return f"{host}|{domain.strip()}" if host and domain.strip() else ""
+    if ats == "amazon":          # one board: Amazon's own career site
+        return "amazon.jobs"
     if ats == "phenom":          # "<host>/<country>/<lang>[?<Country to keep>]", e.g. orange.jobs/gb/en?Egypt
         m = _PHENOM_RE.match(token)
         return f"{m.group(1).lower()}/{m.group(2).lower()}/{m.group(3).lower()}" + (f"?{m.group(4)}" if m.group(4) else "") if m else ""
@@ -818,6 +824,151 @@ def _fetch_oracle(token: str) -> list[dict]:
     return [j for j in jobs if is_board_role(j.get("Title"))]
 
 
+# Big companies with their own career sites: searched country by country (the MENA and Europe lists the
+# Workday reader uses, WORKDAY_REGIONS), keeping tech jobs only.
+def board_countries(regions: list[str] | None = None) -> list[str]:
+    regions = WORKDAY_REGIONS if regions is None else regions
+    names: list[str] = []
+    if "mena" in regions:
+        names += list(MENA_COUNTRY_NAMES)
+    if "europe" in regions:
+        names += [n for n in EUROPE_COUNTRY_NAMES if n != "Czech Republic"]
+    return names
+
+
+# Eightfold career sites (Microsoft, Netflix and other large companies): the site's own public job search.
+# Board id = "<host>|<domain>". Two versions of the search exist; the older one is tried first.
+EIGHTFOLD_PAGE = 100       # the older search ("v2") takes 100 a page; the newer one ("pcsx") is asked for 10
+EIGHTFOLD_MAX_PAGES = int(os.environ.get("EIGHTFOLD_MAX_PAGES", "60"))   # per country
+EIGHTFOLD_ALL_COUNTRIES_MAX = int(os.environ.get("EIGHTFOLD_ALL_COUNTRIES_MAX", "1500"))
+_EIGHTFOLD_KIND: dict[str, str] = {}   # host -> "v2" | "pcsx", whichever this site answers
+EIGHTFOLD_PAUSE = float(os.environ.get("EIGHTFOLD_PAUSE_SECONDS", "2"))   # between pages: these sites limit speed
+# Microsoft's newer search refuses fast readers: a slower pace there, and only the MENA countries by
+# default (Europe and remote jobs come from many other sources). EIGHTFOLD_REGIONS=mena,europe for both.
+EIGHTFOLD_PCSX_PAUSE = float(os.environ.get("EIGHTFOLD_PCSX_PAUSE_SECONDS", "8"))
+EIGHTFOLD_REGIONS = [r.strip().lower() for r in os.environ.get("EIGHTFOLD_REGIONS", "mena").split(",") if r.strip()]
+
+
+def _eightfold_get(url: str, params: dict) -> dict | list:
+    """One search request; on 429 ("too many requests") wait as asked (or 30s, then 60s) and try again."""
+    for wait in (30, 60, None):
+        try:
+            return _get_json(url, params=params)
+        except requests.HTTPError as exc:
+            resp = exc.response
+            if resp is None or resp.status_code != 429 or wait is None:
+                raise
+            after = resp.headers.get("Retry-After", "")
+            time.sleep(min(int(after), 120) if after.isdigit() else wait)
+    raise RuntimeError("unreachable")
+
+
+def _eightfold_page(host: str, domain: str, location: str | None, start: int) -> tuple[list[dict], int]:
+    """Netflix answers the older search (/api/apply/v2/jobs), Microsoft only the newer one (/api/pcsx/search);
+    each site refuses the other one with 403."""
+    params = {"domain": domain, "start": start, "query": ""}
+    if location:
+        params["location"] = location
+    kinds = [_EIGHTFOLD_KIND[host]] if host in _EIGHTFOLD_KIND else ["v2", "pcsx"]
+    error: Exception | None = None
+    for kind in kinds:
+        try:
+            if kind == "v2":
+                data = _eightfold_get(f"https://{host}/api/apply/v2/jobs", {**params, "num": EIGHTFOLD_PAGE})
+                body = data if isinstance(data, dict) else {}
+            else:
+                data = _eightfold_get(f"https://{host}/api/pcsx/search", {**params, "num": 10})
+                body = (data or {}).get("data") if isinstance(data, dict) else {}
+            if isinstance(body, dict) and isinstance(body.get("positions"), list):
+                _EIGHTFOLD_KIND[host] = kind
+                return body["positions"], int(body.get("count") or 0)
+            error = ValueError(f"eightfold '{host}' ({kind}) did not answer a job search")
+        except (requests.RequestException, ValueError) as exc:
+            if getattr(getattr(exc, "response", None), "status_code", None) == 429:
+                raise                      # still too many requests after waiting: not a reason to try the other search
+            error = exc
+    raise error or ValueError(f"eightfold '{host}' did not answer a job search")
+
+
+def _eightfold_record(host: str, domain: str, p: dict) -> dict:
+    locs = p.get("locations") or ([p.get("location")] if p.get("location") else [])
+    url = p.get("canonicalPositionUrl") or p.get("positionUrl") or f"/careers/job/{p.get('id')}"
+    if url.startswith("/"):
+        url = f"https://{host}{url}"
+    posted = p.get("t_create") or p.get("postedTs") or p.get("creationTs")
+    return {"id": p.get("id"), "title": p.get("name") or p.get("title"), "locations": [str(x) for x in locs if x],
+            "department": p.get("department"), "work_location_option": p.get("work_location_option") or p.get("workLocationOption"),
+            "posted_ts": posted, "description": p.get("job_description") or p.get("jobDescription") or "",
+            "job_url": url, "company": domain.split(".")[0].capitalize()}
+
+
+def _fetch_eightfold(token: str) -> list[dict]:
+    host, _, domain = token.partition("|")
+    jobs: dict = {}
+
+    def keep(page: list[dict]) -> int:
+        fresh = [p for p in page if p.get("id") not in jobs]
+        for p in fresh:
+            jobs[p.get("id")] = _eightfold_record(host, domain, p)
+        return len(fresh)
+
+    first, total = _eightfold_page(host, domain, None, 0)
+    # a smaller company: read everything (the first page is already here); a giant one (Microsoft):
+    # only the countries Radarak covers
+    places = [None] if total <= EIGHTFOLD_ALL_COUNTRIES_MAX else board_countries(EIGHTFOLD_REGIONS)
+    pause = EIGHTFOLD_PCSX_PAUSE if _EIGHTFOLD_KIND.get(host) == "pcsx" else EIGHTFOLD_PAUSE
+    for place in places:
+        start = 0
+        for n in range(EIGHTFOLD_MAX_PAGES):
+            try:
+                if place is None and n == 0:
+                    page, count = first, total
+                else:
+                    time.sleep(pause)
+                    page, count = _eightfold_page(host, domain, place, start)
+            except requests.HTTPError as exc:
+                # still refused after waiting: keep what we have rather than lose the whole site today
+                if getattr(exc.response, "status_code", None) == 429 and jobs:
+                    log.warning("eightfold '%s': too many requests, stopping with %s jobs", host, len(jobs))
+                    return [j for j in jobs.values() if is_board_role(j.get("title"))]
+                raise
+            start += len(page)
+            if not page or not keep(page) or start >= count:
+                break
+    return [j for j in jobs.values() if is_board_role(j.get("title"))]
+
+
+# Amazon's own career site (amazon.jobs): its public job search answers JSON. Searched per country.
+AMAZON_URL = "https://www.amazon.jobs/en/search.json"
+AMAZON_PAGE = 100
+AMAZON_MAX_PAGES = int(os.environ.get("AMAZON_MAX_PAGES", "10"))   # per country
+AMAZON_TECH_CATEGORIES = re.compile(r"software|data|machine learning|science|engineer|solutions architect|"
+                                    r"business intelligence|security|it support|network|technical program|"
+                                    r"product management|systems", re.I)
+
+
+def _fetch_amazon(token: str = "amazon.jobs") -> list[dict]:
+    jobs: dict = {}
+    for place in board_countries():
+        offset = 0
+        for _ in range(AMAZON_MAX_PAGES):
+            data = _get_json(AMAZON_URL, params={"loc_query": place, "result_limit": AMAZON_PAGE, "offset": offset,
+                                                 "sort": "recent"})
+            if not isinstance(data, dict) or not isinstance(data.get("jobs"), list):
+                raise ValueError("amazon.jobs did not answer a job search")
+            page = data["jobs"]
+            for j in page:
+                key = j.get("id_icims") or j.get("id")
+                if key and key not in jobs:
+                    jobs[key] = {**j, "searched_country": place,
+                                 "job_url": "https://www.amazon.jobs" + (j.get("job_path") or f"/en/jobs/{key}")}
+            offset += len(page)
+            if not page or offset >= int(data.get("hits") or 0):
+                break
+    return [j for j in jobs.values()
+            if is_board_role(j.get("title")) or AMAZON_TECH_CATEGORIES.search(j.get("job_category") or "")]
+
+
 ATS_FETCHERS: dict[str, Callable[[str], list[dict]]] = {
     "greenhouse": _fetch_greenhouse,
     "lever": _fetch_lever,
@@ -834,6 +985,8 @@ ATS_FETCHERS: dict[str, Callable[[str], list[dict]]] = {
     "oracle": _fetch_oracle,
     "bamboohr": _fetch_bamboohr,
     "pinpoint": _fetch_pinpoint,
+    "eightfold": _fetch_eightfold,
+    "amazon": _fetch_amazon,
 }
 
 
@@ -973,6 +1126,24 @@ def extract_phenom(tokens: list[str] | None = None, pause_seconds: float = 1.0,
 def extract_oracle(tokens: list[str] | None = None, pause_seconds: float = 1.0,
                    meta: dict[str, dict] | None = None) -> ExtractResult:
     return extract_company_boards("oracle", tokens, pause_seconds, meta)
+
+
+def extract_eightfold(tokens: list[str] | None = None, pause_seconds: float = 1.0,
+                      meta: dict[str, dict] | None = None) -> ExtractResult:
+    return extract_company_boards("eightfold", tokens, pause_seconds, meta)
+
+
+def extract_amazon(tokens: list[str] | None = None, pause_seconds: float = 1.0,
+                   meta: dict[str, dict] | None = None) -> ExtractResult:
+    return extract_company_boards("amazon", tokens or ["amazon.jobs"], pause_seconds, meta)
+
+
+def eightfold_id(record: dict) -> str:
+    return f"{record.get('board_token', '')}:{record.get('id') or record['job_url']}"
+
+
+def amazon_id(record: dict) -> str:
+    return f"amazon:{record.get('id_icims') or record.get('id') or record['job_url']}"
 
 
 def oracle_id(record: dict) -> str:
@@ -1555,6 +1726,8 @@ SOURCES: dict[str, SourceSpec] = {
     "workday": SourceSpec(extract_workday, workday_id, required=False, board_ats="workday"),
     "phenom": SourceSpec(extract_phenom, phenom_id, required=False, board_ats="phenom"),
     "oracle": SourceSpec(extract_oracle, oracle_id, required=False, board_ats="oracle"),
+    "eightfold": SourceSpec(extract_eightfold, eightfold_id, required=False, board_ats="eightfold"),
+    "amazon": SourceSpec(extract_amazon, amazon_id, required=False, board_ats="amazon"),
     "breezy": SourceSpec(extract_breezy, breezy_id, required=False, board_ats="breezy"),
     "teamtailor": SourceSpec(extract_teamtailor, teamtailor_id, required=False, board_ats="teamtailor"),
     "bamboohr": SourceSpec(extract_bamboohr, bamboohr_id, required=False, board_ats="bamboohr"),

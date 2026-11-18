@@ -4,7 +4,7 @@
 -- Rotating sources (a different slice of searches each day) can't use that
 -- rule: their jobs stay active if seen within the last N days.
 {% set sources = ['remotive', 'jobicy', 'remoteok', 'himalayas', 'arbeitnow', 'greenhouse', 'lever', 'ashby',
-                  'smartrecruiters', 'workable', 'recruitee', 'personio', 'breezy', 'teamtailor', 'workday', 'successfactors', 'phenom', 'oracle', 'bamboohr', 'pinpoint', 'jsearch', 'jooble', 'adzuna', 'bundesagentur', 'francetravail'] %}
+                  'smartrecruiters', 'workable', 'recruitee', 'personio', 'breezy', 'teamtailor', 'workday', 'successfactors', 'phenom', 'oracle', 'eightfold', 'amazon', 'bamboohr', 'pinpoint', 'jsearch', 'jooble', 'adzuna', 'bundesagentur', 'francetravail'] %}
 {% set rotating_sources = ['jsearch', 'jooble', 'adzuna', 'bundesagentur', 'francetravail', 'remoteok'] %}  {# remoteok: feed shows only the newest ~100 #}
 {% set rotating_active_days = 21 %}  {# > one full search cycle (JSearch: ~16 days) #}
 {#- Adzuna goes through all its searches in ~5 days: not seen for 7 days = missed in a full round, likely gone. -#}

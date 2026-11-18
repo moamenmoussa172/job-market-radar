@@ -54,6 +54,8 @@ keyed as (
             when 'successfactors' then 1
             when 'phenom'     then 2   -- company site, teaser only
             when 'oracle'     then 2   -- company site, short description
+            when 'eightfold'  then 2   -- company site (Microsoft, Netflix), list only
+            when 'amazon'     then 1   -- company site, full description
             when 'himalayas'  then 2   -- structured eligibility + salary
             when 'jobicy'     then 3
             when 'remoteok'   then 3
