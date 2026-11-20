@@ -1475,3 +1475,38 @@ def test_no_referrals_keeps_filter_hidden(page, data):
     assert p.locator('.toggle[data-flag="ref"]').is_hidden()
     assert p.locator("#aboutText .refinvite").count() == 0
     no_errors(pg)
+
+
+def test_trends_dashboard(browser, base, data):
+    """Trends: plain-language takeaways, one-colour weekly chart, track picker, and on a phone the tab opens at its content."""
+    trends = json.loads(fetch(base, "data/trends.json"))
+    if trends["history_days"] < 14:
+        pytest.skip("not enough trend history")
+    ctx = browser.new_context(viewport={"width": 390, "height": 844}, is_mobile=True, has_touch=True)
+    ctx.add_init_script("localStorage.setItem('jr_lang', JSON.stringify('en'));")
+    p = ctx.new_page()
+    errors = []
+    p.on("pageerror", lambda e: errors.append(str(e)))
+    p.goto(base + "/")
+    p.wait_for_selector("#jobList li.job")
+    p.locator("#tab-trends").click()
+    p.wait_for_timeout(600)
+    assert not errors, errors
+    assert p.evaluate("document.getElementById('trends').getBoundingClientRect().top") < 120   # not hidden below the search box
+    assert p.locator("#weeklyChart .wk").count() > 0
+    assert p.locator("#weeklyChart .wseg").count() == 0                       # no 14-colour stacks any more
+    assert p.locator("#takeaways li").count() >= 1
+    assert p.locator("#trendTracks .ttrack").count() >= 2
+    assert p.locator("#daysOpen .range").count() >= 1
+    assert p.evaluate("document.documentElement.scrollWidth <= window.innerWidth + 1")
+    chip = p.locator("#trendTracks .ttrack").nth(1)
+    name = chip.inner_text().strip()
+    chip.click()
+    p.wait_for_timeout(300)
+    assert p.locator("#role").input_value() == "track:" + name
+    assert p.locator("#trendTracks .ttrack[aria-pressed=true]").inner_text().strip() == name
+    if p.locator("#trackMoves .bar").count():
+        p.locator("#trackMoves .bar").first.click()
+        p.wait_for_timeout(400)
+        assert p.locator("#jobs").is_visible()
+    ctx.close()

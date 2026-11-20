@@ -86,14 +86,29 @@
       tabJobs: "Jobs", tabInsights: "Skills & pay", tabSaved: "Saved", tabAbout: "How it works", tabTrends: "Trends",
       weeklyReport: "Weekly report", reportCta: "Get this week's report card",
       weeklyTitle: "New jobs per week", risingTitle: "Skills on the rise", fallingTitle: "Skills cooling down",
-      trackMovesTitle: "Which tracks are hiring faster", trackMovesHint: "New jobs in the last 4 weeks compared with the 4 weeks before.",
-      daysOpenTitle: "How long jobs stay open", daysOpenHint: "Typical days from posting until the job is taken down. Short = apply early.",
+      trackMovesTitle: "Where the new jobs are", trackMovesHint2: "New jobs in the last 4 weeks, by track. Tap one to see its jobs.",
+      daysOpenTitle: "How fast jobs close", topSkillsTitle: "Skills most asked for",
+      trendSkillsHint: (d) => `Share of open jobs that ask for each skill, and how it moved in the last ${d} days. Tap one to see its jobs.`,
+      daysOpenHint: (d) => `Half of all jobs are taken down within ${d} days. The bar shows the usual range for each role, and the dot is the middle.`,
+      daysOpenHintNone: "How long each role usually stays open, from posting until it is taken down.",
+      daysRange: (a, b) => `${a}–${b} days`, trendTracksLabel: "Show trends for", allTech: "All tech",
+      takeawayTitle: "What this means for you", seeJobs: "See jobs",
+      tkBusier: (last, avg) => `Hiring is picking up: <b>${last}</b> new jobs last week, against about ${avg} a week before.`,
+      tkSlower: (last, avg) => `Hiring is slower than usual: <b>${last}</b> new jobs last week, against about ${avg} a week before.`,
+      tkSteady: (last, avg) => `Hiring is steady: <b>${last}</b> new jobs last week, about the usual ${avg} a week.`,
+      tkTrack: (name, n) => `Most new jobs are in <b>${name}</b>: ${n} in the last 4 weeks.`,
+      tkTopSkill: (name, p) => `<b>${name}</b> is the skill asked for most, in ${p}% of open jobs. If you have it, put it at the top of your CV.`,
+      tkRising: (name, a, b) => `<b>${name}</b> is growing fastest: from ${a}% to ${b}% of jobs. A good skill to learn next.`,
+      tkApply: (d) => `Half of the jobs close within <b>${d} days</b>, so apply in the first week.`,
       trendScopeAll: "Trends for all places", trendScopeOf: (c) => `Trends for ${c}`,
       trendScopeFallback: (c) => `There isn't enough data for ${c} yet, so these trends cover all places.`,
-      weeklyHint: "Jobs we saw for the first time each week. The last bar is this week so far.",
+      weeklyHint: "Jobs we saw for the first time each week.",
+      weeklyNote: (avg) => `Dashed line: about ${avg} new jobs a week on average over the last 4 full weeks. The striped bar is this week so far.`,
       skillsHint: (d) => `Share of open jobs that ask for each skill: now compared with ${d} days ago. Tap a skill to see its jobs.`,
-      statNewWeek: "new jobs last week", statVsPrev: (p) => `${p} vs the week before`, statTopTrack: "fastest-growing track",
-      statTopSkill: "skill rising fastest", statDaysOpen: "days a job typically stays open",
+      statNewWeek: "new jobs last week", statUsual: (avg) => `about ${avg} a week usually`,
+      stat4w: "new jobs in the last 4 weeks", statVsPrev4: (p) => `${p} vs the 4 weeks before`,
+      statTopSkill: "most asked-for skill", statInJobs: (p) => `in ${p}% of open jobs`,
+      statDaysOpen: "is how long a job usually stays open", statDays: (d) => `${d} days`, statApplyEarly: "apply early",
       trendsSoon: "Trends need a few weeks of data. New numbers arrive every morning, so check back soon.",
       pts: (v) => `${v > 0 ? "+" : ""}${v} pts`, soFar: "so far", newTrack: "new",
       sortBy: "Sort by", sortNew: "Newest", sortMatch: "Best match, newest first", sortPay: "Highest pay",
@@ -259,14 +274,29 @@
       tabJobs: "الوظايف", tabInsights: "المهارات والمرتبات", tabSaved: "المحفوظة", tabAbout: "إزاي بيشتغل", tabTrends: "الترندات",
       weeklyReport: "التقرير الأسبوعي", reportCta: "خد كارت تقرير الأسبوع ده",
       weeklyTitle: "الوظايف الجديدة كل أسبوع", risingTitle: "مهارات طالعة", fallingTitle: "مهارات بتهدى",
-      trackMovesTitle: "أنهي مجالات بتوظّف أسرع", trackMovesHint: "الوظايف الجديدة في آخر 4 أسابيع مقارنة بالـ 4 اللي قبلهم.",
-      daysOpenTitle: "الوظيفة بتفضل مفتوحة قد إيه", daysOpenHint: "متوسط الأيام من نشر الوظيفة لحد ما تتقفل. لو قليل يبقى قدّم بدري.",
+      trackMovesTitle: "الوظايف الجديدة فين", trackMovesHint2: "الوظايف الجديدة في آخر 4 أسابيع حسب المجال. دوس على مجال تشوف وظايفه.",
+      daysOpenTitle: "الوظايف بتتقفل بسرعة قد إيه", topSkillsTitle: "أكتر مهارات مطلوبة",
+      trendSkillsHint: (d) => `نسبة الوظايف المفتوحة اللي طالبة كل مهارة، واتغيرت قد إيه في آخر ${d} يوم. دوس على مهارة تشوف وظايفها.`,
+      daysOpenHint: (d) => `نص الوظايف بتتقفل في خلال ${d} يوم. الخط بيوضح المدة المعتادة لكل وظيفة، والنقطة هي النص.`,
+      daysOpenHintNone: "كل وظيفة بتفضل مفتوحة قد إيه عادةً، من النشر لحد ما تتقفل.",
+      daysRange: (a, b) => `${a}–${b} يوم`, trendTracksLabel: "اعرض ترندات", allTech: "كل التك",
+      takeawayTitle: "ده معناه إيه ليك", seeJobs: "شوف الوظايف",
+      tkBusier: (last, avg) => `التوظيف بيزيد: <b>${last}</b> وظيفة جديدة الأسبوع اللي فات، والعادي حوالي ${avg} في الأسبوع.`,
+      tkSlower: (last, avg) => `التوظيف أهدى من العادي: <b>${last}</b> وظيفة جديدة الأسبوع اللي فات، والعادي حوالي ${avg} في الأسبوع.`,
+      tkSteady: (last, avg) => `التوظيف ثابت: <b>${last}</b> وظيفة جديدة الأسبوع اللي فات، قريب من العادي ${avg} في الأسبوع.`,
+      tkTrack: (name, n) => `أكتر وظايف جديدة في <b>${name}</b>: ${n} في آخر 4 أسابيع.`,
+      tkTopSkill: (name, p) => `<b>${name}</b> أكتر مهارة مطلوبة، في ${p}% من الوظايف المفتوحة. لو عندك حطها في أول الـ CV.`,
+      tkRising: (name, a, b) => `<b>${name}</b> أسرع مهارة طالعة: من ${a}% لـ ${b}% من الوظايف. مهارة كويسة تتعلمها.`,
+      tkApply: (d) => `نص الوظايف بتتقفل في خلال <b>${d} يوم</b>، فقدّم في أول أسبوع.`,
       trendScopeAll: "ترندات كل الأماكن", trendScopeOf: (c) => `ترندات ${c}`,
       trendScopeFallback: (c) => `لسه مفيش بيانات كفاية عن ${c}، فالترندات دي لكل الأماكن.`,
-      weeklyHint: "الوظايف اللي شفناها لأول مرة كل أسبوع. آخر عمود هو الأسبوع ده لحد دلوقتي.",
+      weeklyHint: "الوظايف اللي شفناها لأول مرة كل أسبوع.",
+      weeklyNote: (avg) => `الخط المتقطع: حوالي ${avg} وظيفة جديدة في الأسبوع في المتوسط في آخر 4 أسابيع كاملة. العمود المخطط هو الأسبوع ده لحد دلوقتي.`,
       skillsHint: (d) => `نسبة الوظايف المفتوحة اللي طالبة كل مهارة: دلوقتي مقارنة بـ ${d} يوم فاتوا. دوس على مهارة تشوف وظايفها.`,
-      statNewWeek: "وظيفة جديدة الأسبوع اللي فات", statVsPrev: (p) => `${p} عن الأسبوع اللي قبله`, statTopTrack: "أسرع مجال بيكبر",
-      statTopSkill: "أسرع مهارة طالعة", statDaysOpen: "يوم بتفضل الوظيفة مفتوحة عادةً",
+      statNewWeek: "وظيفة جديدة الأسبوع اللي فات", statUsual: (avg) => `العادي حوالي ${avg} في الأسبوع`,
+      stat4w: "وظيفة جديدة في آخر 4 أسابيع", statVsPrev4: (p) => `${p} عن الـ 4 أسابيع اللي قبلهم`,
+      statTopSkill: "أكتر مهارة مطلوبة", statInJobs: (p) => `في ${p}% من الوظايف المفتوحة`,
+      statDaysOpen: "المدة المعتادة قبل ما الوظيفة تتقفل", statDays: (d) => `${d} يوم`, statApplyEarly: "قدّم بدري",
       trendsSoon: "الترندات محتاجة كام أسبوع بيانات. أرقام جديدة بتيجي كل يوم الصبح، فارجع تاني قريب.",
       pts: (v) => `${v > 0 ? "+" : ""}${v} نقطة`, soFar: "لحد دلوقتي", newTrack: "جديد",
       sortBy: "رتّب حسب", sortNew: "الأحدث", sortMatch: "الأنسب لمهاراتي، الأحدث الأول", sortPay: "الأعلى مرتب",
@@ -1364,7 +1394,7 @@
     bars($("placeBars"), places.sort((a, b) => b.v - a.v));
 
     $("companyList").innerHTML = countBy(js, (j) => j.c).slice(0, 10)
-      .map(([c, v]) => `<li>${esc(c)} <span>(${num(v)})</span></li>`).join("") || `<p class="none">${t("tooFew")}</p>`;
+      .map(([c, v]) => `<li>${esc(c)} <span>${num(v)}</span></li>`).join("") || `<p class="none">${t("tooFew")}</p>`;
     bars($("roleBars"), countBy(js, (j) => j.r).slice(0, 10).map(([k, v]) => ({ name: k, v, tr: trackOfRole[k] })),
       { click: (r) => { $("role").value = "role:" + r; update(); } });
   }
@@ -1905,61 +1935,102 @@
   function renderTrends() {
     if (!trends) { $("trendScope").textContent = t("trendsSoon"); return; }
     const country = $("country").value, scope = trendScope(country), track = selectedTrack();
-    $("trendScope").textContent = (country && scope === "All" ? t("trendScopeFallback")(country)
-      : scope === "All" ? t("trendScopeAll") : t("trendScopeOf")(scope)) + (track ? " · " + track : "");
+    $("trendScope").textContent = country && scope === "All" ? t("trendScopeFallback")(country)
+      : scope === "All" ? t("trendScopeAll") : t("trendScopeOf")(scope);
     const weekly = trends.weekly[scope] || {}, weeks = trends.weeks, n = weeks.length;
-    const shownTracks = meta.tracks.map((x) => x.name).filter((name) => weekly[name] && (!track || name === track));
+    const allTracks = meta.tracks.map((x) => x.name).filter((name) => weekly[name]);
+    const shownTracks = allTracks.filter((name) => !track || name === track);
     const totals = weeks.map((_, i) => shownTracks.reduce((a, name) => a + weekly[name][i], 0));
-    const enough = trends.history_days >= 14 && (totals[n - 2] || 0) > 0;   // a complete week with data
+    const enough = trends.history_days >= 14 && (totals[n - 2] || 0) + (totals[n - 3] || 0) > 0;
 
-    // headline numbers (last complete week = n-2)
-    const last = totals[n - 2] || 0, prev = totals[n - 3] || 0, change = prev >= 5 ? pct(last, prev) : null;
-    const moves = shownTracks.map((name) => {
-      const w = weekly[name], now4 = sumRange(w, n - 5, n - 1), before4 = sumRange(w, n - 9, n - 5);
-      return { name, now4, before4, change: pct(now4, before4) };
-    }).filter((m) => m.now4 + m.before4 >= 5);
-    const growing = moves.filter((m) => m.change !== null && m.before4 >= 5).sort((a, b) => b.change - a.change)[0];
-    const sk = trends.skills[scope] || trends.skills.All || { rising: [], falling: [] };
-    const open = trends.days_open.filter((r) => !track || r[1] === track);
+    // track picker: the same filter as the track chips on the Jobs tab
+    $("trendTracks").innerHTML = [["", t("allTech")], ...allTracks.map((x) => [x, x])].map(([v, label]) =>
+      `<button type="button" class="ttrack" data-ttrack="${esc(v)}" aria-pressed="${v === track}"${v ? ` style="${tc(v)}"` : ""}>${v ? '<i aria-hidden="true"></i>' : ""}${esc(label)}</button>`).join("");
+
+    // headline numbers: last full week (n-2) against the average of the 4 full weeks before it
+    const last = totals[n - 2] || 0, firstWeek = Math.max(0, totals.findIndex((v) => v > 0));
+    const prevWeeks = totals.slice(Math.max(firstWeek + 1, n - 6), n - 2), avg = prevWeeks.length ? Math.round(prevWeeks.reduce((a, b) => a + b, 0) / prevWeeks.length) : null;
+    const now4 = sumRange(totals, n - 5, n - 1), before4 = sumRange(totals, Math.max(firstWeek + 1, n - 9), n - 5);
+    const change4 = before4 >= 20 && n - 5 - firstWeek > 4 ? pct(now4, before4) : null;
+    const sk = trends.skills[scope] || trends.skills.All || { rising: [], falling: [], top: [] };
+    const top = sk.top || [], open = trends.days_open.filter((r) => !track || r[1] === track);
     const openN = open.reduce((a, r) => a + r[5], 0);
     const typical = openN >= 20 ? Math.round(open.reduce((a, r) => a + r[2] * r[5], 0) / openN) : null;
+    const r0 = (v) => Math.round(v);
+    const stat = (v, l, sub) => `<div class="stat"><b>${esc(v)}</b><span>${esc(l)}</span>${sub ? `<small>${esc(sub)}</small>` : ""}</div>`;
     $("trendStats").innerHTML = !enough ? "" : [
-      [num(last), t("statNewWeek") + (change !== null ? ` (${t("statVsPrev")(signed(change))})` : "")],
-      [growing ? signed(growing.change) : "–", t("statTopTrack") + (growing ? `: ${growing.name}` : "")],
-      [sk.rising[0] ? t("pts")(sk.rising[0][3]) : "–", t("statTopSkill") + (sk.rising[0] ? `: ${sk.rising[0][0]}` : "")],
-      [typical ? num(typical) : "–", t("statDaysOpen")],
-    ].map(([v, l]) => `<div class="stat"><b>${esc(v)}</b><span>${esc(l)}</span></div>`).join("");
+      stat(num(last), t("statNewWeek"), avg !== null && avg > 0 ? t("statUsual")(num(avg)) : ""),
+      stat(num(now4), t("stat4w"), change4 !== null ? t("statVsPrev4")(signed(change4)) : ""),
+      top[0] ? stat(top[0][0], t("statTopSkill"), t("statInJobs")(r0(top[0][2]))) : "",
+      typical ? stat(t("statDays")(num(typical)), t("statDaysOpen"), t("statApplyEarly")) : "",
+    ].join("");
 
-    // weekly chart: stacked by track (or one track's colour)
+    // tracks: volume of new jobs, a change only when both periods are big enough to mean something
+    const moves = allTracks.map((name) => {
+      const w = weekly[name], a = sumRange(w, n - 5, n - 1), b = sumRange(w, Math.max(firstWeek + 1, n - 9), n - 5);
+      return { name, now4: a, before4: b, change: b >= 10 && a >= 5 ? pct(a, b) : b === 0 && a >= 5 && n - 5 - firstWeek > 4 ? "new" : null };
+    }).filter((m) => m.now4 > 0).sort((x, y) => y.now4 - x.now4);
+
+    // takeaways in plain words, each with a way to act on it
+    const tk = [];
+    if (enough && avg) {
+      const d = (last - avg) / avg;
+      tk.push([d > 0.15 ? t("tkBusier")(num(last), num(avg)) : d < -0.15 ? t("tkSlower")(num(last), num(avg)) : t("tkSteady")(num(last), num(avg)), ""]);
+    }
+    if (enough && !track && moves[0] && moves[0].now4 >= 5) tk.push([t("tkTrack")(esc(moves[0].name), num(moves[0].now4)), `data-track-go="${esc(moves[0].name)}"`]);
+    if (top[0]) tk.push([t("tkTopSkill")(esc(top[0][0]), r0(top[0][2])), `data-skill-filter="${esc(top[0][0])}"`]);
+    const riser = (sk.rising || []).find((r) => r[3] >= 3 && (!top[0] || r[0] !== top[0][0]));
+    if (riser) tk.push([t("tkRising")(esc(riser[0]), r0(riser[1]), r0(riser[2])), `data-skill-filter="${esc(riser[0])}"`]);
+    if (typical) tk.push([t("tkApply")(num(typical)), ""]);
+    $("takeawayPanel").hidden = !tk.length;
+    $("takeaways").innerHTML = tk.map(([html, act]) => `<li><span>${html}</span>${act ? `<button type="button" class="linkbtn" ${act}>${esc(t("seeJobs"))} →</button>` : ""}</li>`).join("");
+
+    // weekly chart: one colour, the 4-week average as a dashed line, this week striped
     $("weeklyHint").textContent = enough ? t("weeklyHint") : t("trendsSoon");
-    const max = Math.max(1, ...totals);
-    const firstWeek = Math.max(0, totals.findIndex((v) => v > 0));   // no empty bars before the data starts
-    $("weeklyChart").innerHTML = !enough ? "" : weeks.map((w, i) => (i < firstWeek ? "" : (() => {
-      const segs = shownTracks.map((name) => weekly[name][i] ? `<span class="wseg" style="${tc(name)};height:${(100 * weekly[name][i]) / max}%"
-        title="${esc(name)}: ${num(weekly[name][i])}"></span>` : "").join("");
-      return `<div class="wk${i === n - 1 ? " partial" : ""}"><span class="wv">${totals[i] ? num(totals[i]) : ""}</span>
-        <div class="col">${segs}</div><span class="wl">${i === n - 1 ? t("soFar") : fmtWeek(w)}</span></div>`;
-    })())).join("");
-    $("weeklyLegend").innerHTML = !enough || track ? "" : shownTracks.map((name) =>
-      `<span style="${tc(name)}"><i></i>${esc(name)}</span>`).join("");
+    const shown = weeks.map((w, i) => ({ w, i, v: totals[i] })).filter((x) => x.i >= firstWeek);
+    const max = Math.max(1, avg || 0, ...shown.map((x) => x.v)), every = shown.length > 8 ? 2 : 1;
+    const colour = track ? ` style="${tc(track)}"` : "";
+    $("weeklyChart").innerHTML = !enough ? "" : `<div class="wcols"${colour}>${avg ? `<span class="avgline" style="bottom:${(100 * avg) / max}%"></span>` : ""}${shown.map((x, k) => {
+      const h = (100 * x.v) / max, cls = x.i === n - 1 ? " partial" : x.i === n - 2 ? " last" : "";
+      const label = x.i === n - 1 ? t("soFar") : fmtWeek(x.w);
+      return `<div class="wk${cls}" title="${esc(label)}: ${num(x.v)}"><span class="wbar" style="height:${h}%"></span><span class="wv" style="bottom:calc(${h}% + 4px)">${x.v ? num(x.v) : ""}</span>
+        <span class="wl">${(shown.length - 1 - k) % every === 0 ? esc(label) : ""}</span></div>`;
+    }).join("")}</div>`;
+    $("weeklyNote").textContent = enough && avg ? t("weeklyNote")(num(avg)) : "";
+
+    // where the new jobs are
+    const tmax = Math.max(1, ...moves.map((m) => m.now4));
+    $("trackMoves").innerHTML = !enough || !moves.length ? `<p class="none">${esc(t("trendsSoon"))}</p>` : moves.slice(0, 8).map((m) =>
+      `<button type="button" class="bar tracked${m.name === track ? " on" : ""}" style="${tc(m.name)}" data-track-go="${esc(m.name)}"><span class="name">${esc(m.name)}</span>
+        <span class="track"><span class="fill" style="width:${Math.max(2, (100 * m.now4) / tmax)}%"></span></span><span class="val">${num(m.now4)}</span>
+        ${m.change === "new" ? `<span class="chg up">${t("newTrack")}</span>` : m.change !== null ? `<span class="chg ${m.change >= 0 ? "up" : "down"}">${signed(m.change)}</span>` : "<span></span>"}</button>`).join("");
+
+    // skills most asked for, with how they moved
+    $("topSkillsHint").textContent = trends.window_days ? t("trendSkillsHint")(trends.window_days) : "";
+    const smax = Math.max(1, ...top.slice(0, 8).map((r) => r[2]));
+    $("topSkills").innerHTML = top.length ? top.slice(0, 8).map((r) => {
+      const d = Math.round(r[3]);
+      return `<button type="button" class="bar" data-skill-filter="${esc(r[0])}"><span class="name">${esc(r[0])}</span>
+        <span class="track"><span class="fill" style="width:${Math.max(2, (100 * r[2]) / smax)}%"></span></span><span class="val">${r0(r[2])}%</span>
+        ${Math.abs(d) >= 3 ? `<span class="chg ${d > 0 ? "up" : "down"}">${d > 0 ? "▲" : "▼"} ${Math.abs(d)}</span>` : "<span></span>"}</button>`;
+    }).join("") : `<p class="none">${esc(t("trendsSoon"))}</p>`;
 
     // skills: rising / falling (click = jobs that need it)
-    const hint = trends.window_days ? t("skillsHint")(trends.window_days) : t("trendsSoon");
-    $("risingHint").textContent = hint; $("fallingHint").textContent = "";
+    $("risingHint").textContent = trends.window_days ? t("skillsHint")(trends.window_days) : t("trendsSoon"); $("fallingHint").textContent = "";
     const moveRow = (r) => `<li><button type="button" class="move" data-skill-filter="${esc(r[0])}"><span class="mname">${esc(r[0])}</span>
-      <span class="mfrom">${r[1]}% → ${r[2]}%</span><span class="chg ${r[3] > 0 ? "up" : "down"}">${r[3] > 0 ? "▲" : "▼"} ${esc(t("pts")(r[3]))}</span></button></li>`;
-    $("risingList").innerHTML = sk.rising.slice(0, 8).map(moveRow).join("") || `<li class="none">${esc(t("trendsSoon"))}</li>`;
-    $("fallingList").innerHTML = sk.falling.slice(0, 8).map(moveRow).join("") || `<li class="none">${esc(t("trendsSoon"))}</li>`;
+      <span class="mfrom">${r0(r[1])}% → ${r0(r[2])}%</span><span class="chg ${r[3] > 0 ? "up" : "down"}">${r[3] > 0 ? "▲" : "▼"} ${esc(t("pts")(r0(r[3])))}</span></button></li>`;
+    $("risingList").innerHTML = (sk.rising || []).slice(0, 6).map(moveRow).join("") || `<li class="none">${esc(t("trendsSoon"))}</li>`;
+    $("fallingList").innerHTML = (sk.falling || []).slice(0, 6).map(moveRow).join("") || `<li class="none">${esc(t("trendsSoon"))}</li>`;
 
-    // track momentum
-    $("trackMoves").innerHTML = !enough ? `<li class="none">${esc(t("trendsSoon"))}</li>` : moves
-      .sort((a, b) => (b.change ?? 999) - (a.change ?? 999)).map((m) => `<li style="${tc(m.name)}"><span class="dot"></span>
-        <span class="mname">${esc(m.name)}</span><span class="mfrom">${num(m.before4)} → ${num(m.now4)}</span>
-        <span class="chg ${m.change === null || m.change >= 0 ? "up" : "down"}">${m.change === null ? t("newTrack") : signed(m.change)}</span></li>`).join("");
+    // how fast jobs close: the usual range per role (25th to 75th percentile) with the median as a dot
+    $("daysOpenHint").textContent = typical ? t("daysOpenHint")(num(typical)) : t("daysOpenHintNone");
+    const rows = open.slice(0, 10).sort((a, b) => a[2] - b[2] || a[4] - b[4]);
+    const dmax = Math.max(14, ...rows.map((r) => r[4]));
+    $("daysOpen").innerHTML = rows.length ? rows.map((r) => `<div class="range" style="${tc(r[1])}"><span class="name">${esc(r[0])}</span>
+      <span class="rtrack" aria-hidden="true"><span class="rfill" style="inset-inline-start:${(100 * r[3]) / dmax}%;width:${Math.max(2, (100 * (r[4] - r[3])) / dmax)}%"></span>
+        <span class="rdot" style="inset-inline-start:${(100 * r[2]) / dmax}%"></span></span>
+      <span class="val">${esc(t("daysRange")(r[3], r[4]))}</span></div>`).join("") : `<p class="none">${esc(t("tooFew"))}</p>`;
 
-    // days open, by role
-    bars($("daysOpen"), open.slice(0, 10).map((r) => ({ name: r[0], v: r[2], tr: r[1] })),
-      { fmt: (v) => `${v} ${lang === "ar" ? "يوم" : "d"}` });
     const link = new URLSearchParams(); if (scope !== "All") link.set("place", scope); if (lang === "ar") link.set("lang", "ar");
     $("reportLink").href = "report.html" + (link.toString() ? "?" + link : "");
   }
@@ -2276,6 +2347,12 @@
       const b = e.target.closest("[data-track]");
       if (b) { $("role").value = b.dataset.track; update(); track("track/" + (b.dataset.track.slice(6) || "all")); }
     });
+    $("trends").addEventListener("click", (e) => {
+      const p = e.target.closest("[data-ttrack]");
+      if (p) { $("role").value = p.dataset.ttrack ? "track:" + p.dataset.ttrack : ""; update(); renderTrends(); track("trend-track"); return; }
+      const g = e.target.closest("[data-track-go]");
+      if (g) { $("role").value = "track:" + g.dataset.trackGo; update(); goToJobs(); track("trend-track-jobs"); }
+    });
     $("reset").addEventListener("click", resetFilters);
     $("share").addEventListener("click", share);
     document.querySelectorAll('[role="tab"]').forEach((b) => b.addEventListener("click", () => {
@@ -2283,8 +2360,12 @@
       selectTab(id);
       // a new view starts at its top: the page (reading views) or the job list (job views)
       if (id !== was) {
-        const top = ["saved", "kit", "about", "jobs"].includes(id) ? 0 : Math.max(0, $(id).getBoundingClientRect().top + scrollY - 90);
-        if (scrollY > top) window.scrollTo(0, top);
+        // on phones the search box fills the first screen, so other views jump straight to their content
+        const phone = matchMedia("(max-width: 720px)").matches;
+        // (Saved, Apply kit and About hide the search box there, so they already start at the top)
+        const top = ["saved", "kit", "about", "jobs"].includes(id) ? 0
+          : Math.max(0, $(id).getBoundingClientRect().top + scrollY - (phone ? 12 : 90));
+        if (scrollY > top || (phone && top > 0)) window.scrollTo(0, top);
       }
     }));
     $("lang").addEventListener("click", () => {

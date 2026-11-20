@@ -236,13 +236,28 @@
 
       <section id="trends" role="tabpanel" aria-labelledby="tab-trends" hidden>
       <p id="trendScope" class="trendscope"></p>
+      <div id="trendTracks" class="trendtracks" role="group" data-i18n-aria="trendTracksLabel" aria-label="Show trends for"></div>
       <div class="stats" id="trendStats"></div>
+      <article class="panel takeaways" id="takeawayPanel" hidden>
+        <h2 data-i18n="takeawayTitle">What this means for you</h2>
+        <ul id="takeaways" class="takeaways-list"></ul>
+      </article>
       <div class="grid">
         <article class="panel wide">
           <h2 data-i18n="weeklyTitle">New jobs per week</h2>
           <p class="hint" id="weeklyHint"></p>
           <div id="weeklyChart" class="weekchart"></div>
-          <div id="weeklyLegend" class="legend"></div>
+          <p id="weeklyNote" class="chartnote"></p>
+        </article>
+        <article class="panel">
+          <h2 data-i18n="trackMovesTitle">Where the new jobs are</h2>
+          <p class="hint" data-i18n="trackMovesHint2">New jobs in the last 4 weeks, by track. Tap one to see its jobs.</p>
+          <div id="trackMoves" class="bars tbars"></div>
+        </article>
+        <article class="panel">
+          <h2 data-i18n="topSkillsTitle">Skills most asked for</h2>
+          <p class="hint" id="topSkillsHint"></p>
+          <div id="topSkills" class="bars tbars"></div>
         </article>
         <article class="panel">
           <h2 data-i18n="risingTitle">Skills on the rise</h2>
@@ -254,15 +269,10 @@
           <p class="hint" id="fallingHint"></p>
           <ol id="fallingList" class="moves"></ol>
         </article>
-        <article class="panel">
-          <h2 data-i18n="trackMovesTitle">Which tracks are hiring faster</h2>
-          <p class="hint" data-i18n="trackMovesHint">New jobs in the last 4 weeks compared with the 4 weeks before.</p>
-          <ol id="trackMoves" class="moves"></ol>
-        </article>
-        <article class="panel">
-          <h2 data-i18n="daysOpenTitle">How long jobs stay open</h2>
-          <p class="hint" data-i18n="daysOpenHint">Typical days from posting until the job is taken down. Short = apply early.</p>
-          <div id="daysOpen" class="bars"></div>
+        <article class="panel wide">
+          <h2 data-i18n="daysOpenTitle">How fast jobs close</h2>
+          <p class="hint" id="daysOpenHint"></p>
+          <div id="daysOpen" class="ranges"></div>
         </article>
       </div>
       <a class="reportcta" href="report.html" id="reportLink"><span data-i18n="reportCta">Get this week's report card</span> →</a>
