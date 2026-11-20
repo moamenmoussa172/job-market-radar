@@ -938,33 +938,52 @@ def _fetch_eightfold(token: str) -> list[dict]:
     return [j for j in jobs.values() if is_board_role(j.get("title"))]
 
 
-# Amazon's own career site (amazon.jobs): its public job search answers JSON. Searched per country.
+# Amazon's own career site (amazon.jobs): its public job search answers JSON. Searched per country with the
+# site's own country filter (ISO 3-letter codes); every job is checked against its own country code, so a
+# search that ignores the filter can never put a US job in Egypt.
 AMAZON_URL = "https://www.amazon.jobs/en/search.json"
 AMAZON_PAGE = 100
 AMAZON_MAX_PAGES = int(os.environ.get("AMAZON_MAX_PAGES", "10"))   # per country
 AMAZON_TECH_CATEGORIES = re.compile(r"software|data|machine learning|science|engineer|solutions architect|"
                                     r"business intelligence|security|it support|network|technical program|"
                                     r"product management|systems", re.I)
+ISO3 = {"Egypt": "EGY", "United Arab Emirates": "ARE", "Saudi Arabia": "SAU", "Qatar": "QAT", "Kuwait": "KWT",
+        "Bahrain": "BHR", "Oman": "OMN", "Jordan": "JOR", "Palestine": "PSE", "Morocco": "MAR", "Lebanon": "LBN",
+        "Tunisia": "TUN", "Algeria": "DZA", "Iraq": "IRQ", "Libya": "LBY", "Sudan": "SDN", "Syria": "SYR",
+        "Yemen": "YEM", "Mauritania": "MRT", "Austria": "AUT", "Belgium": "BEL", "Bulgaria": "BGR",
+        "Croatia": "HRV", "Cyprus": "CYP", "Czechia": "CZE", "Denmark": "DNK", "Estonia": "EST", "Finland": "FIN",
+        "France": "FRA", "Germany": "DEU", "Greece": "GRC", "Hungary": "HUN", "Ireland": "IRL", "Italy": "ITA",
+        "Latvia": "LVA", "Lithuania": "LTU", "Luxembourg": "LUX", "Malta": "MLT", "Netherlands": "NLD",
+        "Norway": "NOR", "Poland": "POL", "Portugal": "PRT", "Romania": "ROU", "Serbia": "SRB", "Spain": "ESP",
+        "Sweden": "SWE", "Switzerland": "CHE", "United Kingdom": "GBR", "Turkey": "TUR"}
 
 
 def _fetch_amazon(token: str = "amazon.jobs") -> list[dict]:
     jobs: dict = {}
     for place in board_countries():
+        code = ISO3.get(place)
+        if not code:
+            continue
         offset = 0
         for _ in range(AMAZON_MAX_PAGES):
-            data = _get_json(AMAZON_URL, params={"loc_query": place, "result_limit": AMAZON_PAGE, "offset": offset,
-                                                 "sort": "recent"})
+            data = _get_json(AMAZON_URL, params={"normalized_country_code[]": code, "result_limit": AMAZON_PAGE,
+                                                 "offset": offset, "sort": "recent"})
             if not isinstance(data, dict) or not isinstance(data.get("jobs"), list):
                 raise ValueError("amazon.jobs did not answer a job search")
             page = data["jobs"]
+            fresh = 0
             for j in page:
                 key = j.get("id_icims") or j.get("id")
-                if key and key not in jobs:
-                    jobs[key] = {**j, "searched_country": place,
-                                 "job_url": "https://www.amazon.jobs" + (j.get("job_path") or f"/en/jobs/{key}")}
+                job_code = str(j.get("country_code") or "").upper()
+                if not key or key in jobs or (job_code and job_code != code):
+                    continue                       # another country's job: never relabel it as this one
+                fresh += 1
+                jobs[key] = {**j, "country_name": place,
+                             "job_url": "https://www.amazon.jobs" + (j.get("job_path") or f"/en/jobs/{key}")}
             offset += len(page)
-            if not page or offset >= int(data.get("hits") or 0):
+            if not page or not fresh or offset >= int(data.get("hits") or 0):
                 break
+            time.sleep(0.5)
     return [j for j in jobs.values()
             if is_board_role(j.get("title")) or AMAZON_TECH_CATEGORIES.search(j.get("job_category") or "")]
 

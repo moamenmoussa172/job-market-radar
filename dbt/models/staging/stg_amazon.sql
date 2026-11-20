@@ -6,9 +6,12 @@ select
     'amazon'::text                                          as source,
     source_job_id,
     nullif(trim(p ->> 'title'), '')                         as job_title,
-    coalesce(nullif(p ->> 'company_name', ''), 'Amazon')    as company_name,
-    coalesce(nullif(concat_ws(', ', nullif(p ->> 'city', ''), nullif(p ->> 'searched_country', '')), ''),
-             nullif(p ->> 'normalized_location', ''), nullif(p ->> 'location', ''))
+    -- one company, whatever legal entity posts the job ("Amazon Data Services Sweden AB" -> Amazon)
+    case when coalesce(p ->> 'company_name', '') ~* '(amazon web services|\maws\M)' then 'Amazon Web Services'
+         else 'Amazon' end                                  as company_name,
+    -- the country comes from the job's own country code (checked when it was read), never from the search
+    case when nullif(p ->> 'country_name', '') is not null
+         then concat_ws(', ', nullif(p ->> 'city', ''), p ->> 'country_name') end
                                                             as location_text,
     case when concat(p ->> 'location', ' ', p ->> 'title') ~* '\m(virtual|remote)\M' then true end
                                                             as is_remote_flag,

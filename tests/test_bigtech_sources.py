@@ -5,22 +5,40 @@ from jobradar import boards, sources
 def test_amazon_searches_each_country_pages_and_keeps_tech(monkeypatch):
     monkeypatch.setattr(sources, "WORKDAY_REGIONS", ["mena"])
     monkeypatch.setattr(sources, "MENA_COUNTRY_NAMES", ("Egypt", "Saudi Arabia"))
+    monkeypatch.setattr(sources.time, "sleep", lambda s: None)
     calls = []
 
     def fake(url, params=None, headers=None):
-        calls.append((params["loc_query"], params["offset"]))
-        if params["loc_query"] == "Egypt":
+        code = params["normalized_country_code[]"]
+        calls.append((code, params["offset"]))
+        if code == "EGY":
             page = [{"id_icims": f"e{params['offset'] + i}", "title": "Data Engineer", "job_path": f"/en/jobs/e{params['offset'] + i}",
-                     "city": "Cairo", "posted_date": "November 14, 2026", "job_category": "Data Science"} for i in range(100)]
+                     "city": "Cairo", "country_code": "EGY", "posted_date": "November 14, 2026", "job_category": "Data Science"}
+                    for i in range(100)]
             return {"hits": 150, "jobs": page if params["offset"] == 0 else page[:50]}
-        return {"hits": 2, "jobs": [{"id_icims": "s1", "title": "Warehouse Associate", "job_category": "Fulfillment & Operations"},
-                                    {"id_icims": "e0", "title": "Data Engineer"}]}   # same job again: kept once
+        return {"hits": 3, "jobs": [{"id_icims": "s1", "title": "Warehouse Associate", "country_code": "SAU",
+                                     "job_category": "Fulfillment & Operations"},
+                                    {"id_icims": "u1", "title": "Data Engineer", "city": "Seattle", "country_code": "USA"},
+                                    {"id_icims": "e0", "title": "Data Engineer", "country_code": "EGY"}]}
     monkeypatch.setattr(sources, "_get_json", fake)
     jobs = sources._fetch_amazon()
-    assert calls == [("Egypt", 0), ("Egypt", 100), ("Saudi Arabia", 0)]
-    assert len(jobs) == 150 and all(j["title"] == "Data Engineer" for j in jobs)
-    assert jobs[0]["job_url"] == "https://www.amazon.jobs/en/jobs/e0" and jobs[0]["searched_country"] == "Egypt"
+    assert calls == [("EGY", 0), ("EGY", 100), ("SAU", 0)]
+    assert len(jobs) == 150 and all(j["country_name"] == "Egypt" for j in jobs)   # the Seattle job is not labelled Saudi
+    assert jobs[0]["job_url"] == "https://www.amazon.jobs/en/jobs/e0"
     assert sources.amazon_id({"id_icims": "e0"}) == "amazon:e0"
+
+
+def test_amazon_stops_when_the_country_filter_is_ignored(monkeypatch):
+    monkeypatch.setattr(sources, "WORKDAY_REGIONS", ["mena"])
+    monkeypatch.setattr(sources, "MENA_COUNTRY_NAMES", ("Egypt",))
+    monkeypatch.setattr(sources.time, "sleep", lambda s: None)
+    calls = []
+
+    def fake(url, params=None, headers=None):            # always the same worldwide page
+        calls.append(params["offset"])
+        return {"hits": 9000, "jobs": [{"id_icims": f"w{i}", "title": "Data Engineer", "country_code": "USA"} for i in range(100)]}
+    monkeypatch.setattr(sources, "_get_json", fake)
+    assert sources._fetch_amazon() == [] and calls == [0]
 
 
 def test_eightfold_small_site_reads_everything(monkeypatch):
