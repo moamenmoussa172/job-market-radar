@@ -1199,7 +1199,7 @@
     const title = wrapLines(ctx, L(ins.title), W - 2 * P).slice(0, 4);
     title.forEach((l, i) => text(l, P, 300 + i * 70, "800 58px " + D, "#FFFFFF"));
     let y = 300 + title.length * 70 + 130;
-    text(ins.big, P, y, "800 130px " + D, "#0A84FF");
+    text(ins.big, P, y, "800 130px " + D, "#4ADE80");
     ctx.font = "600 32px " + F;
     wrapLines(ctx, L(ins.big_label), W - 2 * P).slice(0, 2).forEach((l, i) => text(l, P, y + 56 + i * 42, "600 32px " + F, "#C7CCDB"));
     y += 130;
@@ -1211,7 +1211,7 @@
       text(b.t, W - P - 34, ry, "700 32px " + F, "#FFFFFF", rtl ? "left" : "right");
       const bw = Math.max(6, 300 * b.v), bx = rtl ? P + 34 + 130 : W - P - 34 - 130 - 300;
       roundRect(ctx, bx, ry - 22, 300, 14, 7); ctx.fillStyle = "rgba(255,255,255,.12)"; ctx.fill();
-      roundRect(ctx, rtl ? bx + 300 - bw : bx, ry - 22, bw, 14, 7); ctx.fillStyle = "#0A84FF"; ctx.fill();
+      roundRect(ctx, rtl ? bx + 300 - bw : bx, ry - 22, bw, 14, 7); ctx.fillStyle = "#22C55E"; ctx.fill();
     });
     ctx.font = "500 28px " + F;
     const noteY = Math.min(H - 228, Math.max(y + 50 + bars.length * rowH + 60, H - 300));
@@ -1270,7 +1270,7 @@
     const text = (s, x, y, font, color, align) => { ctx.font = font; ctx.fillStyle = color; ctx.textAlign = align || (rtl ? "right" : "left"); ctx.fillText(s, X(x), y); };
     // brand
     const lx = X(P + 30);
-    ctx.fillStyle = "#0A84FF"; ctx.beginPath(); ctx.arc(lx, 128, 30, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#22C55E"; ctx.beginPath(); ctx.arc(lx, 128, 30, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = "rgba(255,255,255,.55)"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(lx, 128, 16, 0, Math.PI * 2); ctx.stroke();
     [[12, -12, 6, "#FFFFFF"], [-12, 7, 5, "#64D2FF"], [7, 13, 4, "#30D158"]].forEach(([dx, dy, r, c]) => { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(lx + dx, 128 + dy, r, 0, Math.PI * 2); ctx.fill(); });
     text("Radarak", P + 76, 146, "800 50px " + D, "#FFFFFF");
@@ -1294,13 +1294,13 @@
       if (s.gain) {
         text(t("cardJobsN")(num(s.gain)), W - P - 36, ry, "700 36px " + F, "#4ADE9B", rtl ? "left" : "right");
         const bw = 300 * s.gain / top, bx = rtl ? P + 36 + 230 : W - P - 36 - 230 - bw;
-        roundRect(ctx, bx, ry - 24, bw, 16, 8); ctx.fillStyle = "#0A84FF"; ctx.fill();
+        roundRect(ctx, bx, ry - 24, bw, 16, 8); ctx.fillStyle = "#22C55E"; ctx.fill();
       }
     });
     // call to action
     y += 410;
     text(t("cardCta"), P, y, "600 34px " + F, "#C7CCDB");
-    const g = ctx.createLinearGradient(P, 0, W - P, 0); g.addColorStop(0, "#0A84FF"); g.addColorStop(1, "#5E5CE6");
+    const g = ctx.createLinearGradient(P, 0, W - P, 0); g.addColorStop(0, "#16A34A"); g.addColorStop(1, "#166534");
     roundRect(ctx, P, y + 30, W - 2 * P, 104, 52); ctx.fillStyle = g; ctx.fill();
     text("radarak.online", W / 2, y + 100, "800 52px " + D, "#FFFFFF", "center");
     text(t("cardPrivacy"), W / 2, H - 52, "500 26px " + F, "rgba(255,255,255,.55)", "center");
