@@ -1242,3 +1242,12 @@ html { scroll-padding-top: 72px; scroll-padding-bottom: 24px; }
 .refcard a.primary, .refinvite a.primary { text-decoration: none; color: #fff; display: inline-flex; align-items: center; justify-content: center; }
 .refinvite h2 { align-items: center; font-size: 22px; line-height: 1.25; }
 .refinvite h2 .ico { width: 24px; height: 24px; }
+
+/* ---- Who can apply (update 96) ---- */
+.whocan { margin: 14px 0 4px; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--paper); }
+.whocan h3 { margin: 0 0 8px; font-size: 13px; font-weight: 700; color: var(--ink-2); letter-spacing: .02em; }
+.whocan ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.whocan li { display: flex; gap: 10px; align-items: flex-start; font-size: 15px; line-height: 1.45; color: var(--ink); }
+.whocan li .ico { width: 18px; height: 18px; flex: none; margin-top: 2px; color: var(--ink-2); }
+.whocan li.ok .ico { color: var(--mint-ink); }
+.whocan li.warn .ico { color: var(--nat-ink); }

@@ -113,6 +113,10 @@
       pts: (v) => `${v > 0 ? "+" : ""}${v} pts`, soFar: "so far", newTrack: "new",
       sortBy: "Sort by", sortNew: "Newest", sortMatch: "Best match, newest first", sortPay: "Highest pay",
       summary: (jobs, companies) => `<b>${jobs}</b> jobs at <b>${companies}</b> companies`,
+      whoTitle: "Who can apply", whoWorld: "Remote, open to people anywhere",
+      whoRemote: (p) => `Remote, open to people in ${p}`, whoRemoteSome: "Remote, but only from some places. Check the listing.",
+      whoOnsite: (p) => `Work from ${p}`, whoNat: "Only for citizens of this country", whoVisa: "The listing mentions visa or relocation support",
+      whoYou: (c) => `You can apply from ${c}`, whoNotYou: (c) => `Probably not open to people in ${c}`,
       remote: "Remote", remoteWorld: "Remote, worldwide", visaTag: "Visa / relocation", natTag: "Nationals only",
       arTag: "Arabic required", longOpen: "Open for a while", today: "Today", yesterday: "Yesterday",
       daysAgo: (n) => `${n} days ago`, moreLocs: (n) => `+${n} more ${n === 1 ? "location" : "locations"}`,
@@ -301,6 +305,10 @@
       pts: (v) => `${v > 0 ? "+" : ""}${v} نقطة`, soFar: "لحد دلوقتي", newTrack: "جديد",
       sortBy: "رتّب حسب", sortNew: "الأحدث", sortMatch: "الأنسب لمهاراتي، الأحدث الأول", sortPay: "الأعلى مرتب",
       summary: (jobs, companies) => `<b>${jobs}</b> وظيفة في <b>${companies}</b> شركة`,
+      whoTitle: "مين يقدر يقدّم", whoWorld: "ريموت، مفتوحة لأي حد في أي مكان",
+      whoRemote: (p) => `ريموت، مفتوحة للناس في ${p}`, whoRemoteSome: "ريموت، بس من أماكن معينة. شوف الإعلان.",
+      whoOnsite: (p) => `الشغل من ${p}`, whoNat: "للمواطنين بس", whoVisa: "الإعلان بيقول إن فيه فيزا أو مساعدة في الانتقال",
+      whoYou: (c) => `تقدر تقدّم من ${c}`, whoNotYou: (c) => `غالبًا مش مفتوحة للناس في ${c}`,
       remote: "ريموت", remoteWorld: "ريموت من أي مكان", visaTag: "فيزا / انتقال", natTag: "للمواطنين بس",
       arTag: "العربي مطلوب", longOpen: "مفتوحة من فترة", today: "النهارده", yesterday: "امبارح",
       daysAgo: (n) => `من ${n} يوم`, moreLocs: (n) => `+${n} أماكن تانية`,
@@ -583,6 +591,9 @@
     eyeoff: '<path d="M3 3l18 18M10.6 6.1A9.5 9.5 0 0 1 12 6c5 0 9 6 9 6a15 15 0 0 1-3 3.4M6.1 7.9A15 15 0 0 0 3 12s4 6 9 6a9 9 0 0 0 4-1M9.9 10a3 3 0 0 0 4.1 4.1"/>',
     handshake: '<path d="M8 12l3 3 7-7"/><path d="M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0"/>',
     users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/>',
+    check: '<path d="M5 12.5l4.5 4.5L19 7"/>',
+    alert: '<path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17h.01"/>',
+    pin: '<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
     lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
   };
   const ic = (name) => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name]}</svg>`;
@@ -756,10 +767,30 @@
     return job.w === "Remote" && (job.ww === 1 || job.rg.includes(regionOf[country]) || job.rg.includes("Worldwide"));
   }
 
+  // Short forms people type, and what they mean
+  const ALIASES = { fe: ["frontend", "front-end", "front end"], be: ["backend", "back-end", "back end"], js: ["javascript"], ts: ["typescript"],
+    k8s: ["kubernetes"], grad: ["junior", "graduate", "intern", "entry level"], fresh: ["junior", "graduate", "intern", "entry level"],
+    ml: ["machine learning", " ml "], qa: ["qa", "quality", "test"], ux: ["ux", "user experience"], ui: ["ui", "user interface"],
+    pm: ["product manager", "project manager"], sre: ["sre", "site reliability"], swe: ["software engineer"], sde: ["software engineer", "software development engineer"],
+    devops: ["devops", "dev ops"], fullstack: ["full stack", "fullstack", "full-stack"], "full-stack": ["full stack", "fullstack", "full-stack"],
+    "c#": ["c#", ".net"], dotnet: [".net"], golang: ["golang", " go "], gen: ["genai", "generative"], llm: ["llm", "genai"] };
+  // Each word must appear somewhere (any order). A whole phrase in quotes stays together.
+  function queryTerms(raw) {
+    const q = raw.trim().toLowerCase();
+    if (!q) return null;
+    const words = [], re = /"([^"]+)"|(\S+)/g; let m;
+    while ((m = re.exec(q))) words.push(m[1] || m[2]);
+    const stop = new Set(["and", "or", "in", "at", "the", "a", "an", "of", "for", "jobs", "job", "وظايف", "وظيفة", "في"]);
+    const terms = words.filter((w) => !stop.has(w)).map((w) => ALIASES[w] || [w]);
+    if (!terms.length) return null;
+    terms.phrase = q.replace(/"/g, "");                 // the whole query, as typed, also counts
+    return terms;
+  }
+
   function filtered(ignoreRole) {
     const country = $("country").value, role = ignoreRole ? "" : $("role").value, sen = $("seniority").value, wm = $("workMode").value;
     const ind = $("industry").value, skill = $("skill").value, ar = $("arabic").value;
-    const q = $("q").value.trim().toLowerCase();
+    const q = queryTerms($("q").value);
     const skillIdx = skill ? meta.skills.indexOf(skill) : -1;
     return jobs.filter((j) => {
       if (role.startsWith("track:") && j.tr !== role.slice(6)) return false;
@@ -782,7 +813,8 @@
       if (hiddenCos.size && hiddenCos.has(coKey(j.c))) return false;
       if (ar === "req" && !(f & FLAG.arabic)) return false;
       if (ar === "not" && (f & FLAG.arabic)) return false;
-      if (q && !j._text.includes(q)) return false;
+      if (q && !(j._head.includes(q.phrase) || j._role.includes(q.phrase)
+        || q.every((alts) => alts.some((a) => j._head.includes(a) || j._skills.has(a.trim()))))) return false;
       return canApplyFrom(j, country);
     });
   }
@@ -2051,6 +2083,30 @@
       .filter(({ x }) => { const k = (x.t + "|" + x.c).toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; })
       .slice(0, 4).map(({ x }) => x);
   }
+  const REGION_AR = { Africa: "أفريقيا", Europe: "أوروبا", MENA: "الشرق الأوسط وشمال أفريقيا", LATAM: "أمريكا اللاتينية", "North America": "أمريكا الشمالية", APAC: "آسيا والمحيط الهادي" };
+  // "Who can apply", in plain words: where the job is open to, and the rules that limit it
+  function whoCanApply(j, f) {
+    const lines = [], sep = lang === "ar" ? "، " : ", ";
+    if (j.w === "Remote") {
+      if (j.ww === 1 || j.rg.includes("Worldwide")) lines.push(["ok", t("whoWorld")]);
+      else {
+        const places = [...(j.co || []), ...j.rg.map((r) => (lang === "ar" && REGION_AR[r]) || r)];
+        lines.push(["", places.length ? t("whoRemote")(places.slice(0, 4).join(sep)) : t("whoRemoteSome")]);
+      }
+    } else {
+      const where = j.l || (j.co || []).join(sep);
+      if (where) lines.push(["", t("whoOnsite")(where) + (j.w === "Hybrid" ? ` (${lang === "ar" ? "هايبرد" : "hybrid"})` : "")]);
+    }
+    if (f & FLAG.nationals) lines.push(["warn", t("whoNat")]);
+    if (f & FLAG.visa) lines.push(["ok", t("whoVisa")]);
+    const country = $("country").value;
+    if (country) lines.push(canApplyFrom(j, country) && !(f & FLAG.nationals) ? ["ok", t("whoYou")(country)] : ["warn", t("whoNotYou")(country)]);
+    if (!lines.length) return "";
+    const icon = { ok: ic("check"), warn: ic("alert"), "": ic("pin") };
+    return `<section class="whocan" aria-labelledby="whoTitle"><h3 id="whoTitle">${esc(t("whoTitle"))}</h3><ul>${lines.map(([k, txt]) =>
+      `<li class="${k}">${icon[k] || ""}<span>${esc(txt)}</span></li>`).join("")}</ul></section>`;
+  }
+
   function renderDrawer(g, j) {
     const mine = mySkillIdx(), f = g.flags;
     const have = j.k.filter((k) => mine.has(k)), miss = j.k.filter((k) => !mine.has(k));
@@ -2080,6 +2136,7 @@
         <button type="button" class="save" data-id="${esc(j.id)}" aria-pressed="${!!savedJobs[j.id]}">${BOOKMARK}<span>${savedJobs[j.id] ? t("saved") : t("save")}</span></button>
         <button type="button" class="applybtn" data-applied="${esc(j.id)}" aria-pressed="${!!(savedJobs[j.id] && savedJobs[j.id].a)}">${CHECK}<span>${savedJobs[j.id] && savedJobs[j.id].a ? t("applied") : t("markApplied")}</span></button>
       </div>
+      ${whoCanApply(j, f)}
       ${adzunaFar(j) && j.c ? `<p class="adznote">${esc(t("adzNote")((j.co || []).join(", ") || "its country"))}
         <a href="${esc(companySearch(j))}" target="_blank" rel="noopener nofollow">${esc(t("findOnSite")(j.c))}</a></p>` : ""}
       ${j.c && meta.cpages && meta.cpages[j.c] ? `<p class="dcompany"><a href="${lang === "ar" ? "ar/" : ""}companies/${esc(meta.cpages[j.c])}/" data-copage>${ic("building")} ${esc(t("coPage")(j.c))} →</a></p>` : ""}
@@ -2665,7 +2722,12 @@
     $("iosHintClose").addEventListener("click", () => { $("iosHint").hidden = true; });
   }
 
-  const prepJob = (j) => { j._text = [j.t, j.c, j.r, ...j.k.map((k) => meta.skills[k])].join(" ").toLowerCase(); };
+  const prepJob = (j) => {
+    // title, company, level and place: every search word must be in here or be one of the job's skills
+    j._head = " " + [j.t, j.c, j.s, j.l].join(" ").toLowerCase().replace(/[(),/|]/g, " ") + " ";
+    j._role = (j.r || "").toLowerCase();
+    j._skills = new Set(j.k.map((k) => meta.skills[k].toLowerCase()));
+  };
   const isCoreCountry = (c) => !!c && (meta.core_regions || []).includes(regionOf[c]);
   function needMore() {
     if (more !== "none" || !meta || !meta.more_jobs) return false;

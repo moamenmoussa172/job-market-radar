@@ -1510,3 +1510,29 @@ def test_trends_dashboard(browser, base, data):
         p.wait_for_timeout(400)
         assert p.locator("#jobs").is_visible()
     ctx.close()
+
+
+def test_search_words_any_order_and_who_can_apply(browser, base, data):
+    """Search: words in any order, short forms (fe, k8s, grad), quotes keep a phrase. The job panel says who can apply."""
+    ctx = browser.new_context(viewport={"width": 390, "height": 844}, is_mobile=True, has_touch=True)
+    ctx.add_init_script("localStorage.setItem('jr_lang', JSON.stringify('en'));")
+    p = ctx.new_page()
+    errors = []
+    p.on("pageerror", lambda e: errors.append(str(e)))
+    p.goto(base + "/")
+    p.wait_for_selector("#jobList li.job")
+
+    def total(q):
+        p.fill("#q", q)
+        p.press("#q", "Enter")
+        p.wait_for_timeout(300)
+        return p.evaluate("document.getElementById('resultSummary').innerText")
+
+    assert total("engineer data") == total("data engineer")
+    assert total("k8s") == total("kubernetes")
+    total("")
+    p.locator("#jobList li.job h3 a").first.click()
+    p.wait_for_selector("#jobDrawer:not([hidden])")
+    assert p.locator("#drawerBody .whocan li").count() >= 1
+    assert not errors, errors
+    ctx.close()
