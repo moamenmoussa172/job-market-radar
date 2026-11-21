@@ -359,6 +359,7 @@ def _shell(lang: str, rel: str, title: str, desc: str, canonical: str, alt_en: s
   <link rel="canonical" href="{_e(canonical)}">
   {alternates}{head_extra}
   <meta name="theme-color" content="#FFFFFF">
+  <script>try{{var th=JSON.parse(localStorage.getItem("jr_theme"));if(th==="dark"||th==="light")document.documentElement.dataset.theme=th}}catch(e){{}}</script>
   <meta property="og:type" content="website">
   <meta property="og:title" content="{_e(title)}">
   <meta property="og:description" content="{_e(desc)}">

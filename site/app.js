@@ -200,6 +200,15 @@
       newTag: "New", newBanner: (n, d) => `<b>${n}</b> new ${n === 1 ? "job" : "jobs"} since your last visit (${d})`,
       newShow: "Show only new", newAll: "Show all jobs", qNew: "New since last visit",
       shareWa: "WhatsApp", shareMore: "Share", shareText: (ti, c) => `${ti}${c ? " at " + c : ""} (found on Radarak)`,
+      nudgeCvTitle: "See the jobs that fit you first", nudgeCvText: "Add your CV and Radarak puts the jobs that match your skills at the top, newest first. It takes a few seconds.",
+      nudgeCvNote: "Read on your device. Your CV is never uploaded.", nudgeCvGo: "Upload my CV", nudgeCvPaste: "Paste the text instead",
+      nudgeRefTitle: "Work in tech? Help someone get in", nudgeRefText: "Offer to refer people at your company. It takes a minute, and you decide who you talk to.",
+      nudgeRefTextYears: (y) => `You have ${y} years of experience. Someone starting out could use a referral from you. It takes a minute, and you decide who you talk to.`,
+      nudgeRefNote: "Only your name, company and LinkedIn are shown. Your email never is.", nudgeRefGo: "Offer referrals", nudgeRefDone: "I already did",
+      nudgeLater: "Not now", nudgeClose: "Close",
+      navToggle: "Show or hide the menu", navMore: "Explore", themeDark: "Dark mode", themeLight: "Light mode",
+      cvBarSub: "Upload your CV and the jobs that fit you come first.", cvBarMore: "or add skills", cvDone: "Show my matching jobs",
+      cvBarHas: (n) => `Matching your ${n} skills`, cvBarHasSub: "Best matches come first. See what to learn next and edit your skills.", cvBarEdit: "My skills",
       installApp: "Install app", iosHint: "To install Radarak: tap the Share button in Safari, then “Add to Home Screen”.", gotIt: "Got it",
     },
     ar: {
@@ -392,6 +401,15 @@
       newTag: "جديدة", newBanner: (n, d) => `<b>${n}</b> وظيفة جديدة من آخر زيارة ليك (${d})`,
       newShow: "اعرض الجديد بس", newAll: "اعرض كل الوظايف", qNew: "جديدة من آخر زيارة",
       shareWa: "واتساب", shareMore: "شارك", shareText: (ti, c) => `${ti}${c ? " في " + c : ""} (لقيتها على رادارك)`,
+      nudgeCvTitle: "شوف الوظايف اللي تناسبك الأول", nudgeCvText: "ضيف الـ CV بتاعك ورادارك هيحط الوظايف المناسبة لمهاراتك فوق، والأحدث الأول. بتاخد ثواني.",
+      nudgeCvNote: "بيتقري على جهازك. الـ CV بتاعك مبيترفعش.", nudgeCvGo: "ارفع الـ CV", nudgeCvPaste: "أو الصق النص",
+      nudgeRefTitle: "شغال في التك؟ ساعد حد يدخل", nudgeRefText: "اعرض إنك تعمل referral في شركتك. بتاخد دقيقة، وانت اللي بتختار تكلم مين.",
+      nudgeRefTextYears: (y) => `عندك ${y} سنين خبرة. حد لسه بادئ ممكن يفرق معاه referral منك. بتاخد دقيقة، وانت اللي بتختار تكلم مين.`,
+      nudgeRefNote: "بيظهر اسمك وشركتك ولينكدإن بس. الإيميل عمره ما بيظهر.", nudgeRefGo: "اعرض referral", nudgeRefDone: "عملت ده قبل كده",
+      nudgeLater: "مش دلوقتي", nudgeClose: "اقفل",
+      navToggle: "اظهر أو اخفي القايمة", navMore: "استكشف", themeDark: "الوضع الغامق", themeLight: "الوضع الفاتح",
+      cvBarSub: "ارفع الـ CV بتاعك والوظايف المناسبة ليك هتطلع الأول.", cvBarMore: "أو ضيف مهاراتك", cvDone: "وريني الوظايف المناسبة",
+      cvBarHas: (n) => `بنطابق ${n} مهارة عندك`, cvBarHasSub: "الأنسب ليك بيطلع الأول. شوف تتعلم إيه بعد كده وعدّل مهاراتك.", cvBarEdit: "مهاراتي",
       installApp: "نزّل التطبيق", iosHint: "عشان تنزّل رادارك: دوس على زرار المشاركة في Safari، وبعدين \"Add to Home Screen\".", gotIt: "تمام",
     },
   };
@@ -723,8 +741,14 @@
     document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => { const v = t(el.dataset.i18nPlaceholder); if (el.placeholder !== v) el.placeholder = v; });
     document.querySelectorAll("[data-i18n-aria]").forEach((el) => { const v = t(el.dataset.i18nAria); if (el.getAttribute("aria-label") !== v) el.setAttribute("aria-label", v); });
     const btn = $("lang");
-    btn.textContent = lang === "ar" ? "English" : "العربية";
+    $("langLabel").textContent = lang === "ar" ? "English" : "العربية";
     btn.lang = lang === "ar" ? "en" : "ar";
+    themeLabel();
+    cvBarText();
+    // names as tooltips for the icon-only menu
+    document.querySelectorAll(".appnav .navlink, .appnav .navbtn, .appnav .tabs button").forEach((el) => {
+      const l = el.querySelector(".tl, span"); if (l) el.title = l.textContent.trim();
+    });
     renderAbout();
     if ($("kit") && !$("kit").hidden) renderKit();
     document.querySelectorAll(".langpath").forEach((a) => { a.href = (lang === "ar" ? "ar/" : "") + a.dataset.path; });
@@ -965,14 +989,14 @@
     list.removeAttribute("aria-busy");
     const rows = groups.slice(0, shown).map(jobRow);
     if (insightsData && insightsData.items.length && rows.length >= 6) rows.splice(4, 0, insightCard());
-    const wasInList = !!document.querySelector("#cvSlot .skillsbox");
+    const wasInList = !!document.querySelector("#cvSlot .cvbar");
     tgRowHome();
     cvBoxHome();                                       // take the CV box out before the list is redrawn
     const inList = cvBoxInList() && rows.length >= 3;
-    if (wasInList && !inList) requestAnimationFrame(() => document.querySelector(".skillsbox").scrollIntoView({ block: "start" }));
+    if (wasInList && !inList && !$("cvDialog").open) requestAnimationFrame(() => $("cvBar").scrollIntoView({ block: "start" }));
     if (inList) rows.splice(Math.min(3, rows.length), 0, `<li class="cvslot" id="cvSlot"></li>`);
     list.innerHTML = rows.join("");
-    if ($("cvSlot")) $("cvSlot").append(document.querySelector(".skillsbox"));
+    if ($("cvSlot")) $("cvSlot").append($("cvBar"));
     // the Telegram invite goes after the first jobs on phones too, so jobs come first
     if (phoneMq.matches && rows.length >= 8) {
       const at = list.children[Math.min(7, list.children.length - 1)];
@@ -997,10 +1021,9 @@
   // first three jobs until they add skills or a CV (then it goes back on top, where its results show).
   let cvBoxSpot = null;
   const phoneMq = window.matchMedia("(max-width: 720px)");
-  const cvBoxInList = () => phoneMq.matches && !mySkills.size && $("cvResult").hidden && $("cvPasteBox").hidden
-    && !(document.activeElement && document.activeElement.closest && document.activeElement.closest(".skillsbox"));
+  const cvBoxInList = () => phoneMq.matches && !mySkills.size;
   function cvBoxHome() {
-    const box = document.querySelector(".skillsbox");
+    const box = $("cvBar");
     if (!box) return;
     if (!cvBoxSpot) cvBoxSpot = { parent: box.parentNode, next: box.nextSibling };
     if (box.parentNode !== cvBoxSpot.parent) cvBoxSpot.parent.insertBefore(box, cvBoxSpot.next);
@@ -1545,6 +1568,7 @@
     cvStatus("");
     const years = findYears(text), role = guessRole(text);
     track("cv-read");
+    if (years) store.set("cvYears", years);
     mySkills = new Set(skills); store.set("mySkills", [...mySkills]);
     $("sort").value = "match";
     update();
@@ -2194,6 +2218,7 @@
     if (!g || !j) { if (more === "none" && meta && meta.more_jobs) loadMore(); return; }
     if (!currentJob) drawerReturn = opener || document.activeElement;
     currentJob = id;
+    if (!$("nudge").hidden) $("nudge").hidden = true;
     renderDrawer(g, j);
     $("jobDrawer").hidden = false; $("drawerScrim").hidden = false;
     document.body.classList.add("drawer-open");
@@ -2203,6 +2228,137 @@
     markViewed(id);
     if (write) writeHash();
   }
+  // ------------------------------------------------------------------ light / dark switch, side menu, CV pop-up
+  const darkNow = () => document.documentElement.dataset.theme ? document.documentElement.dataset.theme === "dark"
+    : matchMedia("(prefers-color-scheme: dark)").matches;
+  function themeLabel() {
+    const dark = darkNow();
+    $("themeLabel").textContent = t(dark ? "themeLight" : "themeDark"); $("themeBtn").title = $("themeLabel").textContent;
+    $("themeBtn").setAttribute("aria-pressed", String(dark));
+    const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = dark ? "#0B0F17" : "#FFFFFF";
+  }
+  function setupChrome() {
+    $("themeBtn").addEventListener("click", () => {
+      const next = darkNow() ? "light" : "dark";
+      document.documentElement.dataset.theme = next; store.set("theme", next); themeLabel(); track("theme/" + next);
+    });
+    matchMedia("(prefers-color-scheme: dark)").addEventListener("change", themeLabel);
+    const navOpen = () => !document.documentElement.classList.contains("nav-closed")
+      && (document.documentElement.classList.contains("nav-open") || matchMedia("(min-width: 1280px)").matches);
+    const syncNav = () => $("navCollapse").setAttribute("aria-expanded", String(navOpen()));
+    $("navCollapse").addEventListener("click", () => {
+      const open = !navOpen(), root = document.documentElement.classList;
+      root.toggle("nav-open", open); root.toggle("nav-closed", !open); store.set("navOpen", open); syncNav();
+    });
+    matchMedia("(min-width: 1280px)").addEventListener("change", syncNav);
+    syncNav();
+    // the CV pop-up
+    $("cvBarBtn").addEventListener("click", () => { $("cvFile").click(); openCv(); track("cvbar-upload"); });
+    $("cvBarMore").addEventListener("click", () => {
+      openCv();
+      if (!mySkills.size) { document.querySelector(".skillsbox").classList.add("open"); $("mySkillInput").focus(); }
+      track("cvbar-open");
+    });
+    $("cvDialogClose").addEventListener("click", () => $("cvDialog").close());
+    $("cvDone").addEventListener("click", () => { $("cvDialog").close(); selectTab("jobs"); $("results").scrollIntoView({ behavior: "smooth", block: "start" }); });
+    $("cvDialog").addEventListener("click", (e) => { if (e.target === $("cvDialog")) $("cvDialog").close(); });   // tap outside the box
+    $("cvDialog").addEventListener("close", () => { document.body.classList.remove("cv-open"); cvBarText(); });
+  }
+  function openCv() {
+    const d = $("cvDialog");
+    if (!d.open) { d.showModal(); document.body.classList.add("cv-open"); }
+    cvBarText();
+  }
+  function cvBarText() {
+    if (!$("cvBar")) return;
+    const n = mySkills.size;
+    $("cvBar").classList.toggle("has", n > 0);
+    $("cvBarTitle").textContent = n ? t("cvBarHas")(n) : t("yourSkills");
+    $("cvBarSub").textContent = n ? t("cvBarHasSub") : t("cvBarSub");
+    $("cvBarBtn").hidden = n > 0;
+    $("cvBarMore").textContent = n ? t("cvBarEdit") : t("cvBarMore");
+    $("cvBarMore").className = n ? "primary" : "linkbtn";
+    $("cvDialogFoot").hidden = !n;
+  }
+
+  // ------------------------------------------------------------------ gentle prompts: add a CV, offer referrals
+  // One small card, never on arrival, never over something you're doing, at most one per visit,
+  // and "Not now" really means not now (days, not minutes). Nothing blocks the page.
+  const NUDGE_REST = { cv: 7, ref: 21 };              // days to wait after "Not now"
+  const NUDGE_MAX = { cv: 3, ref: 3 };                // shown at most this many times, ever
+  let nudgeState = store.get("nudge", {}), nudgeShownThisVisit = false, nudgeKind = null, jobsOpenedThisVisit = 0;
+  const visitStart = Date.now();
+  const visitDays = (() => {                           // distinct days with a visit, newest last (max 30)
+    const d = new Date().toISOString().slice(0, 10), days = store.get("visitDays", []);
+    if (days[days.length - 1] !== d) { days.push(d); store.set("visitDays", days.slice(-30)); }
+    return days.length;
+  })();
+  function nudgeAllowed(kind) {
+    const s = nudgeState[kind] || {};
+    if (nudgeShownThisVisit || s.done || (s.n || 0) >= NUDGE_MAX[kind] || (s.until && Date.now() < s.until)) return false;
+    if (currentJob || document.body.classList.contains("sheet-open") || !$("iosHint").hidden || $("cvDialog").open) return false;
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName || "")) return false;
+    if (Date.now() - visitStart < 15000) return false;   // never right on arrival
+    if (kind === "cv") return !mySkills.size && $("cvResult").hidden;
+    if (kind === "ref") return !!refForm() && visitDays >= 2 && Date.now() - visitStart > 30000;
+    return false;
+  }
+  function showNudge(kind) {
+    if (!nudgeAllowed(kind)) return;
+    const years = store.get("cvYears", 0);
+    nudgeKind = kind; nudgeShownThisVisit = true;
+    const s = nudgeState[kind] = Object.assign({}, nudgeState[kind]); s.n = (s.n || 0) + 1; store.set("nudge", nudgeState);
+    const cv = kind === "cv";
+    $("nudgeIcon").innerHTML = ic(cv ? "file" : "users");
+    $("nudgeTitle").textContent = t(cv ? "nudgeCvTitle" : "nudgeRefTitle");
+    $("nudgeText").textContent = cv ? t("nudgeCvText") : years >= 2 ? t("nudgeRefTextYears")(years) : t("nudgeRefText");
+    $("nudgeNote").innerHTML = `${ic(cv ? "lock" : "eyeoff")}<span>${esc(t(cv ? "nudgeCvNote" : "nudgeRefNote"))}</span>`;
+    $("nudgeGo").textContent = t(cv ? "nudgeCvGo" : "nudgeRefGo");
+    $("nudgeAlt").textContent = t(cv ? "nudgeCvPaste" : "nudgeRefDone");
+    $("nudgeLater").textContent = t("nudgeLater");
+    $("nudgeClose").setAttribute("aria-label", t("nudgeClose"));
+    $("nudge").dataset.kind = kind;
+    $("nudge").hidden = false;
+    track("nudge-show/" + kind);
+  }
+  function hideNudge(why) {
+    if ($("nudge").hidden) return;
+    const s = nudgeState[nudgeKind] = Object.assign({}, nudgeState[nudgeKind]);
+    if (why === "later") s.until = Date.now() + NUDGE_REST[nudgeKind] * 864e5;
+    if (why === "done") s.done = 1;
+    store.set("nudge", nudgeState);
+    $("nudge").hidden = true;
+    track(`nudge-${why}/${nudgeKind}`);
+  }
+  function setupNudges() {
+    $("nudgeGo").addEventListener("click", () => {
+      const kind = nudgeKind; hideNudge("done");
+      if (kind === "cv") {
+        $("cvFile").click();                             // straight to the file picker (still inside the tap)
+        openCv();
+      } else window.open(refForm(), "_blank", "noopener");
+    });
+    $("nudgeAlt").addEventListener("click", () => {
+      const kind = nudgeKind; hideNudge("done");
+      if (kind === "cv") {
+        openCv();
+        if ($("cvPasteBox").hidden) $("cvPasteBtn").click();
+        $("cvText").focus();
+      }
+    });
+    $("nudgeLater").addEventListener("click", () => hideNudge("later"));
+    $("nudgeClose").addEventListener("click", () => hideNudge("later"));
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("nudge").hidden && !currentJob) hideNudge("later"); });
+    // the CV card: after you've looked at a couple of jobs (that's when a match score helps), or after a minute of browsing
+    setTimeout(() => showNudge("cv"), 60000);
+    // the referral card: a returning visitor who has been here a while and isn't looking at a job right now
+    setTimeout(() => showNudge("ref"), 45000);
+  }
+  function nudgeAfterJob() {
+    jobsOpenedThisVisit += 1;
+    if (jobsOpenedThisVisit >= 2) setTimeout(() => showNudge("cv"), 700);
+  }
+
   function closeJob(write = true) {
     currentJobWanted = null;
     if (!currentJob) return;
@@ -2211,6 +2367,7 @@
     document.body.classList.remove("drawer-open");
     if (drawerReturn && document.contains(drawerReturn)) drawerReturn.focus();
     if (write) writeHash();
+    nudgeAfterJob();
   }
 
   // ------------------------------------------------------------------ active filter chips
@@ -2249,6 +2406,11 @@
     const active = role.startsWith("track:") ? role.slice(6) : role.startsWith("role:") ? trackOfRole[role.slice(5)] : "";
     const pill = (value, label, n, track) => `<button type="button" class="tpill${(value === "" ? !role : active === track) ? " on" : ""}"
       data-track="${esc(value)}"${track ? ` style="${tc(track)}"` : ""}><span class="dot"></span>${esc(label)} <span class="n">${num(n)}</span></button>`;
+    // the same counts in the "I'm looking for" list next to the search
+    for (const o of $("role").options) {
+      if (o.value === "") o.textContent = `${t("anyRole")} (${num(base.length)})`;
+      else if (o.value.startsWith("track:")) { const n = counts.get(o.value.slice(6)) || 0; o.textContent = `${o.value.slice(6)} (${num(n)})`; }
+    }
     $("trackPills").innerHTML = pill("", t("allTracks"), base.length, "")
       + meta.tracks.filter((tr) => counts.get(tr.name)).map((tr) => pill("track:" + tr.name, tr.name, counts.get(tr.name), tr.name)).join("");
     // on phones the pills scroll sideways: keep the chosen one in view (without scrolling the page)
@@ -2296,6 +2458,7 @@
     renderAlerts();
     renderWatches();
     document.querySelector(".skillsbox").classList.toggle("has", mySkills.size > 0);
+    cvBarText();
     renderJobs();
     if (currentJob) { const g = groupFor(currentJob), j = jobs.find((x) => x.id === currentJob); if (g && j) renderDrawer(g, j); }
     renderSaved();
@@ -2305,6 +2468,7 @@
   }
 
   function selectTab(id, write = true) {
+    if (id !== "jobs" && $("cvDialog") && $("cvDialog").open) $("cvDialog").close();   // e.g. "Add to my Apply kit" from the CV pop-up
     // the skills box and filters belong to job views; reading views (Saved, How it works) get the full width
     document.body.dataset.tab = id;
     document.querySelectorAll('[role="tab"]').forEach((b) => {
@@ -2456,7 +2620,7 @@
         if (x.dataset.applied) { toggleApplied(x.dataset.applied); if (savedJobs[x.dataset.applied] && savedJobs[x.dataset.applied].a) toast(t("tipApplied")); renderJobs(); renderSaved(); refreshDrawer(); }
         else if (x.dataset.unsave) { delete savedJobs[x.dataset.unsave]; store.set("saved", savedJobs); renderSaved(); }
         else if (x.dataset.savedView) { savedView = x.dataset.savedView; renderSaved(); }
-        else if (x.dataset.learnSee) { $("skill").value = x.dataset.learnSee; update(); goToJobs(); track("learn-see"); }
+        else if (x.dataset.learnSee) { if ($("cvDialog").open) $("cvDialog").close(); $("skill").value = x.dataset.learnSee; update(); goToJobs(); track("learn-see"); }
         else if (x.dataset.share) { const j = jobs.find((y) => y.id === x.dataset.share); track("job-share/whatsapp/" + (j ? j.tr : "unknown")); }
         else if (x.id === "newToggle") { quick.fresh = !quick.fresh; if (quick.fresh) track("new-since-visit"); update(); }
         return;
@@ -2510,7 +2674,7 @@
       }
     });
     $("jobDrawer").addEventListener("click", (e) => {
-      if (e.target.closest("#drawerAddSkills")) { closeJob(); selectTab("jobs"); document.querySelector(".skillsbox").scrollIntoView({ behavior: "smooth" }); $("mySkillInput").focus(); }
+      if (e.target.closest("#drawerAddSkills")) { closeJob(); openCv(); document.querySelector(".skillsbox").classList.add("open"); $("mySkillInput").focus(); }
       if (e.target.closest("#copyJob")) {
         const b = e.target.closest("#copyJob");
         const j = jobs.find((x) => x.id === currentJob);
@@ -2803,6 +2967,8 @@
     applyLanguage();
     setupTelegram();
     setupWatches();
+    setupChrome();
+    setupNudges();
     document.addEventListener("click", (e) => { if (e.target.closest("[data-sharecard]")) shareCard(); });
     $("jobList").addEventListener("click", onInsightClick);
     $("skillsHandBtn").addEventListener("click", () => {

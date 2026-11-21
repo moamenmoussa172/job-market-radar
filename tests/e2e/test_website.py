@@ -236,10 +236,11 @@ def test_track_pills(page, data):
     pg = page()
     p = pg.open()
     p.select_option("#country", "Egypt")
-    pill = p.locator("#trackPills .tpill[data-track^='track:']").first
-    track = pill.get_attribute("data-track")[6:]
-    pill_n = int(pill.locator(".n").inner_text().replace(",", ""))
-    pill.click()
+    # tracks are picked in the "I'm looking for" list next to the search, with their job counts
+    opt = p.locator("#role option[value^='track:']").first
+    track = opt.get_attribute("value")[6:]
+    pill_n = int(opt.inner_text().rsplit("(", 1)[1].rstrip(")").replace(",", ""))
+    p.select_option("#role", "track:" + track)
     p.wait_for_timeout(300)
     assert pg.count() == expected(data, country="Egypt", track=track) == pill_n
     assert "track%3A" in p.url
@@ -443,6 +444,7 @@ def test_whatsapp_and_copy_link(page, data):
 def test_my_skills_and_match(page, data):
     pg = page()
     p = pg.open()
+    p.click("#cvBarMore")                                   # the CV box lives in a pop-up
     for s in ("SQL", "Python"):
         p.fill("#mySkillInput", s)
         p.press("#mySkillInput", "Enter")
@@ -461,6 +463,8 @@ def test_my_skills_and_match(page, data):
 def test_learn_next(page, data):
     pg = page(storage={"jr_mySkills": ["SQL", "Python"]})
     p = pg.open()
+    assert "2" in p.inner_text("#cvBarTitle")                  # the bar says the skills are being matched
+    p.click("#cvBarMore")                                       # "My skills" opens the pop-up with the plan
     p.wait_for_selector("#learnNext:not([hidden])")
     steps = p.locator("#learnNext .learnsteps li")
     assert steps.count() >= 1
@@ -468,12 +472,14 @@ def test_learn_next(page, data):
     steps.first.locator("[data-learn-see]").click()
     p.wait_for_timeout(300)
     assert p.locator("#skill").input_value() == skill
+    assert not p.locator("#cvDialog").evaluate("d => d.open")     # back to the jobs
     no_errors(pg)
 
 
 def test_cv_paste(page, data):
     pg = page()
     p = pg.open()
+    p.click("#cvBarMore")
     p.click("#cvPasteBtn")
     p.fill("#cvText", "Data Engineer, 3 years of experience. Skills: Python, SQL, Apache Airflow, dbt, PostgreSQL, Docker.")
     p.click("#cvRead")
@@ -970,9 +976,12 @@ def test_phone_cards_are_compact_and_cv_box_folds(page, data):
     p = pg.open("#country=Egypt")
     first = p.locator("#jobList li.job").first.bounding_box()
     assert first["height"] < 200, first
-    assert not p.locator("#mySkillInput").is_visible() and p.locator("#skillsHandBtn").is_visible()
-    p.locator("#skillsHandBtn").click()
-    assert p.locator("#mySkillInput").is_visible()
+    assert not p.locator("#mySkillInput").is_visible() and p.locator("#cvBar").count() == 1
+    p.evaluate("document.getElementById('cvBar').scrollIntoView({block: 'center'})")
+    p.locator("#cvBarMore").click()                         # the whole CV box opens as a sheet
+    assert p.locator("#cvDialog").evaluate("d => d.open") and p.locator("#mySkillInput").is_visible()
+    p.keyboard.press("Escape")
+    assert not p.locator("#cvDialog").evaluate("d => d.open")
     no_errors(pg)
 
 
@@ -989,6 +998,7 @@ def test_cv_shows_next_skill_and_makes_a_share_card(browser, base, tmp_path):
     p.on("pageerror", lambda e: errors.append(str(e)))
     p.goto(base + "/#country=Egypt")
     p.wait_for_function("/\\d/.test(document.querySelector('#count').textContent)", timeout=30000)
+    p.locator("#cvBarMore").click()
     p.locator("#cvPasteBtn").click()
     p.locator("#cvText").fill(CV_TEXT)
     p.locator("#cvRead").click()
@@ -1233,7 +1243,7 @@ def test_one_place_for_cvs_and_helpful_feedback(browser, base, data, tmp_path):
     assert "Saved tab" in p.locator("#toast").inner_text()
     # a CV read in the skills box goes into the Apply kit in one tap
     with p.expect_file_chooser() as fc:
-        p.click("#cvBtn")
+        p.click("#cvBarBtn")
     fc.value.set_files(str(tmp_path / "cv.txt"))
     p.wait_for_selector("#cvToKit", timeout=15000)
     p.click("#cvToKit")
@@ -1383,7 +1393,7 @@ def test_phone_shows_jobs_first_and_big_tap_targets(page, data):
     first = p.evaluate("document.querySelector('#jobList > li.job').getBoundingClientRect().top")
     assert first < 760, f"first job starts at {first}px, below the fold"
     # new visitor: the CV box waits after the first three jobs
-    assert p.evaluate("!!document.querySelector('#jobList > li.cvslot .skillsbox')")
+    assert p.evaluate("!!document.querySelector('#jobList > li.cvslot .cvbar')")
     assert p.evaluate("[...document.querySelectorAll('#jobList > li')].indexOf(document.getElementById('cvSlot'))") == 3
     small = p.evaluate("""[...document.querySelectorAll('#jobList .save, #jobList .wa')]
         .filter((e) => { const r = e.getBoundingClientRect(); return r.height && r.height < 44; }).length""")
@@ -1392,7 +1402,7 @@ def test_phone_shows_jobs_first_and_big_tap_targets(page, data):
     p.evaluate("""(() => { localStorage.setItem('jr_mySkills', JSON.stringify(['Python'])); })()""")
     p.reload()
     p.wait_for_selector("#jobList > li.job")
-    assert p.evaluate("!document.querySelector('#jobList .skillsbox')")
+    assert p.evaluate("!document.querySelector('#jobList .cvbar')")
     no_errors(pg)
 
 
@@ -1534,5 +1544,47 @@ def test_search_words_any_order_and_who_can_apply(browser, base, data):
     p.locator("#jobList li.job h3 a").first.click()
     p.wait_for_selector("#jobDrawer:not([hidden])")
     assert p.locator("#drawerBody .whocan li").count() >= 1
+    assert not errors, errors
+    ctx.close()
+
+
+def test_gentle_prompts(browser, base, data):
+    """The 'add your CV' card waits until you've looked at two jobs; 'Not now' rests it for days; a returning visitor may see the referral card."""
+    ctx = browser.new_context(viewport={"width": 390, "height": 844}, is_mobile=True, has_touch=True)
+    ctx.add_init_script("if(!sessionStorage.x){localStorage.clear();sessionStorage.x=1;localStorage.setItem('jr_lang', JSON.stringify('en'));"
+                        "localStorage.setItem('jr_visitDays', JSON.stringify(['2026-01-01']));}")
+    p = ctx.new_page()
+    errors = []
+    p.on("pageerror", lambda e: errors.append(str(e)))
+    p.clock.install()
+    p.goto(base + "/")
+    p.wait_for_selector("#jobList li.job")
+    p.locator("#jobList li.job h3 a").first.click()
+    p.wait_for_selector("#jobDrawer:not([hidden])")
+    p.keyboard.press("Escape")
+    p.clock.fast_forward(2000)
+    assert p.locator("#nudge").is_hidden()                       # not on arrival, not after one job
+    p.clock.fast_forward(20000)
+    for i in range(2):
+        p.locator("#jobList li.job h3 a").nth(i).click()
+        p.wait_for_selector("#jobDrawer:not([hidden])")
+        p.keyboard.press("Escape")
+    p.clock.fast_forward(1000)
+    p.wait_for_selector("#nudge:not([hidden])")
+    assert p.get_attribute("#nudge", "data-kind") == "cv"
+    assert "never uploaded" in p.inner_text("#nudge")
+    p.click("#nudgeLater")
+    assert p.locator("#nudge").is_hidden()
+    state = p.evaluate("JSON.parse(localStorage.getItem('jr_nudge'))")
+    assert state["cv"]["until"] > p.evaluate("Date.now()") + 6 * 864e5
+    p.reload()
+    p.wait_for_selector("#jobList li.job")
+    p.clock.fast_forward(70000)
+    p.wait_for_timeout(300)
+    meta = json.loads(fetch(base, "data/meta.json"))
+    if (meta.get("referrals") or {}).get("form"):
+        assert p.get_attribute("#nudge", "data-kind") == "ref"      # the CV card is resting, so the referral card may come
+    else:
+        assert p.locator("#nudge").is_hidden()
     assert not errors, errors
     ctx.close()

@@ -1388,28 +1388,176 @@ h1, h2, h3 { letter-spacing: -.02em; }
   .joblist { margin-inline: -12px; }
 }
 
-/* wide screens: the tabs become a menu down the left side, the way workspace apps do it */
-@media (min-width: 1100px) {
-  body:has(.tabs-wrap) { padding-inline-start: var(--rail); }
-  .tabs-wrap {
-    position: fixed; inset-block: 0; inset-inline-start: 0; width: var(--rail); z-index: 45;
-    background: var(--surface); border-bottom: 0; border-inline-end: 1px solid var(--line);
-    backdrop-filter: none; -webkit-backdrop-filter: none;
-  }
-  .tabs-wrap::before { content: ""; display: block; width: 14px; height: 14px; margin: 30px auto 0; border-radius: 50%;
-    background: var(--violet-fill); box-shadow: 0 0 0 5px var(--violet-soft); }
-  .tabs { flex-direction: column; height: calc(100% - 44px); max-width: none; padding: 26px 10px 16px; overflow-y: auto; }
-  .tablist { display: flex; flex-direction: column; gap: 6px; }
-  .tabs button { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 11px 4px 10px; border-radius: 10px;
-    font-size: 12px; font-weight: 600; line-height: 1.2; white-space: normal; text-align: center; color: var(--ink-2); }
-  .tabs button:hover { background: var(--paper); color: var(--ink); }
-  .tabs button .ti { display: block; }
-  .tabs button .tl { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-  .tabs button .ts { display: block; }
-  .tabs button[aria-selected="true"] { background: var(--violet-soft); color: var(--violet-ink); }
-  .tabs button[aria-selected="true"]::after { display: none; }
-  .tabs button[aria-selected="true"] .ti { stroke-width: 2.3; }
-  #savedCount { position: absolute; top: 6px; inset-inline-start: calc(50% + 6px); font-size: 10.5px; min-width: 18px; height: 18px; padding: 0 5px; line-height: 18px; }
+/* ---- gentle prompts: add your CV / offer referrals (update 98) ---- */
+.nudge {
+  position: fixed; z-index: 60; inset-inline-end: 24px; bottom: 24px; width: min(400px, calc(100vw - 32px));
+  display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 14px; padding: 18px 18px 14px;
+  background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: var(--r-m);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, .12), 0 1px 3px rgba(15, 23, 42, .06);
+  animation: nudgein .28s cubic-bezier(.2, .8, .2, 1) both;
+}
+@keyframes nudgein { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .nudge { animation: none; } }
+.nudge-ic { width: 44px; height: 44px; border-radius: 10px; display: grid; place-items: center; background: var(--violet-soft); color: var(--violet-ink); }
+.nudge-ic .ico { width: 22px; height: 22px; }
+.nudge-body { min-width: 0; padding-inline-end: 22px; }
+.nudge h2 { margin: 2px 0 4px; font: 700 16.5px/1.3 var(--display); letter-spacing: -.01em; }
+[dir="rtl"] .nudge h2 { font-family: var(--font); letter-spacing: 0; }
+.nudge p { margin: 0; color: var(--ink-2); font-size: 14.5px; line-height: 1.5; }
+.nudge .nudge-note { display: flex; gap: 6px; align-items: flex-start; margin-top: 8px; color: var(--muted); font-size: 13px; }
+.nudge .nudge-note .ico { width: 15px; height: 15px; flex: none; margin-top: 2px; }
+.nudge-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-top: 14px; }
+.nudge-actions .primary { padding: 11px 16px; min-height: 44px; }
+.nudge-actions .linkbtn { font-size: 14px; min-height: 44px; padding-inline: 4px; }
+.nudge-later { margin-inline-start: auto; padding: 8px 4px; min-height: 44px; background: none; border: 0; font: 500 14px var(--font); color: var(--muted); cursor: pointer; }
+.nudge-later:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.nudge-x { position: absolute; top: 8px; inset-inline-end: 8px; width: 36px; height: 36px; color: var(--muted); }
+.nudge-x:hover { background: var(--paper); color: var(--ink); }
+.nudge-x svg { width: 18px; height: 18px; }
+.nudge[data-kind="ref"] .nudge-ic { background: color-mix(in srgb, var(--amber) 18%, var(--surface)); color: color-mix(in srgb, var(--amber) 55%, var(--ink)); }
+@media (max-width: 720px) {
+  .nudge { inset-inline: 10px; width: auto; bottom: calc(70px + env(safe-area-inset-bottom, 0px)); grid-template-columns: 40px minmax(0, 1fr); gap: 12px; padding: 14px 14px 6px; }
+  .nudge h2 { font-size: 16px; }
+  .nudge p { font-size: 14px; }
+  .nudge-actions { margin-top: 12px; }
+  .nudge-ic { width: 40px; height: 40px; }
+  .nudge-actions .primary { flex: 1 1 100%; justify-content: center; text-align: center; }
+  .nudge-actions .linkbtn { padding-inline: 0; }
+}
+body.drawer-open .nudge, body.sheet-open .nudge { display: none; }
+
+/* =====================================================================
+   Update 98: one side menu (tabs + site links + language + light/dark), the CV box in a pop-up,
+   tracks in the "I'm looking for" list instead of a row of pills.
+   ===================================================================== */
+.trackpills { display: none; }
+.brand { color: var(--ink); }
+.brand .ring { stroke: #fff; }
+.ni { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.navbtn[aria-pressed="true"] .moon, .navbtn[aria-pressed="false"] .sun { display: none; }
+.navbtn, .appnav .navlink, .appnav .installbtn {
+  display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border: 0; border-radius: 10px; background: none;
+  color: var(--ink-2); font: 500 15px/1.2 var(--font); text-decoration: none; cursor: pointer; text-align: start; white-space: nowrap;
+}
+.navbtn:hover, .appnav .navlink:hover, .appnav .installbtn:hover { background: var(--paper); color: var(--ink); }
+.appnav .installbtn svg { width: 20px; height: 20px; }
+.navcollapse { display: none; }
+body[data-tab="saved"] .cvbar, body[data-tab="about"] .cvbar, body[data-tab="trends"] .cvbar, body[data-tab="kit"] .cvbar { display: none; }
+
+/* phones: a slim top row (logo, light/dark, language) and the bottom tab bar */
+@media (max-width: 720px) {
+  .appnav { display: flex; align-items: center; gap: 8px; padding: 10px 12px 10px 16px; background: var(--bg); border-bottom: 1px solid var(--line); }
+  [dir="rtl"] .appnav { padding: 10px 16px 10px 12px; }
+  .appnav-top { flex: 1; min-width: 0; }
+  .appnav-links { display: none; }
+  .appnav-foot { display: flex; align-items: center; gap: 2px; }
+  .appnav-foot .navbtn { padding: 0 10px; gap: 6px; font-size: 14px; }
+  #themeBtn span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .appnav .installbtn { padding: 0 10px; font-size: 13px; gap: 6px; }
+}
+
+/* tablets and computers: everything in one menu down the side; wide screens show it open with names */
+@media (min-width: 721px) {
+  :root { --nav-w: 80px; }
+  .appnav { position: fixed; inset-block: 0; inset-inline-start: 0; z-index: 45; width: var(--nav-w); display: flex; flex-direction: column;
+    padding: 14px 10px 12px; background: var(--surface); border-inline-end: 1px solid var(--line); overflow-y: auto; overflow-x: hidden; scrollbar-width: none; }
+  body:has(.appnav) { padding-inline-start: var(--nav-w); }
+  .appnav-top { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .appnav-top .brand span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .navcollapse { display: inline-grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 10px; background: none; color: var(--muted); cursor: pointer; }
+  .navcollapse:hover { background: var(--paper); color: var(--ink); }
+  .navcollapse svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+  .appnav .tabs-wrap { position: static; background: none; border: 0; backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .appnav .tabs { display: block; max-width: none; padding: 0; overflow: visible; }
+  .appnav .tablist { display: flex; flex-direction: column; gap: 4px; }
+  .appnav .tabs button { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 100%; padding: 10px 2px 9px; border-radius: 10px;
+    font-size: 11.5px; font-weight: 600; line-height: 1.2; white-space: normal; text-align: center; color: var(--ink-2); }
+  .appnav .tabs button:hover { background: var(--paper); color: var(--ink); }
+  .appnav .tabs button .ti, .appnav .tabs button .ts { display: block; }
+  .appnav .tabs button .tl { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .appnav .tabs button[aria-selected="true"] { background: var(--violet-soft); color: var(--violet-ink); }
+  .appnav .tabs button[aria-selected="true"]::after { display: none; }
+  .appnav .tabs button[aria-selected="true"] .ti { stroke-width: 2.3; }
+  .appnav #savedCount { position: absolute; top: 5px; inset-inline-start: calc(50% + 6px); font-size: 10.5px; min-width: 18px; height: 18px; padding: 0 5px; line-height: 18px; }
   .minisearch { display: none; }
+  .appnav-links { display: flex; flex-direction: column; gap: 2px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .navhead { display: none; margin: 0 12px 6px; font-size: 12px; font-weight: 600; color: var(--muted); }
+  .appnav-foot { display: flex; flex-direction: column; gap: 2px; margin-top: auto; padding-top: 12px; border-top: 1px solid var(--line); }
+  .appnav .navlink, .navbtn, .appnav .installbtn { justify-content: center; padding: 0; }
+  .appnav .navlink span, .navbtn span, .appnav .installbtn span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .sidebar { top: 20px; max-height: calc(100vh - 40px); }
+}
+/* open: names next to the icons (on by default on wide screens) */
+@media (min-width: 1280px) { :root:not(.nav-closed) { --nav-w: 248px; } }
+@media (min-width: 721px) { :root.nav-open { --nav-w: 248px; } }
+@media (min-width: 721px) {
+  :root.nav-open .appnav, :root.nav-open :root:not(.nav-closed) .appnav.wide { padding-inline: 14px; }
+}
+@media (min-width: 1280px) {
+  :root:not(.nav-closed) .appnav { padding-inline: 14px; }
+}
+@media (min-width: 1280px) {
+  :root:not(.nav-closed) .appnav-top { flex-direction: row; justify-content: space-between; padding-inline: 6px; }
+  :root:not(.nav-closed) .appnav-top .brand span { position: static; width: auto; height: auto; overflow: visible; clip: auto; }
+  :root:not(.nav-closed) .appnav .tabs button { flex-direction: row; justify-content: flex-start; gap: 12px; min-height: 44px; padding: 0 12px; font-size: 15px; font-weight: 500; text-align: start; }
+  :root:not(.nav-closed) .appnav .tabs button[aria-selected="true"] { font-weight: 600; }
+  :root:not(.nav-closed) .appnav .tabs button .ts { display: none; }
+  :root:not(.nav-closed) .appnav .tabs button .tl { position: static; width: auto; height: auto; overflow: visible; clip: auto; white-space: nowrap; }
+  :root:not(.nav-closed) .appnav #savedCount { position: static; margin-inline-start: auto; }
+  :root:not(.nav-closed) .navhead { display: block; }
+  :root:not(.nav-closed) .appnav .navlink, :root:not(.nav-closed) .navbtn, :root:not(.nav-closed) .appnav .installbtn { justify-content: flex-start; padding: 0 12px; }
+  :root:not(.nav-closed) .appnav .navlink span, :root:not(.nav-closed) .navbtn span, :root:not(.nav-closed) .appnav .installbtn span { position: static; width: auto; height: auto; overflow: visible; clip: auto; }
+}
+@media (min-width: 721px) {
+  :root.nav-open .appnav-top { flex-direction: row; justify-content: space-between; padding-inline: 6px; }
+  :root.nav-open .appnav-top .brand span { position: static; width: auto; height: auto; overflow: visible; clip: auto; }
+  :root.nav-open .appnav .tabs button { flex-direction: row; justify-content: flex-start; gap: 12px; min-height: 44px; padding: 0 12px; font-size: 15px; font-weight: 500; text-align: start; }
+  :root.nav-open .appnav .tabs button[aria-selected="true"] { font-weight: 600; }
+  :root.nav-open .appnav .tabs button .ts { display: none; }
+  :root.nav-open .appnav .tabs button .tl { position: static; width: auto; height: auto; overflow: visible; clip: auto; white-space: nowrap; }
+  :root.nav-open .appnav #savedCount { position: static; margin-inline-start: auto; }
+  :root.nav-open .navhead { display: block; }
+  :root.nav-open .appnav .navlink, :root.nav-open .navbtn, :root.nav-open .appnav .installbtn { justify-content: flex-start; padding: 0 12px; }
+  :root.nav-open .appnav .navlink span, :root.nav-open .navbtn span, :root.nav-open .appnav .installbtn span { position: static; width: auto; height: auto; overflow: visible; clip: auto; }
+}
+
+/* the CV bar in the page, and the full CV box in a pop-up */
+.cvbar { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: 14px; margin: 0 0 16px; padding: 14px 16px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-m); box-shadow: var(--shadow); }
+.cvbar.has { background: var(--violet-soft); border-color: var(--green-line); }
+.cvbar-ic { width: 44px; height: 44px; border-radius: 10px; display: grid; place-items: center; background: var(--violet-soft); color: var(--violet-ink); }
+.cvbar.has .cvbar-ic { background: var(--surface); }
+.cvbar-ic svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.cvbar h2 { margin: 0; font: 700 16px/1.3 var(--display); }
+[dir="rtl"] .cvbar h2 { font-family: var(--font); }
+.cvbar p { margin: 2px 0 0; color: var(--ink-2); font-size: 14px; line-height: 1.45; }
+.cvbar-actions { display: flex; align-items: center; gap: 6px 10px; flex-wrap: wrap; justify-content: flex-end; }
+.cvbar-actions .primary { min-height: 42px; }
+.cvbar-actions .linkbtn { min-height: 42px; }
+.joblist > li.cvslot .cvbar { margin: 0; border: 0; border-radius: 0; box-shadow: none; background: var(--violet-soft); }
+.cvdialog { width: min(760px, calc(100vw - 32px)); max-height: min(88vh, 920px); padding: 0; border: 1px solid var(--line); border-radius: 16px;
+  background: var(--surface); color: var(--ink); box-shadow: 0 24px 60px rgba(15, 23, 42, .25); overflow: auto; overscroll-behavior: contain; }
+.cvdialog::backdrop { background: rgba(15, 23, 42, .45); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+.cvdialog[open] { animation: cvin .22s cubic-bezier(.2, .8, .2, 1); }
+@keyframes cvin { from { opacity: 0; transform: translateY(10px) scale(.99); } }
+@media (prefers-reduced-motion: reduce) { .cvdialog[open] { animation: none; } }
+body .cvdialog .skillsbox { display: block; margin: 0; border: 0; border-radius: 0; box-shadow: none; background: none; padding: 26px 26px 18px; }
+.cvdialog .skills-intro { padding-inline-end: 36px; }
+.cvdialog-x { position: absolute; top: 12px; inset-inline-end: 12px; z-index: 2; width: 40px; height: 40px; color: var(--muted); }
+.cvdialog-x:hover { background: var(--paper); color: var(--ink); }
+.cvdialog-x svg { width: 20px; height: 20px; }
+.cvdialog-foot { position: sticky; bottom: 0; display: flex; justify-content: flex-end; padding: 12px 26px; background: var(--surface); border-top: 1px solid var(--line); }
+body.cv-open { overflow: hidden; }
+@media (max-width: 720px) {
+  .cvbar { grid-template-columns: 40px minmax(0, 1fr); gap: 12px; padding: 14px; }
+  .cvbar-ic { width: 40px; height: 40px; }
+  .cvbar-actions { grid-column: 1 / -1; justify-content: flex-start; }
+  .cvbar-actions .primary { flex: 1 1 auto; }
+  .cvdialog { width: 100vw; max-width: 100vw; max-height: 92vh; margin: auto 0 0; border-radius: 18px 18px 0 0; border-bottom: 0; }
+  .cvdialog[open] { animation-name: cvup; }
+  @keyframes cvup { from { transform: translateY(40px); opacity: 0; } }
+  body .cvdialog .skillsbox { padding: 22px 16px 14px; }
+  .cvdialog .skills-intro .hint { display: block; }
+  .cvdialog-foot { padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); }
+  .cvdialog-foot .primary { flex: 1; }
 }
