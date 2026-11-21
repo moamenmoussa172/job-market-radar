@@ -12,6 +12,13 @@
   const T = {
     en: {
       brand: "Radarak", code: "Source code", skip: "Skip to jobs",
+      navJobs: "Jobs", navExplore: "Explore", stickyPh: "Search title, company, or stack...", contribute: "Contribute",
+      nlKicker: "Weekly Digest", nlJoin: "Join 4,200+ engineers",
+      footMission: "Direct career-page aggregation built to help MENA & remote tech talent skip dead links and expired boards.",
+      footExplore: "Explore", footCommunity: "Community & Alerts",
+      tgEgypt: "Telegram Alerts — Egypt", tgGulf: "Telegram Alerts — Gulf", tgRemote: "Telegram Alerts — Remote",
+      contributeGithub: "Contribute on GitHub",
+      liveCount: (a, b) => `${a} of ${b} tracked jobs live`,
       browseTracks: "Browse by track", allTracks: "All tech",
       ask1: "I live in", ask2: "and I'm looking for", ask3: "jobs.", country: "Country", role: "Role",
       anyCountry: "any country", anyRole: "any tech", allOf: (x) => `${x} (all roles)`,
@@ -200,6 +207,13 @@
     },
     ar: {
       brand: "رادارك", code: "الكود المصدري", skip: "انتقل للوظايف",
+      navJobs: "الوظايف", navExplore: "استكشف", stickyPh: "دوّر بالوظيفة أو الشركة أو المهارة...", contribute: "ساهم في الكود",
+      nlKicker: "ملخص أسبوعي", nlJoin: "انضم لـ +4,200 مهندس",
+      footMission: "تجميع مباشر من صفحات توظيف الشركات لمساعدة المواهب التقنية في الشرق الأوسط والريموت بعيدًا عن اللينكات المنتهية.",
+      footExplore: "استكشف", footCommunity: "المجتمع والتنبيهات",
+      tgEgypt: "تنبيهات تيليجرام — مصر", tgGulf: "تنبيهات تيليجرام — الخليج", tgRemote: "تنبيهات تيليجرام — ريموت",
+      contributeGithub: "ساهم على GitHub",
+      liveCount: (a, b) => `${a} من ${b} وظيفة متابعة متاحة حاليًا`,
       browseTracks: "تصفّح حسب المجال", allTracks: "كل التك",
       ask1: "أنا عايش في", ask2: "وبدوّر على وظايف", ask3: "", country: "الدولة", role: "الوظيفة",
       anyCountry: "أي دولة", anyRole: "أي مجال تقني", allOf: (x) => `${x} (كل الوظايف)`,
@@ -722,6 +736,7 @@
       const d = new Date(meta.generated_at);
       $("fresh").textContent = t("updated")(d.toLocaleDateString(lang === "ar" ? "ar-EG" : "en-GB", { day: "numeric", month: "long" }));
       $("footText").textContent = `${t("listedOf")(num(meta.listed_jobs), num(meta.total_active_jobs))} ${meta.credits.join(", ")}.`;
+      if ($("footLiveCount")) $("footLiveCount").textContent = t("liveCount")(num(meta.listed_jobs), num(meta.total_active_jobs));
     }
   }
 
@@ -2233,6 +2248,7 @@
     renderTracks();
     renderChips();
     if (document.activeElement !== $("qMini")) $("qMini").value = $("q").value;
+    if ($("qSticky") && document.activeElement !== $("qSticky")) $("qSticky").value = $("q").value;
     renderSkills();
     renderLearn();
     renderNewBanner();
@@ -2448,8 +2464,8 @@
       if (e.key === "Escape" && currentJob) { closeJob(); return; }
       if (e.key === "/" && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) {
         e.preventDefault();
-        const mini = $("qMini");
-        (mini.offsetParent ? mini : $("q")).focus();
+        const sticky = $("qSticky"), mini = $("qMini");
+        (sticky && sticky.offsetParent ? sticky : mini && mini.offsetParent ? mini : $("q")).focus();
       }
     });
     $("jobDrawer").addEventListener("click", (e) => {
@@ -2527,6 +2543,29 @@
     // the compact search in the sticky bar mirrors the main keywords box
     $("qMini").addEventListener("input", () => { $("q").value = $("qMini").value; update(); });
     $("qMini").addEventListener("keydown", (e) => { if (e.key === "Enter") { selectTab("jobs"); $("results").scrollIntoView({ behavior: "smooth" }); } });
+    // header Explore dropdown & sticky scroll search
+    const expBtn = $("exploreBtn"), expMenu = $("exploreMenu");
+    if (expBtn && expMenu) {
+      const setExp = (open) => {
+        expMenu.hidden = !open;
+        expBtn.setAttribute("aria-expanded", String(open));
+      };
+      expBtn.addEventListener("click", (e) => { e.stopPropagation(); setExp(expMenu.hidden); });
+      document.addEventListener("click", (e) => { if (!expMenu.hidden && !e.target.closest("#exploreDropdown")) setExp(false); });
+      document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !expMenu.hidden) { setExp(false); expBtn.focus(); } });
+    }
+    const stickyBar = $("stickySearchBar"), stickyInput = $("qSticky"), heroConsole = $("console");
+    if (stickyInput) {
+      stickyInput.addEventListener("input", () => { $("q").value = stickyInput.value; update(); });
+      stickyInput.addEventListener("keydown", (e) => { if (e.key === "Enter") { selectTab("jobs"); $("results").scrollIntoView({ behavior: "smooth" }); } });
+    }
+    if (stickyBar && heroConsole) {
+      const toggleSticky = () => {
+        stickyBar.hidden = heroConsole.getBoundingClientRect().bottom >= 64;
+      };
+      window.addEventListener("scroll", toggleSticky, { passive: true });
+      toggleSticky();
+    }
     window.addEventListener("hashchange", () => { readHash(); update(); maybeLoadMore(); });
     window.addEventListener("resize", sizeHero);
   }
@@ -2564,13 +2603,22 @@
     }
     clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.hidden = true; }, actionLabel ? 6000 : 3500);
   }
-  // weekly email (Buttondown): shown only when the publish step filled in the newsletter name
+  // weekly email (Buttondown): posts to Buttondown when configured, shows local confirmation in preview
   function setupNewsletter() {
-    const box = $("newsletter"), name = box.dataset.bd;
-    if (!name) return;
-    box.hidden = false;
-    $("nlForm").action = "https://buttondown.com/api/emails/embed-subscribe/" + encodeURIComponent(name);
-    $("nlForm").addEventListener("submit", () => { track("newsletter-subscribe"); setTimeout(() => toast(t("nlThanks")), 300); });
+    const box = $("newsletter"), form = $("nlForm");
+    if (!box || !form) return;
+    const name = box.dataset.bd;
+    if (name) {
+      box.hidden = false;
+      form.action = "https://buttondown.com/api/emails/embed-subscribe/" + encodeURIComponent(name);
+      form.addEventListener("submit", () => { track("newsletter-subscribe"); setTimeout(() => toast(t("nlThanks")), 300); });
+    } else {
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        form.reset();
+        toast(t("nlThanks"));
+      });
+    }
   }
 
   const TZ_COUNTRY = {
@@ -2653,7 +2701,7 @@
       navigator.serviceWorker.register("sw.js").catch(() => {});
     }
     const btn = $("installBtn");
-    if (standalone()) return;
+    if (standalone()) { btn.hidden = true; return; }
     window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installEvt = e; btn.hidden = false; });
     window.addEventListener("appinstalled", () => { btn.hidden = true; track("app-installed"); });
     if (isIOS()) btn.hidden = false;           // Safari has no install prompt: show how to do it by hand
@@ -2722,6 +2770,7 @@
       meta = m; jobs = j;
     } catch {
       $("count").textContent = "–";
+      if ($("footLiveCount")) $("footLiveCount").textContent = "–";
       $("jobList").innerHTML = "";
       $("empty").hidden = false;
       $("empty").textContent = t("loadError");

@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Radarak: your radar for tech jobs you can actually get</title>
   <meta name="description" content="Free, daily-updated tech jobs for Egypt, the Gulf and Europe. Pick the country you live in and see which jobs you can apply to, what skills they ask for and what they pay. Arabic and English.">
-  <meta name="theme-color" content="#FFFFFF">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#090A0F">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icons/icon-180.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -27,35 +28,89 @@
 <body>
   <a class="skip" href="#results" data-i18n="skip">Skip to jobs</a>
 
-  <header class="topbar">
+  <header class="topbar" id="main-header">
     <div class="topbar-in">
-      <a class="brand" href="./" aria-label="Radarak">
-        <svg viewBox="0 0 32 32" aria-hidden="true"><circle class="disc" cx="16" cy="16" r="15"/><circle class="ring" cx="16" cy="16" r="8.5"/>
-          <circle cx="22.5" cy="9.5" r="3" fill="#FFFFFF"/><circle cx="9.5" cy="19.5" r="2.5" fill="#64D2FF"/><circle cx="19.5" cy="22.5" r="2.1" fill="#30D158"/></svg>
-        <span data-i18n="brand">Radarak</span>
-      </a>
-      <nav class="topnav" aria-label="Site">
-        <a class="navlink hide-s langpath" href="jobs/" data-path="jobs/" data-i18n="browseJobs">Jobs by country</a>
-        <a class="navlink hide-s langpath" href="companies/" data-path="companies/" data-i18n="navCompanies">Companies</a>
-        <a class="navlink hide-s langpath" href="juniors/" data-path="juniors/" data-i18n="navJuniors">Juniors</a>
-        <a class="navlink hide-s langpath" href="salaries/" data-path="salaries/" data-i18n="navSalaries">Salaries</a>
-        <a class="navlink hide-s" href="report.html" data-i18n="weeklyReport">Weekly report</a>
-        <a class="navlink hide-s" href="https://github.com/moamenmoussa172/job-market-radar" target="_blank" rel="noopener" data-i18n="code">Source code</a>
-        <button id="installBtn" class="installbtn" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14"/></svg><span data-i18n="installApp">Install app</span></button>
+      <div class="topbar-left">
+        <a class="brand" href="./" aria-label="Radarak">
+          <svg viewBox="0 0 32 32" aria-hidden="true"><circle class="disc" cx="16" cy="16" r="15"/><circle class="ring" cx="16" cy="16" r="8.5"/>
+            <circle cx="22.5" cy="9.5" r="3" fill="#FFFFFF"/><circle cx="9.5" cy="19.5" r="2.5" fill="#64D2FF"/><circle cx="19.5" cy="22.5" r="2.1" fill="#30D158"/></svg>
+          <span data-i18n="brand">Radarak</span>
+        </a>
+        <nav class="primary-nav" aria-label="Site">
+          <a class="navlink navlink-active hide-s" href="#results" data-i18n="navJobs">Jobs</a>
+          <a class="navlink hide-s langpath" href="juniors/" data-path="juniors/" data-i18n="navJuniors">Juniors</a>
+          <div class="nav-dropdown hide-s" id="exploreDropdown">
+            <button id="exploreBtn" class="navlink explore-btn" type="button" aria-expanded="false" aria-controls="exploreMenu">
+              <span data-i18n="navExplore">Explore</span>
+              <svg class="explore-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="exploreMenu" class="explore-menu" hidden>
+              <a class="explore-item langpath" href="jobs/" data-path="jobs/">
+                <span data-i18n="browseJobs">Jobs by country</span>
+                <span class="explore-count">12</span>
+              </a>
+              <a class="explore-item langpath" href="companies/" data-path="companies/">
+                <span data-i18n="navCompanies">Companies</span>
+                <span class="explore-count">840+</span>
+              </a>
+              <a class="explore-item langpath" href="salaries/" data-path="salaries/">
+                <span data-i18n="navSalaries">Salaries</span>
+                <span class="explore-badge" data-i18n="newTag">New</span>
+              </a>
+              <a class="explore-item" href="report.html">
+                <span data-i18n="weeklyReport">Weekly report</span>
+              </a>
+            </div>
+          </div>
+        </nav>
+      </div>
+
+      <div id="stickySearchBar" class="sticky-search" hidden>
+        <svg class="sticky-search-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+        <label class="sr" for="qSticky" data-i18n="search">Search</label>
+        <input id="qSticky" type="search" autocomplete="off" data-i18n-placeholder="stickyPh" placeholder="Search title, company, or stack...">
+        <kbd aria-hidden="true">/</kbd>
+      </div>
+
+      <div class="topbar-right">
+        <div class="tooltip-wrap">
+          <a class="icon-util" href="https://github.com/moamenmoussa172/job-market-radar" target="_blank" rel="noopener" data-i18n-aria="contribute" aria-label="Contribute">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+          </a>
+          <span class="tooltip" role="tooltip" data-i18n="contribute">Contribute</span>
+        </div>
+        <button id="installBtn" class="installbtn hide-xs" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14"/></svg><span data-i18n="installApp">Install app</span></button>
         <button id="lang" class="langbtn" type="button" lang="ar">العربية</button>
-      </nav>
+      </div>
     </div>
   </header>
 
   <section class="hero" aria-labelledby="heroTitle">
     <svg class="radar" viewBox="0 0 400 400" aria-hidden="true">
       <defs>
-        <radialGradient id="sweepFill" cx="200" cy="200" r="190" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stop-color="#0071E3" stop-opacity="0"/><stop offset="1" stop-color="#0071E3" stop-opacity=".45"/></radialGradient>
+        <radialGradient id="radarGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#3B82F6" stop-opacity="0.22"/>
+          <stop offset="65%" stop-color="#3B82F6" stop-opacity="0.04"/>
+          <stop offset="100%" stop-color="#090A0F" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="sweepFill" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#60A5FA" stop-opacity="0.45"/>
+          <stop offset="60%" stop-color="#3B82F6" stop-opacity="0.12"/>
+          <stop offset="100%" stop-color="#3B82F6" stop-opacity="0"/>
+        </linearGradient>
       </defs>
-      <circle cx="200" cy="200" r="190"/><circle cx="200" cy="200" r="135"/><circle cx="200" cy="200" r="80"/><circle cx="200" cy="200" r="25"/>
-      <path class="axis" d="M200 10V390M10 200H390"/>
-      <path class="sweep" d="M200 200 L200 10 A190 190 0 0 1 334 66 Z"/>
+      <circle class="radar-glow" cx="200" cy="200" r="190" fill="url(#radarGlow)"/>
+      <circle cx="200" cy="200" r="175"/>
+      <circle class="ring-dashed" cx="200" cy="200" r="130" stroke-dasharray="3 3"/>
+      <circle cx="200" cy="200" r="85"/>
+      <circle class="ring-inner" cx="200" cy="200" r="40"/>
+      <path class="axis" d="M200 15V385M15 200H385"/>
+      <g class="sweep">
+        <path d="M200,200 L200,25 A175,175 0 0,1 351,112 Z" fill="url(#sweepFill)"/>
+        <line class="sweep-beam" x1="200" y1="200" x2="200" y2="25"/>
+      </g>
+      <circle class="emitter-core" cx="200" cy="200" r="4"/>
+      <circle class="emitter-ring" cx="200" cy="200" r="9"/>
       <g id="blips"></g>
     </svg>
     <div class="hero-in">
@@ -311,10 +366,18 @@
     <button type="button" class="primary sm" id="iosHintClose" data-i18n="gotIt">Got it</button>
   </div>
 
-  <footer class="foot">
+  <footer class="foot" id="footer">
     <div class="foot-in">
-      <section class="newsletter" id="newsletter" data-bd="" hidden>
-        <div><h2 data-i18n="nlTitle">Radarak Weekly</h2><p data-i18n="nlText">Every Sunday: the week's new tech jobs in Egypt, the Gulf and remote, in one short email.</p></div>
+      <section class="newsletter" id="newsletter" data-bd="">
+        <div>
+          <div class="nl-kicker">
+            <span data-i18n="nlKicker">Weekly Digest</span>
+            <span aria-hidden="true">•</span>
+            <span data-i18n="nlJoin">Join 4,200+ engineers</span>
+          </div>
+          <h2 data-i18n="nlTitle">Radarak Weekly</h2>
+          <p data-i18n="nlText">Every Sunday: the week's highest-signal tech jobs in Egypt, the Gulf, and remote, in one clean email.</p>
+        </div>
         <form id="nlForm" method="post" target="_blank">
           <label class="sr" for="nlEmail" data-i18n="nlEmail">Your email</label>
           <input id="nlEmail" type="email" name="email" required autocomplete="email" data-i18n-placeholder="nlEmailPh" placeholder="you@example.com">
@@ -322,14 +385,49 @@
           <button class="primary" type="submit" data-i18n="nlBtn">Subscribe</button>
         </form>
       </section>
-      <p class="foottg" id="footTg" hidden></p>
-      <nav class="footnav"><a class="langpath" href="jobs/" data-path="jobs/" data-i18n="browseJobsAll">Browse tech jobs by country and role</a>
-        <a class="langpath" href="companies/" data-path="companies/" data-i18n="navCompanies">Companies</a>
-        <a class="langpath" href="juniors/" data-path="juniors/" data-i18n="navJuniors">Juniors</a>
-        <a class="langpath" href="salaries/" data-path="salaries/" data-i18n="navSalaries">Salaries</a>
-        <a href="report.html" data-i18n="weeklyReport">Weekly report</a>
-        <a href="mailto:hello@radarak.online?subject=Radarak%20feedback" data-i18n="feedback">Send feedback</a></nav>
-      <p id="footText"></p>
+
+      <div class="foot-grid">
+        <div class="foot-col">
+          <a class="brand foot-brand" href="./" aria-label="Radarak">
+            <svg viewBox="0 0 32 32" aria-hidden="true"><circle class="disc" cx="16" cy="16" r="15"/><circle class="ring" cx="16" cy="16" r="8.5"/>
+              <circle cx="22.5" cy="9.5" r="3" fill="#FFFFFF"/><circle cx="9.5" cy="19.5" r="2.5" fill="#64D2FF"/><circle cx="19.5" cy="22.5" r="2.1" fill="#30D158"/></svg>
+            <span data-i18n="brand">Radarak</span>
+          </a>
+          <p class="foot-mission" data-i18n="footMission">Direct career-page aggregation built to help MENA &amp; remote tech talent skip dead links and expired boards.</p>
+          <div class="foot-live">
+            <span class="live-dot" aria-hidden="true"></span>
+            <span id="footLiveCount">—</span>
+          </div>
+        </div>
+
+        <div class="foot-col">
+          <h4 class="foot-heading" data-i18n="footExplore">Explore</h4>
+          <ul class="foot-list footnav">
+            <li><a class="langpath" href="jobs/" data-path="jobs/" data-i18n="browseJobsAll">Jobs by Country &amp; Role</a></li>
+            <li><a class="langpath" href="companies/" data-path="companies/" data-i18n="navCompanies">Hiring Companies</a></li>
+            <li><a class="langpath" href="juniors/" data-path="juniors/" data-i18n="navJuniors">Juniors &amp; Internships</a></li>
+            <li><a class="langpath" href="salaries/" data-path="salaries/" data-i18n="navSalaries">Salary Benchmarks</a></li>
+            <li><a href="report.html" data-i18n="weeklyReport">Weekly Market Report</a></li>
+          </ul>
+        </div>
+
+        <div class="foot-col">
+          <h4 class="foot-heading" data-i18n="footCommunity">Community &amp; Alerts</h4>
+          <ul class="foot-list">
+            <li><a href="https://t.me/radarak_egypt" target="_blank" rel="noopener" data-i18n="tgEgypt">Telegram Alerts — Egypt</a></li>
+            <li><a href="https://t.me/radarak_gulf" target="_blank" rel="noopener" data-i18n="tgGulf">Telegram Alerts — Gulf</a></li>
+            <li><a href="https://t.me/radarak_remote" target="_blank" rel="noopener" data-i18n="tgRemote">Telegram Alerts — Remote</a></li>
+            <li><a href="https://github.com/moamenmoussa172/job-market-radar" target="_blank" rel="noopener" data-i18n="contributeGithub">Contribute on GitHub</a></li>
+            <li><a href="mailto:hello@radarak.online?subject=Radarak%20feedback" data-i18n="feedback">Send Feedback</a></li>
+          </ul>
+          <p class="foottg" id="footTg" hidden></p>
+        </div>
+      </div>
+
+      <div class="foot-bottom">
+        <p id="footText"></p>
+        <p class="foot-copy">© 2026 <span data-i18n="brand">Radarak</span></p>
+      </div>
     </div>
   </footer>
 
