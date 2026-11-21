@@ -14,7 +14,7 @@
       brand: "Radarak", code: "Source code", skip: "Skip to jobs",
       browseTracks: "Browse by track", allTracks: "All tech",
       ask1: "I live in", ask2: "and I'm looking for", ask3: "jobs.", country: "Country", role: "Role",
-      anyCountry: "any country", anyRole: "any tech", allOf: (x) => `${x} (all roles)`,
+      anyCountry: "any country", anyRole: "All tech jobs", allOf: (x) => `All ${x} jobs`,
       countLabel: "jobs you can apply to", countAll: "open tech jobs", share: "Share this search", copied: "Link copied",
       updated: (d) => `Updated ${d}. New jobs are added every morning.`,
       yourSkills: "Match jobs to your skills", addSkill: "Add a skill you have", addByHand: "or add skills by hand",
@@ -215,7 +215,7 @@
       brand: "رادارك", code: "الكود المصدري", skip: "انتقل للوظايف",
       browseTracks: "تصفّح حسب المجال", allTracks: "كل التك",
       ask1: "أنا عايش في", ask2: "وبدوّر على وظايف", ask3: "", country: "الدولة", role: "الوظيفة",
-      anyCountry: "أي دولة", anyRole: "أي مجال تقني", allOf: (x) => `${x} (كل الوظايف)`,
+      anyCountry: "أي دولة", anyRole: "كل وظايف التك", allOf: (x) => `كل وظايف ${x}`,
       countLabel: "وظيفة تقدر تقدّم عليها", countAll: "وظيفة تقنية متاحة", share: "شارك البحث ده", copied: "اتنسخ اللينك",
       updated: (d) => `آخر تحديث ${d}. وظايف جديدة بتتضاف كل يوم الصبح.`,
       yourSkills: "شوف الوظايف المناسبة لمهاراتك", addSkill: "ضيف مهارة عندك", addByHand: "أو ضيف مهاراتك بإيدك",
@@ -2393,12 +2393,14 @@
   // ------------------------------------------------------------------ track pills + radar
   function renderTracks() {
     // count jobs the way the list shows them: the same title at the same company counts once
-    const keys = new Map(), all = new Set();
+    const keys = new Map(), roleKeys = new Map(), all = new Set();
     for (const j of filtered(true)) {
       const k = j.t.toLowerCase() + "|" + (j.c || "").toLowerCase();
       all.add(k);
       if (!keys.has(j.tr)) keys.set(j.tr, new Set());
       keys.get(j.tr).add(k);
+      if (!roleKeys.has(j.r)) roleKeys.set(j.r, new Set());
+      roleKeys.get(j.r).add(k);
     }
     const counts = new Map([...keys].map(([tr, set]) => [tr, set.size]));
     const base = { length: all.size };
@@ -2406,11 +2408,24 @@
     const active = role.startsWith("track:") ? role.slice(6) : role.startsWith("role:") ? trackOfRole[role.slice(5)] : "";
     const pill = (value, label, n, track) => `<button type="button" class="tpill${(value === "" ? !role : active === track) ? " on" : ""}"
       data-track="${esc(value)}"${track ? ` style="${tc(track)}"` : ""}><span class="dot"></span>${esc(label)} <span class="n">${num(n)}</span></button>`;
-    // the same counts in the "I'm looking for" list next to the search
-    for (const o of $("role").options) {
-      if (o.value === "") o.textContent = `${t("anyRole")} (${num(base.length)})`;
-      else if (o.value.startsWith("track:")) { const n = counts.get(o.value.slice(6)) || 0; o.textContent = `${o.value.slice(6)} (${num(n)})`; }
+    // the same counts in the "I'm looking for" list next to the search: the total on top, each track's total on its
+    // heading, each role's own count, and roles with no jobs here left out (unless it's the one you picked)
+    const sel = $("role");
+    for (const g of sel.querySelectorAll("optgroup")) {
+      const name = g.dataset.track || (g.dataset.track = g.label);
+      const n = counts.get(name) || 0;
+      g.label = `${name} (${num(n)})`;
+      for (const o of g.querySelectorAll("option")) {
+        if (o.value.startsWith("track:")) { o.textContent = t("allOf")(name); continue; }
+        const rn = roleKeys.has(o.value.slice(5)) ? roleKeys.get(o.value.slice(5)).size : 0;
+        o.textContent = `${o.value.slice(5)} (${num(rn)})`;
+        const hide = !rn && o.value !== role;
+        o.hidden = hide; o.disabled = hide;
+      }
+      const empty = !n && !g.querySelector(`option[value="${CSS.escape(role)}"]`);
+      g.hidden = empty; g.disabled = empty;
     }
+    if (sel.options[0] && sel.options[0].value === "") sel.options[0].textContent = `${t("anyRole")} (${num(base.length)})`;
     $("trackPills").innerHTML = pill("", t("allTracks"), base.length, "")
       + meta.tracks.filter((tr) => counts.get(tr.name)).map((tr) => pill("track:" + tr.name, tr.name, counts.get(tr.name), tr.name)).join("");
     // on phones the pills scroll sideways: keep the chosen one in view (without scrolling the page)

@@ -239,7 +239,10 @@ def test_track_pills(page, data):
     # tracks are picked in the "I'm looking for" list next to the search, with their job counts
     opt = p.locator("#role option[value^='track:']").first
     track = opt.get_attribute("value")[6:]
-    pill_n = int(opt.inner_text().rsplit("(", 1)[1].rstrip(")").replace(",", ""))
+    head = opt.evaluate("o => o.parentElement.label")               # the count sits on the track's heading
+    pill_n = int(head.rsplit("(", 1)[1].rstrip(")").replace(",", ""))
+    total = p.locator("#role option[value='']").inner_text()
+    assert int(total.rsplit("(", 1)[1].rstrip(")").replace(",", "")) == pg.count()
     p.select_option("#role", "track:" + track)
     p.wait_for_timeout(300)
     assert pg.count() == expected(data, country="Egypt", track=track) == pill_n
